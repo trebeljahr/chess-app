@@ -6,8 +6,10 @@ function getDefaultState() {
     board: generateBoard(),
     turn: "white",
     movePart: 0,
+    moveHistory: [],
     check: false,
-    checkmate: false
+    checkmate: false,
+    remis: false
   };
 }
 
@@ -17,6 +19,7 @@ class ChessApp extends React.Component {
     this.state = getDefaultState();
     this.handleClick = this.handleClick.bind(this);
     this.resetBoard = this.resetBoard.bind(this);
+    this.handleUndo = this.handleUndo.bind(this);
   }
   handleClick(field) {
     let { row, col } = convertPos(field);
@@ -38,6 +41,8 @@ class ChessApp extends React.Component {
           oldPos: this.state.oldPos,
           newPos: newPos
         };
+        let moveHistoryCopy = [...this.state.moveHistory];
+        moveHistoryCopy.push(move);
         if (
           checkForCheck(this.state.board, this.state.turn) &&
           this.state.check !== true
@@ -47,10 +52,14 @@ class ChessApp extends React.Component {
         this.setState({
           board: updateBoard(this.state.board, move),
           turn: changeTurns(this.state.turn),
-          movePart: 0
+          movePart: 0,
+          moveHistory: moveHistoryCopy
         });
         if (checkForCheckMate(this.state.board, this.state.turn)) {
           this.setState({ checkmate: true });
+        }
+        if (checkForRemis(this.state.board, this.state.turn)) {
+          this.setState({ remis: true });
         }
       }
     } else if (fieldContent.figure.color === this.state.turn) {
@@ -63,6 +72,18 @@ class ChessApp extends React.Component {
     }
   }
 
+  handleUndo() {
+    let move = RevertLastMoveInstructions(this.state.moveHistory);
+    this.setState({
+      board: updateBoard(this.state.board, move),
+      turn: changeTurns(this.state.turn),
+      movePart: 0,
+      check: checkForCheck(this.state.board, this.state.turn),
+      checkmate: false,
+      remis: false
+    });
+  }
+
   resetBoard() {
     this.setState(getDefaultState());
   }
@@ -73,9 +94,28 @@ class ChessApp extends React.Component {
         <Board board={this.state.board} handleClick={this.handleClick} />
         <Dashboard checkmate={this.state.checkmate} turn={this.state.turn} />
         <ResetBoard resetBoard={this.resetBoard} />
+        <UndoButton
+          handleUndo={this.handleUndo}
+          moveHistory={this.state.moveHistory}
+        />
       </div>
     );
   }
+}
+function RevertLastMoveInstructions(moveHistory) {
+  let oldMove = moveHistory.pop();
+  let backwardsMove = {
+    oldPos: oldMove.newPos,
+    newPos: oldMove.oldPos,
+    figure: oldMove.figure
+  };
+  return backwardsMove;
+}
+
+function UndoButton(props) {
+  return props.moveHistory.length >= 1 ? (
+    <button onClick={() => props.handleUndo()}>Undo!</button>
+  ) : null;
 }
 
 function Dashboard(props) {
@@ -87,6 +127,7 @@ function Dashboard(props) {
     </div>
   );
 }
+
 function invertColor(color) {
   return color === "white" ? "black" : "white";
 }
@@ -105,21 +146,21 @@ function findFigures(board, color) {
 }
 
 function checkForCheckMate(board, color) {
+  if (checkForCheck(board, invertColor(color)) && checkForRemis(board, color)) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function checkForRemis(board, color) {
   board = JSON.parse(JSON.stringify(board));
   let possibleFiguresToMove = findFigures(board, invertColor(color));
-  possibleFiguresToMove.map(tile => {
-    return (board = createFieldMarkers(
-      board,
-      tile.row,
-      tile.col,
-      "valid",
-      true
-    ));
+  possibleFiguresToMove.forEach(tile => {
+    board = createFieldMarkers(board, tile.row, tile.col, "valid", true);
   });
   return areThereNoMoreValidMoves(board);
 }
-
-function checkForRemis(board, row, col, color) {}
 
 function areThereNoMoreValidMoves(board) {
   for (let row = 0; row < 8; row++) {
@@ -142,7 +183,6 @@ function convertPos(pos) {
 }
 
 function createFieldMarkers(board, row, col, mark, virtual) {
-  let maxDistance = 8;
   let figure = board[row][col].figure;
   if (mark === "valid" && !virtual) {
     removeMarkers(board, ["valid", "selected"]);
@@ -156,31 +196,29 @@ function createFieldMarkers(board, row, col, mark, virtual) {
       if (mark === "valid") {
         markRochade(board, row, col);
       }
-      maxDistance = 1;
-      break;
-    case "knight":
-      maxDistance = 1;
       break;
     default:
       break;
   }
-
-  for (let key in figure.allowedDirections) {
-    let direction = figure.allowedDirections[key];
-    board = markTiles(
-      board,
-      row,
-      direction[0],
-      col,
-      direction[1],
-      figure,
-      maxDistance,
-      0,
-      mark,
-      row,
-      col,
-      figure
-    );
+  if (figure.type !== "pawn") {
+    let { allowedDirections, maxDistance } = getMoveInstructions(figure.type);
+    for (let key in allowedDirections) {
+      let direction = allowedDirections[key];
+      board = markTiles(
+        board,
+        row,
+        direction[0],
+        col,
+        direction[1],
+        figure,
+        maxDistance,
+        0,
+        mark,
+        row,
+        col,
+        figure
+      );
+    }
   }
   return board;
 }
@@ -204,7 +242,7 @@ function getPawnRowTransformations(row, color) {
 
 function diagonalPawnCaptures(board, row, col, color, mark) {
   let rowChange = color === "white" ? -1 : 1;
-  [-1, 1].map(y => {
+  [-1, 1].forEach(y => {
     if (0 <= col + y && col + y <= 7) {
       let tile = board[row + rowChange][col + y];
       if (tile.figure !== "noFigure" && tile.figure.color !== color) {
@@ -229,7 +267,7 @@ function diagonalPawnCaptures(board, row, col, color, mark) {
 }
 
 function straightPawnSteps(board, row, col, stepSize) {
-  stepSize.map(x => {
+  stepSize.forEach(x => {
     let tile = board[row + x][col];
     if (tile.figure === "noFigure") {
       let boardCopy = JSON.parse(JSON.stringify(board));
@@ -406,7 +444,7 @@ function updateBoard(board, move, virtual) {
 function removeMarkers(board, marks) {
   for (let row = 0; row < 8; row++) {
     for (let col = 0; col < 8; col++) {
-      marks.map(mark => {
+      marks.forEach(mark => {
         board[row][col][mark] = "";
       });
     }
@@ -459,17 +497,22 @@ function ResetBoard(props) {
 function generateFigure(col, row) {
   let color = "";
   let type = "";
-  let allowedDirections = {};
   switch (row) {
     case 1:
       type = "pawn";
+      color = "black";
+      break;
     case 0:
       color = "black";
       break;
     case 6:
       type = "pawn";
+      color = "white";
+      break;
     case 7:
       color = "white";
+      break;
+    default:
       break;
   }
   if (row === 7 || row === 0) {
@@ -477,17 +520,74 @@ function generateFigure(col, row) {
       case 0:
       case 7:
         type = "rook";
-        allowedDirections = {
-          up: [-1, 0],
-          down: [+1, 0],
-          right: [0, +1],
-          left: [0, -1]
-        };
         break;
       case 1:
       case 6:
         type = "knight";
-        allowedDirections = {
+        break;
+      case 2:
+      case 5:
+        type = "bishop";
+        break;
+      case 3:
+        type = "queen";
+        break;
+      case 4:
+        type = "king";
+        break;
+      default:
+        break;
+    }
+  }
+  if (color) {
+    return { color: color, type: type };
+  }
+  return "noFigure";
+}
+
+function getMoveInstructions(figure) {
+  switch (figure) {
+    case "king":
+      return {
+        allowedDirections: {
+          up: [-1, 0],
+          down: [+1, 0],
+          right: [0, +1],
+          left: [0, -1],
+          "diagonal-1": [-1, -1],
+          "diagonal-2": [+1, +1],
+          "diagonal-3": [-1, +1],
+          "diagonal-4": [+1, -1]
+        },
+        maxDistance: 1
+      };
+    case "queen":
+      return {
+        allowedDirections: {
+          up: [-1, 0],
+          down: [+1, 0],
+          right: [0, +1],
+          left: [0, -1],
+          "diagonal-1": [-1, -1],
+          "diagonal-2": [+1, +1],
+          "diagonal-3": [-1, +1],
+          "diagonal-4": [+1, -1]
+        },
+        maxDistance: 8
+      };
+    case "bishop":
+      return {
+        allowedDirections: {
+          "diagonal-1": [-1, -1],
+          "diagonal-2": [+1, +1],
+          "diagonal-3": [-1, +1],
+          "diagonal-4": [+1, -1]
+        },
+        maxDistance: 8
+      };
+    case "knight":
+      return {
+        allowedDirections: {
           "1": [-1, -2],
           "2": [-1, +2],
           "3": [+2, +1],
@@ -496,52 +596,22 @@ function generateFigure(col, row) {
           "6": [+1, +2],
           "7": [-2, +1],
           "8": [-2, -1]
-        };
-        break;
-      case 2:
-      case 5:
-        type = "bishop";
-        allowedDirections = {
-          "diagonal-1": [-1, -1],
-          "diagonal-2": [+1, +1],
-          "diagonal-3": [-1, +1],
-          "diagonal-4": [+1, -1]
-        };
-        break;
-      case 3:
-        type = "queen";
-        allowedDirections = {
+        },
+        maxDistance: 1
+      };
+    case "rook":
+      return {
+        allowedDirections: {
           up: [-1, 0],
           down: [+1, 0],
           right: [0, +1],
-          left: [0, -1],
-          "diagonal-1": [-1, -1],
-          "diagonal-2": [+1, +1],
-          "diagonal-3": [-1, +1],
-          "diagonal-4": [+1, -1]
-        };
-        break;
-      case 4:
-        type = "king";
-        allowedDirections = {
-          up: [-1, 0],
-          down: [+1, 0],
-          right: [0, +1],
-          left: [0, -1],
-          "diagonal-1": [-1, -1],
-          "diagonal-2": [+1, +1],
-          "diagonal-3": [-1, +1],
-          "diagonal-4": [+1, -1]
-        };
-        break;
-      default:
-        break;
-    }
+          left: [0, -1]
+        },
+        maxDistance: 8
+      };
+    default:
+      break;
   }
-  if (color) {
-    return { color: color, type: type, allowedDirections: allowedDirections };
-  }
-  return "noFigure";
 }
 
 function Board(props) {
@@ -552,7 +622,7 @@ function Board(props) {
           return (
             <div
               onClick={() => props.handleClick(col.field)}
-              id={col.field}
+              key={col.field}
               className={
                 col.color +
                 " " +
