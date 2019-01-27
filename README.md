@@ -1,8 +1,7 @@
 This is a simple chess-app. It basically is a digital chess-board, which one can use to play in a browser locally. 
 Later on I want to add a basic backend matchmaking to make it possible to play against other players on other devices. 
 
-This was created with create-react-app, hence you can run these: 
-In the project directory, you can run:
+This was created with create-react-app, hence you can run these
 
 ### `npm start`
 
