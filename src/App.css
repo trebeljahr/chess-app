@@ -30,3 +30,55 @@
     transform: rotate(360deg);
   }
 }
+.board{
+	  margin: auto;
+	    margin-top: 10vmin;
+	      display: grid;
+	        width: 80vmin;
+		  height: 80vmin;
+		    grid-template-rows: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);
+		      grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);
+	      }
+	      .board div {
+		        font-size: 3vmin;
+			  text-align: center;
+			    display: flex;
+			      justify-content: center;
+			        align-items: center;
+			}
+			.selected {
+				  background: #5F939B !important;
+			  }
+			  .check {
+				    background: #F55D3E !important;
+			    }
+			    .valid {
+				      width: 90%;
+				        height: 90%;
+					  background: #28C958d2;
+					    border-radius: 100%;
+				    }
+				    span{
+					      font-size: 2em;
+				      }
+
+				      .black-tile{
+					        background: #A15E49;
+					}
+					.white-tile {
+						  background: #CA895F;
+					  }
+					  .white {
+						    color: white;
+					    }
+					    .black {
+						      color: black;
+					      }
+					      .rook {
+						        border-radius: 0;
+						}
+						.figures {
+							  width: 80%;
+							    height: 80%;
+							      line-height: 3em;
+						      }
