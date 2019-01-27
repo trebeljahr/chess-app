@@ -1,6 +1,5 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import "./App.css";
 
 function getDefaultState() {
   return {
@@ -8,7 +7,7 @@ function getDefaultState() {
     turn: "white",
     movePart: 0,
     check: false,
-    checkmate: false,
+    checkmate: false
   };
 }
 
@@ -50,7 +49,9 @@ class ChessApp extends React.Component {
           turn: changeTurns(this.state.turn),
           movePart: 0
         });
-        if(checkForCheckMate(this.state.board, this.state.turn)){this.setState({checkmate: true})};
+        if (checkForCheckMate(this.state.board, this.state.turn)) {
+          this.setState({ checkmate: true });
+        }
       }
     } else if (fieldContent.figure.color === this.state.turn) {
       this.setState({
@@ -77,52 +78,58 @@ class ChessApp extends React.Component {
   }
 }
 
-function Dashboard (props){
+function Dashboard(props) {
   return (
-  <div>
-      {props.checkmate?invertColor(props.turn) + " wins!":"It's " + props.turn + "'s turn"}
-        </div>
-  )
+    <div>
+      {props.checkmate
+        ? invertColor(props.turn) + " wins!"
+        : "It's " + props.turn + "'s turn"}
+    </div>
+  );
 }
-function invertColor(color){
-  return color==="white"?"black":"white";
+function invertColor(color) {
+  return color === "white" ? "black" : "white";
 }
 
-function findFigures(board, color){
-let out = [];
-for (let row = 0; row < 8; row++){
-    for (let col = 0; col < 8; col++){
+function findFigures(board, color) {
+  let out = [];
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
       let tile = board[row][col];
-     if (tile.figure !== "noFigure" && tile.figure.color === color){
-       out.push({row: row, col: col});
-     }
+      if (tile.figure !== "noFigure" && tile.figure.color === color) {
+        out.push({ row: row, col: col });
+      }
     }
-}
-    return out;
+  }
+  return out;
 }
 
-function checkForCheckMate(board, color){
+function checkForCheckMate(board, color) {
   board = JSON.parse(JSON.stringify(board));
   let possibleFiguresToMove = findFigures(board, invertColor(color));
- possibleFiguresToMove.map(tile=>{
-   board = createFieldMarkers(board, tile.row, tile.col, "valid", true);
- })
+  possibleFiguresToMove.map(tile => {
+    return (board = createFieldMarkers(
+      board,
+      tile.row,
+      tile.col,
+      "valid",
+      true
+    ));
+  });
   return areThereNoMoreValidMoves(board);
-  }
-
-function checkForRemis(board, row, col, color){
-
 }
 
-function areThereNoMoreValidMoves(board){
-  for (let row = 0; row < 8; row++){
-    for (let col = 0; col < 8; col++){
+function checkForRemis(board, row, col, color) {}
+
+function areThereNoMoreValidMoves(board) {
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
       let tile = board[row][col];
-      if (tile.valid === "valid"){
+      if (tile.valid === "valid") {
         return false;
       }
     }
-}
+  }
   return true;
 }
 
@@ -146,9 +153,11 @@ function createFieldMarkers(board, row, col, mark, virtual) {
       determinePawnMarkers(board, row, col, figure.color, mark);
       break;
     case "king":
-      if (mark === "valid"){
+      if (mark === "valid") {
         markRochade(board, row, col);
       }
+      maxDistance = 1;
+      break;
     case "knight":
       maxDistance = 1;
       break;
@@ -178,8 +187,9 @@ function createFieldMarkers(board, row, col, mark, virtual) {
 
 function determinePawnMarkers(board, row, col, color, mark) {
   let pawnRowTransformation = getPawnRowTransformations(row, color);
- if (mark === "valid")
-	{straightPawnSteps(board, row, col, pawnRowTransformation)}
+  if (mark === "valid") {
+    straightPawnSteps(board, row, col, pawnRowTransformation);
+  }
   diagonalPawnCaptures(board, row, col, color, mark);
 }
 
@@ -199,15 +209,20 @@ function diagonalPawnCaptures(board, row, col, color, mark) {
       let tile = board[row + rowChange][col + y];
       if (tile.figure !== "noFigure" && tile.figure.color !== color) {
         if (mark === "valid") {
-        let boardCopy = JSON.parse(JSON.stringify(board));
-        let move = {oldPos: {row: row, col: col}, newPos: {row: row+rowChange, col:col+y}, figure: board[row][col].figure}
-        boardCopy = updateBoard(boardCopy, move, true);
-        if (checkForCheck(boardCopy, board[row][col].figure.color)) {
+          let boardCopy = JSON.parse(JSON.stringify(board));
+          let move = {
+            oldPos: { row: row, col: col },
+            newPos: { row: row + rowChange, col: col + y },
+            figure: board[row][col].figure
+          };
+          boardCopy = updateBoard(boardCopy, move, true);
+          if (checkForCheck(boardCopy, board[row][col].figure.color)) {
+          } else {
+            tile[mark] = mark;
+          }
         } else {
           tile[mark] = mark;
         }
-        }
-       else {tile[mark] = mark;}
       }
     }
   });
@@ -217,42 +232,56 @@ function straightPawnSteps(board, row, col, stepSize) {
   stepSize.map(x => {
     let tile = board[row + x][col];
     if (tile.figure === "noFigure") {
-        let boardCopy = JSON.parse(JSON.stringify(board));
-        let move = {oldPos: {row: row, col: col}, newPos: {row: row+x, col:col}, figure: board[row][col].figure}
-        boardCopy = updateBoard(boardCopy, move, true);
-        if (checkForCheck(boardCopy, board[row][col].figure.color)) {
-        } else {
-          tile.valid = "valid";
-        }
+      let boardCopy = JSON.parse(JSON.stringify(board));
+      let move = {
+        oldPos: { row: row, col: col },
+        newPos: { row: row + x, col: col },
+        figure: board[row][col].figure
+      };
+      boardCopy = updateBoard(boardCopy, move, true);
+      if (checkForCheck(boardCopy, board[row][col].figure.color)) {
+      } else {
+        tile.valid = "valid";
+      }
     }
   });
 }
 
-function markRochade(board, row, col){
-  if(IsLongRochadePossible(board, row, col)){board[row][col-2].valid="valid"}
-  if(IsShortRochadePossible(board, row, col)){board[row][col+2].valid="valid"}
+function markRochade(board, row, col) {
+  if (IsLongRochadePossible(board, row, col)) {
+    board[row][col - 2].valid = "valid";
+  }
+  if (IsShortRochadePossible(board, row, col)) {
+    board[row][col + 2].valid = "valid";
+  }
 }
 
-function IsLongRochadePossible(board, row, col, figure){
+function IsLongRochadePossible(board, row, col, figure) {
   let tile = board[row][col];
-  if (col === 0 && tile.figure.type === "rook"){
+  if (col === 0 && tile.figure.type === "rook") {
     return true;
   }
-  if (tile.check === "check" && col >= 2|| tile.figure !== "noFigure" && col !== 4) {
+  if (
+    (tile.check === "check" && col >= 2) ||
+    (tile.figure !== "noFigure" && col !== 4)
+  ) {
     return false;
   }
-  return IsLongRochadePossible(board, row, col-1);
+  return IsLongRochadePossible(board, row, col - 1);
 }
 
-function IsShortRochadePossible(board, row, col){
+function IsShortRochadePossible(board, row, col) {
   let tile = board[row][col];
-  if (col === 7 && tile.figure.type === "rook"){
+  if (col === 7 && tile.figure.type === "rook") {
     return true;
   }
-  if (tile.check === "check" && col <= 6 || tile.figure !== "noFigure" && col !== 4){
+  if (
+    (tile.check === "check" && col <= 6) ||
+    (tile.figure !== "noFigure" && col !== 4)
+  ) {
     return false;
   }
-  return IsShortRochadePossible(board, row, col+1);
+  return IsShortRochadePossible(board, row, col + 1);
 }
 
 function markTiles(
@@ -313,10 +342,9 @@ function markTiles(
     } else {
       board[newRow][newCol][mark] = mark;
     }
+  } else {
+    board[newRow][newCol][mark] = mark;
   }
-    else {
-      board[newRow][newCol][mark] = mark;
-    }
   return markTiles(
     board,
     newRow,
@@ -506,6 +534,8 @@ function generateFigure(col, row) {
           "diagonal-4": [+1, -1]
         };
         break;
+      default:
+        break;
     }
   }
   if (color) {
@@ -553,6 +583,5 @@ function Board(props) {
     </div>
   );
 }
-
 
 export default ChessApp;
