@@ -9,7 +9,17 @@ function getDefaultState() {
     moveHistory: [],
     check: false,
     checkmate: false,
-    remis: false
+    remis: false,
+    white: {
+      hasMovedKing: false,
+      hasMovedRightRook: false,
+      hasMovedLeftRook: false
+    },
+    black: {
+      hasMovedKing: false,
+      hasMovedRightRook: false,
+      hasMovedLeftRook: false
+    }
   };
 }
 
@@ -61,6 +71,7 @@ class ChessApp extends React.Component {
         if (checkForRemis(this.state.board, this.state.turn)) {
           this.setState({ remis: true });
         }
+        traverseMoveHistory(this.state.moveHistory);
       }
     } else if (fieldContent.figure.color === this.state.turn) {
       this.setState({
@@ -71,7 +82,6 @@ class ChessApp extends React.Component {
       });
     }
   }
-
   handleUndo() {
     let move = RevertLastMoveInstructions(this.state.moveHistory);
     this.setState({
@@ -92,7 +102,11 @@ class ChessApp extends React.Component {
     return (
       <div>
         <Board board={this.state.board} handleClick={this.handleClick} />
-        <Dashboard checkmate={this.state.checkmate} turn={this.state.turn} />
+        <Dashboard
+          checkmate={this.state.checkmate}
+          remis={this.state.remis}
+          turn={this.state.turn}
+        />
         <ResetBoard resetBoard={this.resetBoard} />
         <UndoButton
           handleUndo={this.handleUndo}
@@ -102,6 +116,36 @@ class ChessApp extends React.Component {
     );
   }
 }
+
+function traverseMoveHistory(moveHistory, color) {
+  let player = {
+    white: {
+      hasMovedKing: false,
+      hasMovedLeftRook: false,
+      hasMovedRightRook: false
+    },
+    black: {
+      hasMovedKing: false,
+      hasMovedLeftRook: false,
+      hasMovedRightRook: false
+    }
+  };
+  /*moveHistory.forEach(move => {
+    if (move.figure.type === "king") {
+      player[color]hasMovedKing = true;
+    }
+    if (move.figure.type === "rook") {
+      if (move.oldPos === 0) {
+        player.color.hasMovedleftRook = true;
+      }
+      if (move.oldPos === 7) {
+        player.color.hasMovedRightRook = true;
+      }
+    }
+  });
+  console.log(player);*/
+}
+
 function RevertLastMoveInstructions(moveHistory) {
   let oldMove = moveHistory.pop();
   let backwardsMove = {
@@ -123,6 +167,8 @@ function Dashboard(props) {
     <div>
       {props.checkmate
         ? invertColor(props.turn) + " wins!"
+        : props.remis
+        ? "It's a draw!"
         : "It's " + props.turn + "'s turn"}
     </div>
   );
