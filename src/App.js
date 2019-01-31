@@ -1,28 +1,21 @@
 import React from "react";
 import "./App.css";
-
-function getDefaultState() {
-  return {
-    board: generateBoard(),
-    turn: "white",
-    movePart: 0,
-    moveHistory: [],
-    check: false,
-    checkmate: false,
-    remis: false,
-    white: {
-      hasMovedKing: false,
-      hasMovedRightRook: false,
-      hasMovedLeftRook: false
-    },
-    black: {
-      hasMovedKing: false,
-      hasMovedRightRook: false,
-      hasMovedLeftRook: false
-    }
-  };
-}
-
+import { getDefaultState } from "./helpers/getDefaultState.js";
+import { convertPos } from "./helpers/convertPos.js";
+import { createFieldMarkers } from "./tileMarkers/createFieldMarkers.js";
+import { validateMove } from "./helpers/validateMove.js";
+import { checkForCheck } from "./gameFunctions/checkForCheck.js";
+import { updateBoard } from "./gameFunctions/updateBoard.js";
+import { changeTurns } from "./helpers/changeTurns.js";
+import { checkForCheckMate } from "./gameFunctions/checkForCheckMate.js";
+import { checkForRemis } from "./gameFunctions/checkForRemis.js";
+import { flagWhichRochadeFiguresHaveBeenMoved } from "./helpers/flagWhichRochadeFiguresHaveBeenMoved.js";
+import { RevertLastMoveInstructions } from "./helpers/RevertLastMoveInstructions.js";
+import { invertColor } from "./helpers/invertColor.js";
+import Board from "./components/Board";
+import Dashboard from "./components/Dashboard";
+import UndoButton from "./components/UndoButton";
+import ResetBoard from "./components/ResetBoard";
 class ChessApp extends React.Component {
   constructor(props) {
     super(props);
@@ -71,7 +64,23 @@ class ChessApp extends React.Component {
         if (checkForRemis(this.state.board, this.state.turn)) {
           this.setState({ remis: true });
         }
-        traverseMoveHistory(this.state.moveHistory);
+        this.setState(state => {
+          return state.turn === "white"
+            ? {
+                white: flagWhichRochadeFiguresHaveBeenMoved(
+                  state.moveHistory,
+                  state.white,
+                  invertColor(state.turn)
+                )
+              }
+            : {
+                black: flagWhichRochadeFiguresHaveBeenMoved(
+                  state.moveHistory,
+                  state.black,
+                  invertColor(state.turn)
+                )
+              };
+        });
       }
     } else if (fieldContent.figure.color === this.state.turn) {
       this.setState({
@@ -116,34 +125,47 @@ class ChessApp extends React.Component {
     );
   }
 }
-
-function traverseMoveHistory(moveHistory, color) {
-  let player = {
+/*
+function getDefaultState() {
+  return {
+    board: generateBoard(),
+    turn: "white",
+    movePart: 0,
+    moveHistory: [],
+    check: false,
+    checkmate: false,
+    remis: false,
     white: {
       hasMovedKing: false,
-      hasMovedLeftRook: false,
-      hasMovedRightRook: false
+      hasMovedRightRook: false,
+      hasMovedLeftRook: false
     },
     black: {
       hasMovedKing: false,
-      hasMovedLeftRook: false,
-      hasMovedRightRook: false
+      hasMovedRightRook: false,
+      hasMovedLeftRook: false
     }
   };
-  /*moveHistory.forEach(move => {
-    if (move.figure.type === "king") {
-      player[color]hasMovedKing = true;
-    }
-    if (move.figure.type === "rook") {
-      if (move.oldPos === 0) {
-        player.color.hasMovedleftRook = true;
+}
+
+function flagWhichRochadeFiguresHaveBeenMoved(moveHistory, player, color) {
+  moveHistory.forEach(move => {
+    if (move.figure.color === color) {
+      if (move.figure.type === "king") {
+        player.hasMovedKing = true;
       }
-      if (move.oldPos === 7) {
-        player.color.hasMovedRightRook = true;
+      if (move.figure.type === "rook") {
+        if (move.oldPos === 0) {
+          player.hasMovedleftRook = true;
+        }
+        if (move.oldPos === 7) {
+          player.hasMovedRightRook = true;
+        }
       }
     }
   });
-  console.log(player);*/
+  console.log(player, color);
+  return player;
 }
 
 function RevertLastMoveInstructions(moveHistory) {
@@ -179,16 +201,16 @@ function invertColor(color) {
 }
 
 function findFigures(board, color) {
-  let out = [];
+  let figuresPositions = [];
   for (let row = 0; row < 8; row++) {
     for (let col = 0; col < 8; col++) {
       let tile = board[row][col];
       if (tile.figure !== "noFigure" && tile.figure.color === color) {
-        out.push({ row: row, col: col });
+        figuresPositions.push({ row: row, col: col });
       }
     }
   }
-  return out;
+  return figuresPositions;
 }
 
 function checkForCheckMate(board, color) {
@@ -698,6 +720,6 @@ function Board(props) {
       )}
     </div>
   );
-}
+}*/
 
 export default ChessApp;
