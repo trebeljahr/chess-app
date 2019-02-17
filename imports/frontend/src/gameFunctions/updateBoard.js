@@ -4,6 +4,9 @@ export function updateBoard(board, move, virtual) {
   removeMarkers(board, ["valid", "selected", "check"]);
   removePiece(board, move.oldPos);
   generatePiece(board, move.newPos, move.figure, virtual);
+if (move.secondFigure && move.secondFigure !== "noFigure"){
+  generatePiece(board, move.oldPos, move.secondFigure, false)
+}
   return board;
 }
 
