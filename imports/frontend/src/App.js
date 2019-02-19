@@ -21,11 +21,8 @@ class ChessApp extends React.Component {
   constructor(props) {
     super(props);
     this.state = getDefaultState();
-    this.handleClick = this.handleClick.bind(this);
-    this.resetBoard = this.resetBoard.bind(this);
-    this.handleUndo = this.handleUndo.bind(this);
   }
-  handleClick(field) {
+  handleClick = (field) => {
     let { row, col } = convertPos(field);
     let fieldContent = this.state.board[row][col];
     if (this.state.movePart === 1) {
@@ -92,7 +89,7 @@ class ChessApp extends React.Component {
       });
     }
   }
-  handleUndo() {
+  handleUndo = () => {
     let move = RevertLastMoveInstructions(this.state.moveHistory);
     this.setState({
       board: updateBoard(this.state.board, move),
@@ -104,7 +101,7 @@ class ChessApp extends React.Component {
     });
   }
 
-  resetBoard() {
+  resetBoard = () => {
     this.setState(getDefaultState());
   }
 
@@ -126,6 +123,5 @@ class ChessApp extends React.Component {
     );
   }
 }
-
 
 export default ChessApp;
