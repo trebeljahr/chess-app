@@ -9,24 +9,27 @@ import { updateBoard } from "./gameFunctions/updateBoard.js";
 import { changeTurns } from "./helpers/changeTurns.js";
 import { checkForCheckMate } from "./gameFunctions/checkForCheckMate.js";
 import { checkForRemis } from "./gameFunctions/checkForRemis.js";
-import { flagWhichRochadeFiguresHaveBeenMoved } from "./helpers/flagWhichRochadeFiguresHaveBeenMoved.js";
 import { RevertLastMoveInstructions } from "./helpers/RevertLastMoveInstructions.js";
 import { invertColor } from "./helpers/invertColor.js";
 import Board from "./components/Board";
 import Dashboard from "./components/Dashboard";
 import UndoButton from "./components/UndoButton";
 import ResetBoard from "./components/ResetBoard";
+import { checkForMovedKing } from "./helpers/movedRochadeFigures.js";
 
 class ChessApp extends React.Component {
   constructor(props) {
     super(props);
     this.state = getDefaultState();
   }
-  handleClick = (field) => {
+  handleClick = field => {
     let { row, col } = convertPos(field);
     let fieldContent = this.state.board[row][col];
     if (this.state.movePart === 1) {
       if (fieldContent.figure.color === this.state.figure.color) {
+        if (row === this.state.oldPos.row && col === this.state.oldPos.col) {
+          this.setState(state => {});
+        }
         this.setState(state => {
           return {
             board: createFieldMarkers(state.board, row, col, "valid"),
@@ -62,23 +65,6 @@ class ChessApp extends React.Component {
         if (checkForRemis(this.state.board, this.state.turn)) {
           this.setState({ remis: true });
         }
-        this.setState(state => {
-          return state.turn === "white"
-            ? {
-                white: flagWhichRochadeFiguresHaveBeenMoved(
-                  state.moveHistory,
-                  state.white,
-                  invertColor(state.turn)
-                )
-              }
-            : {
-                black: flagWhichRochadeFiguresHaveBeenMoved(
-                  state.moveHistory,
-                  state.black,
-                  invertColor(state.turn)
-                )
-              };
-        });
       }
     } else if (fieldContent.figure.color === this.state.turn) {
       this.setState({
@@ -88,7 +74,7 @@ class ChessApp extends React.Component {
         figure: fieldContent.figure
       });
     }
-  }
+  };
   handleUndo = () => {
     let move = RevertLastMoveInstructions(this.state.moveHistory);
     this.setState({
@@ -99,12 +85,16 @@ class ChessApp extends React.Component {
       checkmate: false,
       remis: false
     });
-  }
-
+  };
+  componentDidUpdate = () => {
+    console.log(
+      checkForMovedKing(this.state.moveHistory, invertColor(this.state.turn)),
+      this.state.turn
+    );
+  };
   resetBoard = () => {
     this.setState(getDefaultState());
-  }
-
+  };
   render() {
     return (
       <div>

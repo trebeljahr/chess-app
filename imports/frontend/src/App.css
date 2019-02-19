@@ -1,84 +1,58 @@
-.App {
+.board {
+  margin: auto;
+  margin-top: 10vmin;
+  display: grid;
+  width: 80vmin;
+  height: 80vmin;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(
+      0,
+      1fr
+    ) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(
+      0,
+      1fr
+    ) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+.board div {
+  font-size: 3vmin;
   text-align: center;
-}
-
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 40vmin;
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
+  align-items: center;
+}
+.selected {
+  background: #5f939b !important;
+}
+.check {
+  background: #f55d3e !important;
+}
+.valid {
+  width: 90%;
+  height: 90%;
+  background: #28c958d2;
+  border-radius: 100%;
+}
+span {
+  font-size: 2em;
+}
+
+.black-tile {
+  background: #a15e49;
+}
+.white-tile {
+  background: #ca895f;
+}
+.white {
   color: white;
 }
-
-.App-link {
-  color: #61dafb;
+.black {
+  color: black;
 }
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.rook {
+  border-radius: 0;
 }
-.board{
-	  margin: auto;
-	    margin-top: 10vmin;
-	      display: grid;
-	        width: 80vmin;
-		  height: 80vmin;
-		    grid-template-rows: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);
-		      grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);
-	      }
-	      .board div {
-		        font-size: 3vmin;
-			  text-align: center;
-			    display: flex;
-			      justify-content: center;
-			        align-items: center;
-			}
-			.selected {
-				  background: #5F939B !important;
-			  }
-			  .check {
-				    background: #F55D3E !important;
-			    }
-			    .valid {
-				      width: 90%;
-				        height: 90%;
-					  background: #28C958d2;
-					    border-radius: 100%;
-				    }
-				    span{
-					      font-size: 2em;
-				      }
-
-				      .black-tile{
-					        background: #A15E49;
-					}
-					.white-tile {
-						  background: #CA895F;
-					  }
-					  .white {
-						    color: white;
-					    }
-					    .black {
-						      color: black;
-					      }
-					      .rook {
-						        border-radius: 0;
-						}
-						.figures {
-							  width: 80%;
-							    height: 80%;
-							      line-height: 3em;
-						      }
+.figures {
+  width: 80%;
+  height: 80%;
+  line-height: 3em;
+}
