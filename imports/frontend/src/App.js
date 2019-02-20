@@ -24,18 +24,15 @@ class ChessApp extends React.Component {
   }
   handleClick = field => {
     let { row, col } = convertPos(field);
-    let fieldContent = this.state.board[row][col];
+    let figure = this.state.board[row][col].figure;
     if (this.state.movePart === 1) {
-      if (fieldContent.figure.color === this.state.figure.color) {
-        if (row === this.state.oldPos.row && col === this.state.oldPos.col) {
-          this.setState(state => {});
-        }
+      if (figure.color === this.state.figure.color) {
         this.setState(state => {
           return {
             board: createFieldMarkers(state.board, row, col, "valid"),
             movePart: 1,
             oldPos: { row, col },
-            figure: fieldContent.figure
+            figure
           };
         });
       } else if (validateMove(this.state.board, row, col)) {
@@ -43,7 +40,8 @@ class ChessApp extends React.Component {
         let move = {
           figure: this.state.figure,
           oldPos: this.state.oldPos,
-          newPos: newPos
+          newPos,
+          secondFigure: figure
         };
         this.setState(state => {
           return {
@@ -54,20 +52,19 @@ class ChessApp extends React.Component {
             checkmate: checkForCheckMate(state.board, state.turn),
             remis:
               !checkForCheckMate(state.board, state.turn) &&
-              (state.board, state.turn)
+              checkForRemis(state.board, state.turn)
                 ? true
                 : false,
             moveHistory: [...state.moveHistory, move]
           };
         });
       }
-    }
-    if (fieldContent.figure.color === this.state.turn) {
+    } else if (figure.color === this.state.turn) {
       this.setState({
         board: createFieldMarkers(this.state.board, row, col, "valid"),
         movePart: 1,
         oldPos: { row, col },
-        figure: fieldContent.figure
+        figure
       });
     }
   };
@@ -75,7 +72,7 @@ class ChessApp extends React.Component {
   handleUndo = () => {
     let move = RevertLastMoveInstructions(this.state.moveHistory);
     this.setState({
-      board: updateBoard(this.state.board, move),
+      board: updateBoard(this.state.board, move, false, true),
       turn: changeTurns(this.state.turn),
       movePart: 0,
       check: checkForCheck(this.state.board, this.state.turn),
