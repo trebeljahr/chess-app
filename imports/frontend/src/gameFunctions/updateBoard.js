@@ -1,11 +1,11 @@
 import { createTilesUnderThreat } from "../tileMarkers/createTilesUnderThreat";
 
-export function updateBoard(board, move, virtual) {
+export function updateBoard(board, move, virtual, undo) {
   removeMarkers(board, ["valid", "selected", "check"]);
   removePiece(board, move.oldPos);
   generatePiece(board, move.newPos, move.figure, virtual);
-  if (move.secondFigure && move.secondFigure !== "noFigure") {
-    generatePiece(board, move.oldPos, move.secondFigure, false);
+  if (move.secondFigure && move.secondFigure !== "noFigure" && undo) {
+    return generatePiece(board, move.oldPos, move.secondFigure, false);
   }
   return board;
 }
