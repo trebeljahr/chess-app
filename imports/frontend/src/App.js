@@ -45,28 +45,24 @@ class ChessApp extends React.Component {
           oldPos: this.state.oldPos,
           newPos: newPos
         };
-        let moveHistoryCopy = [...this.state.moveHistory];
-        moveHistoryCopy.push(move);
-        if (
-          checkForCheck(this.state.board, this.state.turn) &&
-          this.state.check !== true
-        ) {
-          this.setState({ check: true });
-        }
-        this.setState({
-          board: updateBoard(this.state.board, move),
-          turn: changeTurns(this.state.turn),
-          movePart: 0,
-          moveHistory: moveHistoryCopy
+        this.setState(state => {
+          return {
+            board: updateBoard(state.board, move),
+            turn: changeTurns(state.turn),
+            check: checkForCheck(state.board, state.turn),
+            movePart: 0,
+            checkmate: checkForCheckMate(state.board, state.turn),
+            remis:
+              !checkForCheckMate(state.board, state.turn) &&
+              (state.board, state.turn)
+                ? true
+                : false,
+            moveHistory: [...state.moveHistory, move]
+          };
         });
-        if (checkForCheckMate(this.state.board, this.state.turn)) {
-          this.setState({ checkmate: true });
-        }
-        if (checkForRemis(this.state.board, this.state.turn)) {
-          this.setState({ remis: true });
-        }
       }
-    } else if (fieldContent.figure.color === this.state.turn) {
+    }
+    if (fieldContent.figure.color === this.state.turn) {
       this.setState({
         board: createFieldMarkers(this.state.board, row, col, "valid"),
         movePart: 1,
@@ -75,6 +71,7 @@ class ChessApp extends React.Component {
       });
     }
   };
+
   handleUndo = () => {
     let move = RevertLastMoveInstructions(this.state.moveHistory);
     this.setState({
@@ -87,10 +84,7 @@ class ChessApp extends React.Component {
     });
   };
   componentDidUpdate = () => {
-    console.log(
-      checkForMovedKing(this.state.moveHistory, invertColor(this.state.turn)),
-      this.state.turn
-    );
+    console.log(this.state.moveHistory);
   };
   resetBoard = () => {
     this.setState(getDefaultState());
