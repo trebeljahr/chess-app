@@ -19,6 +19,7 @@ export function removeMarkers(board, marks) {
       });
     }
   }
+  return board;
 }
 
 function removePiece(board, pos) {

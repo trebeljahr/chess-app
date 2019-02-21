@@ -5,17 +5,16 @@ import { convertPos } from "./helpers/convertPos.js";
 import { createFieldMarkers } from "./tileMarkers/createFieldMarkers.js";
 import { validateMove } from "./helpers/validateMove.js";
 import { checkForCheck } from "./gameFunctions/checkForCheck.js";
-import { updateBoard } from "./gameFunctions/updateBoard.js";
+import { updateBoard, removeMarkers } from "./gameFunctions/updateBoard.js";
 import { changeTurns } from "./helpers/changeTurns.js";
 import { checkForCheckMate } from "./gameFunctions/checkForCheckMate.js";
 import { checkForRemis } from "./gameFunctions/checkForRemis.js";
 import { RevertLastMoveInstructions } from "./helpers/RevertLastMoveInstructions.js";
 import { invertColor } from "./helpers/invertColor.js";
+import { checkForMovedKing } from "./helpers/movedRochadeFigures.js";
+
 import Board from "./components/Board";
 import Dashboard from "./components/Dashboard";
-import UndoButton from "./components/UndoButton";
-import ResetBoard from "./components/ResetBoard";
-import { checkForMovedKing } from "./helpers/movedRochadeFigures.js";
 
 class ChessApp extends React.Component {
   constructor(props) {
@@ -58,6 +57,13 @@ class ChessApp extends React.Component {
             moveHistory: [...state.moveHistory, move]
           };
         });
+      } else {
+        this.setState(state => {
+          return {
+            board: removeMarkers(state.board, ["valid", "selected"]),
+            movePart: 0
+          };
+        });
       }
     } else if (figure.color === this.state.turn) {
       this.setState({
@@ -80,9 +86,7 @@ class ChessApp extends React.Component {
       remis: false
     });
   };
-  componentDidUpdate = () => {
-    console.log(this.state.moveHistory);
-  };
+  componentDidUpdate = () => {};
   resetBoard = () => {
     this.setState(getDefaultState());
   };
@@ -90,16 +94,16 @@ class ChessApp extends React.Component {
     return (
       <div>
         <Board board={this.state.board} handleClick={this.handleClick} />
-        <Dashboard
-          checkmate={this.state.checkmate}
-          remis={this.state.remis}
-          turn={this.state.turn}
-        />
-        <ResetBoard resetBoard={this.resetBoard} />
-        <UndoButton
-          handleUndo={this.handleUndo}
-          moveHistory={this.state.moveHistory}
-        />
+        <div>
+          <Dashboard
+            checkmate={this.state.checkmate}
+            remis={this.state.remis}
+            turn={this.state.turn}
+            resetBoard={this.resetBoard}
+            handleUndo={this.handleUndo}
+            moveHistory={this.state.moveHistory}
+          />
+        </div>
       </div>
     );
   }
