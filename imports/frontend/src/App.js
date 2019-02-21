@@ -1,18 +1,16 @@
 import React from "react";
 import "./App.css";
 import { getDefaultState } from "./helpers/getDefaultState.js";
-import { convertPos } from "./helpers/convertPos.js";
 import { createFieldMarkers } from "./tileMarkers/createFieldMarkers.js";
+import { changeTurns } from "./helpers/changeTurns.js";
+import { invertColor } from "./helpers/invertColor.js";
+import { findFigures } from "./helpers/findFigures.js";
+import { convertPos } from "./helpers/convertPos.js";
 import { validateMove } from "./helpers/validateMove.js";
 import { checkForCheck } from "./gameFunctions/checkForCheck.js";
 import { updateBoard, removeMarkers } from "./gameFunctions/updateBoard.js";
-import { changeTurns } from "./helpers/changeTurns.js";
-import {
-  checkForCheckMate,
-  checkForRemis
-} from "./gameFunctions/endgameConditions.js";
+import { checkForCheckMate, checkForRemis } from "./gameFunctions/endGame.js";
 import { RevertLastMoveInstructions } from "./helpers/RevertLastMoveInstructions.js";
-import { invertColor } from "./helpers/invertColor.js";
 import { checkForMovedKing } from "./helpers/movedRochadeFigures.js";
 import Board from "./components/Board";
 import Dashboard from "./components/Dashboard";
