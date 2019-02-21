@@ -7,12 +7,13 @@ import { validateMove } from "./helpers/validateMove.js";
 import { checkForCheck } from "./gameFunctions/checkForCheck.js";
 import { updateBoard, removeMarkers } from "./gameFunctions/updateBoard.js";
 import { changeTurns } from "./helpers/changeTurns.js";
-import { checkForCheckMate } from "./gameFunctions/checkForCheckMate.js";
-import { checkForRemis } from "./gameFunctions/checkForRemis.js";
+import {
+  checkForCheckMate,
+  checkForRemis
+} from "./gameFunctions/endgameConditions.js";
 import { RevertLastMoveInstructions } from "./helpers/RevertLastMoveInstructions.js";
 import { invertColor } from "./helpers/invertColor.js";
 import { checkForMovedKing } from "./helpers/movedRochadeFigures.js";
-
 import Board from "./components/Board";
 import Dashboard from "./components/Dashboard";
 
