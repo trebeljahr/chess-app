@@ -1,13 +1,23 @@
 import React from "react";
+import "./Dashboard.css";
 import { invertColor } from "../../helpers/invertColor.js";
+import ResetBoard from "../ResetBoard";
+import UndoButton from "../UndoButton";
 const Dashboard = props => {
   return (
-    <div>
-      {props.checkmate
-        ? invertColor(props.turn) + " wins!"
-        : props.remis
-        ? "It's a draw!"
-        : "It's " + props.turn + "'s turn"}
+    <div className="flex-container">
+      <p className="dashboard-text">
+        {props.checkmate
+          ? invertColor(props.turn) + " wins!"
+          : props.remis
+          ? "It's a draw!"
+          : "It's " + props.turn + "'s turn"}
+      </p>
+      <ResetBoard resetBoard={props.resetBoard} />
+      <UndoButton
+        handleUndo={props.handleUndo}
+        moveHistory={props.moveHistory}
+      />
     </div>
   );
 };
