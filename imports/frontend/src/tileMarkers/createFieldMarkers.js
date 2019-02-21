@@ -2,7 +2,7 @@ import { markTiles } from "./markTiles.js";
 import { determinePawnMarkers } from "./pawnMovement.js";
 import { getMoveInstructions } from "../helpers/getMoveInstructions.js";
 import { removeMarkers } from "../gameFunctions/updateBoard.js";
-import { markRochade } from "./markRochade.js";
+//import { markRochade } from "./markRochade.js";
 export function createFieldMarkers(board, row, col, mark, virtual) {
   let figure = board[row][col].figure;
   if (mark === "valid" && !virtual) {
@@ -14,9 +14,9 @@ export function createFieldMarkers(board, row, col, mark, virtual) {
       determinePawnMarkers(board, row, col, figure.color, mark);
       break;
     case "king":
-      if (mark === "valid") {
+      /*if (mark === "valid") {
         markRochade(board, row, col);
-      }
+      }*/
       break;
     default:
       break;
