@@ -3,7 +3,8 @@ export function RevertLastMoveInstructions(moveHistory) {
   let backwardsMove = {
     oldPos: oldMove.newPos,
     newPos: oldMove.oldPos,
-    figure: oldMove.figure
+    figure: oldMove.figure,
+    secondFigure: oldMove.secondFigure
   };
   return backwardsMove;
 }

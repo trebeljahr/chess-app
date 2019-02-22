@@ -1,21 +1,19 @@
 import React from "react";
 import "./App.css";
 import { getDefaultState } from "./helpers/getDefaultState.js";
-import { convertPos } from "./helpers/convertPos.js";
 import { createFieldMarkers } from "./tileMarkers/createFieldMarkers.js";
+import { changeTurns } from "./helpers/changeTurns.js";
+import { invertColor } from "./helpers/invertColor.js";
+import { findFigures } from "./helpers/findFigures.js";
+import { convertPos } from "./helpers/convertPos.js";
 import { validateMove } from "./helpers/validateMove.js";
 import { checkForCheck } from "./gameFunctions/checkForCheck.js";
-import { updateBoard } from "./gameFunctions/updateBoard.js";
-import { changeTurns } from "./helpers/changeTurns.js";
-import { checkForCheckMate } from "./gameFunctions/checkForCheckMate.js";
-import { checkForRemis } from "./gameFunctions/checkForRemis.js";
+import { updateBoard, removeMarkers } from "./gameFunctions/updateBoard.js";
+import { checkForCheckMate, checkForRemis } from "./gameFunctions/endGame.js";
 import { RevertLastMoveInstructions } from "./helpers/RevertLastMoveInstructions.js";
-import { invertColor } from "./helpers/invertColor.js";
+import { checkForMovedKing } from "./helpers/movedRochadeFigures.js";
 import Board from "./components/Board";
 import Dashboard from "./components/Dashboard";
-import UndoButton from "./components/UndoButton";
-import ResetBoard from "./components/ResetBoard";
-import { checkForMovedKing } from "./helpers/movedRochadeFigures.js";
 
 import { withTracker } from "meteor/react-meteor-data";
 import { States } from "../../api/states.js";
@@ -27,18 +25,15 @@ class ChessApp extends React.Component {
   }
   handleClick = field => {
     let { row, col } = convertPos(field);
-    let fieldContent = this.props.board[row][col];
+    let figure = this.state.board[row][col].figure;
     if (this.state.movePart === 1) {
-      if (fieldContent.figure.color === this.state.figure.color) {
-        if (row === this.state.oldPos.row && col === this.state.oldPos.col) {
-          this.setState(state => {});
-        }
+      if (figure.color === this.state.figure.color) {
         this.setState(state => {
           return {
             board: createFieldMarkers(state.board, row, col, "valid"),
             movePart: 1,
             oldPos: { row, col },
-            figure: fieldContent.figure
+            figure
           };
         });
       } else if (validateMove(this.state.board, row, col)) {
@@ -46,42 +41,46 @@ class ChessApp extends React.Component {
         let move = {
           figure: this.state.figure,
           oldPos: this.state.oldPos,
-          newPos: newPos
+          newPos,
+          secondFigure: figure
         };
-        let moveHistoryCopy = [...this.state.moveHistory];
-        moveHistoryCopy.push(move);
-        if (
-          checkForCheck(this.state.board, this.state.turn) &&
-          this.state.check !== true
-        ) {
-          this.setState({ check: true });
-        }
-        this.setState({
-          board: updateBoard(this.state.board, move),
-          turn: changeTurns(this.state.turn),
-          movePart: 0,
-          moveHistory: moveHistoryCopy
+        this.setState(state => {
+          return {
+            board: updateBoard(state.board, move),
+            turn: changeTurns(state.turn),
+            check: checkForCheck(state.board, state.turn),
+            movePart: 0,
+            checkmate: checkForCheckMate(state.board, state.turn),
+            remis:
+              !checkForCheckMate(state.board, state.turn) &&
+              checkForRemis(state.board, state.turn)
+                ? true
+                : false,
+            moveHistory: [...state.moveHistory, move]
+          };
         });
-        if (checkForCheckMate(this.state.board, this.state.turn)) {
-          this.setState({ checkmate: true });
-        }
-        if (checkForRemis(this.state.board, this.state.turn)) {
-          this.setState({ remis: true });
-        }
+      } else {
+        this.setState(state => {
+          return {
+            board: removeMarkers(state.board, ["valid", "selected"]),
+            movePart: 0
+          };
+        });
       }
-    } else if (fieldContent.figure.color === this.state.turn) {
+    } else if (figure.color === this.state.turn) {
       this.setState({
         board: createFieldMarkers(this.state.board, row, col, "valid"),
         movePart: 1,
         oldPos: { row, col },
-        figure: fieldContent.figure
+        figure
       });
     }
   };
+
   handleUndo = () => {
     let move = RevertLastMoveInstructions(this.state.moveHistory);
     this.setState({
-      board: updateBoard(this.state.board, move),
+      board: updateBoard(this.state.board, move, false, true),
       turn: changeTurns(this.state.turn),
       movePart: 0,
       check: checkForCheck(this.state.board, this.state.turn),
