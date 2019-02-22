@@ -17,11 +17,22 @@ import UndoButton from "./components/UndoButton";
 import ResetBoard from "./components/ResetBoard";
 import { checkForMovedKing } from "./helpers/movedRochadeFigures.js";
 
+import { withTracker } from "meteor/react-meteor-data";
+import { States } from "../../api/states.js";
+
 class ChessApp extends React.Component {
   constructor(props) {
     super(props);
     this.state = getDefaultState();
+    //States.insert(this.state.board);
   }
+  componentWillMount = () => {
+    Tracker.autorun(() => {
+      let something = States.find({}).fetch();
+      console.log(something);
+      this.setState({ something });
+    });
+  };
   handleClick = field => {
     let { row, col } = convertPos(field);
     let fieldContent = this.state.board[row][col];
@@ -86,19 +97,17 @@ class ChessApp extends React.Component {
       remis: false
     });
   };
-  componentDidUpdate = () => {
-    console.log(
-      checkForMovedKing(this.state.moveHistory, invertColor(this.state.turn)),
-      this.state.turn
-    );
-  };
   resetBoard = () => {
     this.setState(getDefaultState());
   };
   render() {
     return (
       <div>
-        <Board board={this.state.board} handleClick={this.handleClick} />
+        <Board
+          board={this.state.board}
+          turnAround={true}
+          handleClick={this.handleClick}
+        />
         <Dashboard
           checkmate={this.state.checkmate}
           remis={this.state.remis}
@@ -109,9 +118,16 @@ class ChessApp extends React.Component {
           handleUndo={this.handleUndo}
           moveHistory={this.state.moveHistory}
         />
+        {this.props.states.map(state => (
+          <p key={state._id}>{state.text}</p>
+        ))}
       </div>
     );
   }
 }
 
-export default ChessApp;
+export default withTracker(() => {
+  return {
+    states: States.find({}).fetch()
+  };
+})(ChessApp);
