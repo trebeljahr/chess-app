@@ -24,18 +24,10 @@ class ChessApp extends React.Component {
   constructor(props) {
     super(props);
     this.state = getDefaultState();
-    //States.insert(this.state.board);
   }
-  componentWillMount = () => {
-    Tracker.autorun(() => {
-      let something = States.find({}).fetch();
-      console.log(something);
-      this.setState({ something });
-    });
-  };
   handleClick = field => {
     let { row, col } = convertPos(field);
-    let fieldContent = this.state.board[row][col];
+    let fieldContent = this.props.board[row][col];
     if (this.state.movePart === 1) {
       if (fieldContent.figure.color === this.state.figure.color) {
         if (row === this.state.oldPos.row && col === this.state.oldPos.col) {
@@ -98,36 +90,33 @@ class ChessApp extends React.Component {
     });
   };
   resetBoard = () => {
-    this.setState(getDefaultState());
+    Meteor.call("states.update");
   };
+
   render() {
-    return (
-      <div>
+    return this.props.states.map(state => (
+      <div key={state._id}>
         <Board
-          board={this.state.board}
-          turnAround={this.state.turn === "black"}
+          board={state.board}
+          turnAround={state.turn === "black"}
           handleClick={this.handleClick}
         />
         <Dashboard
-          checkmate={this.state.checkmate}
-          remis={this.state.remis}
-          turn={this.state.turn}
+          checkmate={state.checkmate}
+          remis={state.remis}
+          turn={state.turn}
         />
         <ResetBoard resetBoard={this.resetBoard} />
         <UndoButton
           handleUndo={this.handleUndo}
-          moveHistory={this.state.moveHistory}
+          moveHistory={state.moveHistory}
         />
-        {this.props.states.map(state => (
-          <p key={state._id}>{state.text}</p>
-        ))}
       </div>
-    );
+    ));
   }
 }
 
-export default withTracker(() => {
-  return {
-    states: States.find({}).fetch()
-  };
+export default withTracker(({ id }) => {
+  Meteor.subscribe("states.public");
+  return { states: States.find({ _id: "zZdYxLYtTnWZYJ9Wh" }).fetch() };
 })(ChessApp);
