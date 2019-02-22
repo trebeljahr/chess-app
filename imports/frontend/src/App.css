@@ -1,5 +1,8 @@
-.turnAround {
-  transform: rotate(180deg);
+.turnToBlackPlayer {
+  transform: translateZ(0px) rotate(180deg);
+}
+.turnToWhitePlayer {
+  transform: rotate(0deg);
 }
 .board {
   border: none;
@@ -40,9 +43,13 @@ span {
 
 .black-tile {
   background: #a15e49;
+  border: none;
+  z-index: 2;
 }
 .white-tile {
   background: #ca895f;
+  border: none;
+  z-index: 2;
 }
 .white {
   color: white;
