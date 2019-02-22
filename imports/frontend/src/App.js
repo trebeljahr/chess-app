@@ -105,7 +105,7 @@ class ChessApp extends React.Component {
       <div>
         <Board
           board={this.state.board}
-          turnAround={true}
+          turnAround={this.state.turn === "black"}
           handleClick={this.handleClick}
         />
         <Dashboard
