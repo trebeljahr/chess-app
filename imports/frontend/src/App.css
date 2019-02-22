@@ -1,17 +1,19 @@
+.turnAround {
+  transform: rotate(180deg);
+}
 .board {
+  border: none;
   margin: auto;
   margin-top: 10vmin;
   display: grid;
   width: 80vmin;
   height: 80vmin;
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(
-      0,
-      1fr
-    ) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(
-      0,
-      1fr
-    ) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows:
+    minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)
+    minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns:
+    minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)
+    minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
 }
 .board div {
   font-size: 3vmin;
@@ -47,9 +49,6 @@ span {
 }
 .black {
   color: black;
-}
-.rook {
-  border-radius: 0;
 }
 .figures {
   width: 80%;
