@@ -102,10 +102,6 @@ class ChessApp extends React.Component {
       });
     }
   };
-  /*  handleNewGame = () => {
-    if (!!States.find({ id: "test-game" }).fetch()[0]) return;
-    Meteor.call("states.createNew", "test-game");
-  };*/
   resetBoard = () => {
     Meteor.call("states.update", {
       id: "test-game",
@@ -113,32 +109,27 @@ class ChessApp extends React.Component {
     });
   };
   render() {
-    return (
+    return this.props.game ? (
       <div>
-        {this.props.game ? (
-          <div>
-            <Board
-              board={this.props.game.board}
-              handleClick={this.handleClick}
-            />
-            <Dashboard
-              checkmate={this.props.game.checkmate}
-              remis={this.props.game.remis}
-              turn={this.props.game.turn}
-              resetBoard={this.resetBoard}
-              handleUndo={this.handleUndo}
-              moveHistory={this.props.game.moveHistory}
-            />
-          </div>
-        ) : (
-          <div>Loading...</div>
-        )}
+        <h2>{this.props.game.name}</h2>
+        <Board board={this.props.game.board} handleClick={this.handleClick} />
+        <Dashboard
+          checkmate={this.props.game.checkmate}
+          remis={this.props.game.remis}
+          turn={this.props.game.turn}
+          resetBoard={this.resetBoard}
+          handleUndo={this.handleUndo}
+          moveHistory={this.props.game.moveHistory}
+        />
       </div>
+    ) : (
+      <div>Loading...</div>
     );
   }
 }
-const ChessAppContainer = withTracker(({ id }) => {
-  let game = States.find({}).fetch()[0];
+const ChessAppContainer = withTracker(props => {
+  let _id = props.match.params.id;
+  let game = States.find({ _id }).fetch()[0];
   return {
     game
   };
