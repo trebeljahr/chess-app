@@ -2,7 +2,12 @@ import React from "react";
 
 const Board = props => {
   return (
-    <div className="board">
+    <div
+      className={
+        "board" +
+        (props.turnAround ? " turnToBlackPlayer" : " turnToWhitePlayer")
+      }
+    >
       {props.board.map(row =>
         row.map(col => {
           return (
@@ -16,7 +21,7 @@ const Board = props => {
                   ? col.check
                   : "") +
                 " " +
-                col.selected
+                (col.selected ? col.selected : "")
               }
             >
               <div className={col.valid}>
@@ -27,7 +32,10 @@ const Board = props => {
                         "fa-chess-" +
                         col.figure.type +
                         " " +
-                        col.figure.color
+                        col.figure.color +
+                        (props.turnAround
+                          ? " turnToBlackPlayer"
+                          : " turnToWhitePlayer")
                       : ""
                   }
                 />
