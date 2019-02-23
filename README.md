@@ -11,6 +11,6 @@ or via https
 Next you have to install everything, otherwise the $ meteor command won't work. 
 Installing can be done via
 
-`$ meteor npm install
+`$ meteor npm install`
 
 then you should be able to run the `$ meteor` command, which starts the application in your browser at localhost:3000.
