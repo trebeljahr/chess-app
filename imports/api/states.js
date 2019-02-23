@@ -1,12 +1,15 @@
 import { Mongo } from "meteor/mongo";
-import { getDefaultState } from "../frontend/src/helpers/getDefaultState.js";
+import { getDefaultState } from "../src/helpers/getDefaultState.js";
 export const States = new Mongo.Collection("states");
 
 Meteor.methods({
-  "states.createNew"(id) {
-    States.insert({ id, ...getDefaultState() });
+  "states.createNew"({ name }) {
+    States.insert({ name, ...getDefaultState() });
   },
-  "states.update"({ id, fieldsToUpdate }) {
-    States.update({ id }, { $set: { ...fieldsToUpdate } });
+  "states.update"({ title, fieldsToUpdate }) {
+    States.update({ title }, { $set: { ...fieldsToUpdate } });
+  },
+  "states.deleteById"({ _id }) {
+    States.remove({ _id });
   }
 });
