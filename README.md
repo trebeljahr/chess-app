@@ -9,7 +9,9 @@ or via https
 `$ git clone https://github.com/Nrin3141/chess-app.git`
 
 Next you have to install everything, otherwise the $ meteor command won't work. 
-Installing can be done via
+So first go to the app an then install everything.
+
+`$ cd chess-app`
 
 `$ meteor npm install`
 
