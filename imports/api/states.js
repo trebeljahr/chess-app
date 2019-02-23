@@ -8,8 +8,5 @@ Meteor.methods({
   },
   "states.update"({ id, fieldsToUpdate }) {
     States.update({ id }, { $set: { ...fieldsToUpdate } });
-  },
-  "states.list"() {
-    return getDefaultState();
   }
 });
