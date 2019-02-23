@@ -1,13 +1,17 @@
 .turnToBlackPlayer {
   transform: translateZ(0px) rotate(180deg);
 }
+#name {
+  margin: 0;
+  margin-bottom: 0.5%;
+  padding: 0;
+}
 .turnToWhitePlayer {
   transform: rotate(0deg);
 }
 .board {
   border: none;
   margin: auto;
-  margin-top: 10vmin;
   display: grid;
   width: 80vmin;
   height: 80vmin;
@@ -17,6 +21,15 @@
   grid-template-columns:
     minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)
     minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+.gameContainer {
+  width: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 .board div {
   font-size: 3vmin;

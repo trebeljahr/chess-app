@@ -88,13 +88,14 @@ class ChessApp extends React.Component {
     if (this.props.game) {
       let game = this.props.game;
       let move = RevertLastMoveInstructions(game.moveHistory);
+      console.log(game.moveHistory.slice(0));
       Meteor.call("states.update", {
         id: "test-game",
         fieldsToUpdate: {
           board: updateBoard(game.board, move, false, true),
           turn: changeTurns(game.turn),
           movePart: 0,
-          moveHistory: game.moveHistory.slice(0, -1),
+          moveHistory: game.moveHistory.slice(0),
           check: checkForCheck(game.board, game.turn),
           checkmate: false,
           remis: false
@@ -110,8 +111,8 @@ class ChessApp extends React.Component {
   };
   render() {
     return this.props.game ? (
-      <div>
-        <h2>{this.props.game.name}</h2>
+      <div className="gameContainer">
+        <h2 id="name">{this.props.game.name}</h2>
         <Board board={this.props.game.board} handleClick={this.handleClick} />
         <Dashboard
           checkmate={this.props.game.checkmate}
