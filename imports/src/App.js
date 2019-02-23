@@ -129,7 +129,6 @@ class ChessApp extends React.Component {
               handleUndo={this.handleUndo}
               moveHistory={this.props.game.moveHistory}
             />
-            //<button onClick={this.handleNewGame}>Add a new game!</button>
           </div>
         ) : (
           <div>Loading...</div>
