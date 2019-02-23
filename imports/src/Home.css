@@ -1,0 +1,22 @@
+.linkButton {
+  border: none;
+  padding: 1.5%;
+  text-decoration: none;
+  color: black;
+  background-color: lightblue;
+}
+.deleteButton {
+  border: none;
+  padding: 1.5%;
+  text-decoration: none;
+  color: black;
+  background-color: crimson;
+}
+.gameContainer {
+  display: flex;
+  align-items: baseline;
+  margin: auto;
+}
+.gameContainer > * {
+  margin: 1%;
+}
