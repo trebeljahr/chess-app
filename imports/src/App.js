@@ -23,6 +23,7 @@ class ChessApp extends React.Component {
   }
   handleClick = field => {
     if (this.props.game) {
+      console.log(this.props.id);
       let { row, col } = convertPos(field);
       let game = this.props.game;
       let figure = game.board[row][col].figure;
@@ -30,7 +31,7 @@ class ChessApp extends React.Component {
       if (game.movePart === 1) {
         if (figure.color === game.figure.color) {
           Meteor.call("states.update", {
-            id: "test-game",
+            _id: this.props.id,
             fieldsToUpdate: {
               board: createFieldMarkers(game.board, row, col, "valid"),
               movePart: 1,
@@ -47,7 +48,7 @@ class ChessApp extends React.Component {
             secondFigure: figure
           };
           Meteor.call("states.update", {
-            id: "test-game",
+            _id: this.props.id,
             fieldsToUpdate: {
               board: updateBoard(game.board, move),
               turn: changeTurns(game.turn),
@@ -64,7 +65,7 @@ class ChessApp extends React.Component {
           });
         } else {
           Meteor.call("states.update", {
-            id: "test-game",
+            _id: this.props.id,
             fieldsToUpdate: {
               board: removeMarkers(game.board, ["valid", "selected"]),
               movePart: 0
@@ -73,7 +74,7 @@ class ChessApp extends React.Component {
         }
       } else if (figure.color === game.turn) {
         Meteor.call("states.update", {
-          id: "test-game",
+          _id: this.props.id,
           fieldsToUpdate: {
             board: createFieldMarkers(game.board, row, col, "valid"),
             movePart: 1,
@@ -90,7 +91,7 @@ class ChessApp extends React.Component {
       let move = RevertLastMoveInstructions(game.moveHistory);
       console.log(game.moveHistory.slice(0));
       Meteor.call("states.update", {
-        id: "test-game",
+        _id: this.props.id,
         fieldsToUpdate: {
           board: updateBoard(game.board, move, false, true),
           turn: changeTurns(game.turn),
@@ -105,7 +106,7 @@ class ChessApp extends React.Component {
   };
   resetBoard = () => {
     Meteor.call("states.update", {
-      id: "test-game",
+      _id: this.props.id,
       fieldsToUpdate: getDefaultState()
     });
   };
@@ -132,6 +133,7 @@ const ChessAppContainer = withTracker(props => {
   let _id = props.match.params.id;
   let game = States.find({ _id }).fetch()[0];
   return {
+    id: _id,
     game
   };
 })(ChessApp);

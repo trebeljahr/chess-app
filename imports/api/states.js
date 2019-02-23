@@ -6,8 +6,8 @@ Meteor.methods({
   "states.createNew"({ name }) {
     States.insert({ name, ...getDefaultState() });
   },
-  "states.update"({ title, fieldsToUpdate }) {
-    States.update({ title }, { $set: { ...fieldsToUpdate } });
+  "states.update"({ _id, fieldsToUpdate }) {
+    States.update(_id, { $set: { ...fieldsToUpdate } });
   },
   "states.deleteById"({ _id }) {
     States.remove({ _id });
