@@ -15,7 +15,7 @@ import Dashboard from "./components/Dashboard";
 import { checkForMovedKing } from "./helpers/movedRochadeFigures.js";
 
 import { withTracker } from "meteor/react-meteor-data";
-import { States } from "../../api/states.js";
+import { States } from "../../imports/api/states.js";
 
 class ChessApp extends React.Component {
   constructor(props) {
@@ -102,10 +102,10 @@ class ChessApp extends React.Component {
       });
     }
   };
-  handleNewGame = () => {
+  /*  handleNewGame = () => {
     if (!!States.find({ id: "test-game" }).fetch()[0]) return;
     Meteor.call("states.createNew", "test-game");
-  };
+  };*/
   resetBoard = () => {
     Meteor.call("states.update", {
       id: "test-game",
@@ -133,12 +133,11 @@ class ChessApp extends React.Component {
         ) : (
           <div>Loading...</div>
         )}
-        <button onClick={this.handleNewGame}>Add a new game!</button>
       </div>
     );
   }
 }
-const ChessAppContainer = withTracker(({}) => {
+const ChessAppContainer = withTracker(({ id }) => {
   let game = States.find({}).fetch()[0];
   return {
     game
