@@ -8,14 +8,11 @@ class Home extends React.Component {
     super(props);
   }
   handleDelete = _id => {
-    console.log(_id);
     Meteor.call("states.deleteById", { _id });
   };
   createNewGame = e => {
     e.preventDefault();
     let name = e.target.name.value;
-    console.log(name);
-
     if (States.findOne({ name })) {
       alert("A game with this name already exists!");
       return;
@@ -35,7 +32,7 @@ class Home extends React.Component {
             {this.props.states.map(state => (
               <div key={state._id} className="gameContainer">
                 <h3>{state.name}</h3>
-                <a className="linkButton" href="https://www.google.com">
+                <a className="linkButton" href={"/games/" + state._id}>
                   Join
                 </a>
                 <button
