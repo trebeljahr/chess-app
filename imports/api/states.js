@@ -6,10 +6,8 @@ Meteor.methods({
   "states.createNew"(id) {
     States.insert({ id, ...getDefaultState() });
   },
-  "states.update"({ stateId, fieldsToUpdate }) {
-    const state = States.findOne(stateId);
-
-    States.update(stateId, fieldsToUpdate);
+  "states.update"({ id, fieldsToUpdate }) {
+    States.update({ id }, { $set: { ...fieldsToUpdate } });
   },
   "states.list"() {
     return getDefaultState();
