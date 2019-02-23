@@ -22,7 +22,6 @@ class ChessApp extends React.Component {
     super(props);
   }
   handleClick = field => {
-    console.log(this.props.game);
     if (this.props.game) {
       let { row, col } = convertPos(field);
       let game = this.props.game;
@@ -92,9 +91,10 @@ class ChessApp extends React.Component {
       Meteor.call("states.update", {
         id: "test-game",
         fieldsToUpdate: {
-          board: updateBoard(game.board, move),
+          board: updateBoard(game.board, move, false, true),
           turn: changeTurns(game.turn),
           movePart: 0,
+          moveHistory: game.moveHistory.slice(0, -1),
           check: checkForCheck(game.board, game.turn),
           checkmate: false,
           remis: false
