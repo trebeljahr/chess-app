@@ -44,6 +44,9 @@
 .check {
   background: #f55d3e !important;
 }
+.grey {
+  background-color: darkgrey;
+}
 .valid {
   width: 90%;
   height: 90%;

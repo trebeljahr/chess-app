@@ -6,9 +6,19 @@ import "./Home.css";
 class Home extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {
+      extend: false
+    };
   }
   handleDelete = _id => {
     Meteor.call("states.deleteById", { _id });
+  };
+  handleExtend = () => {
+    this.setState(state => {
+      return {
+        extend: !state.extend
+      };
+    });
   };
   createNewGame = e => {
     e.preventDefault();
@@ -25,25 +35,38 @@ class Home extends React.Component {
       <div>
         {this.props.states ? (
           <div className="centerFlex">
-            Create a game
-            <form onSubmit={this.createNewGame}>
-              <input type="text" name="name" placeholder="Name" />
-              <input type="submit" />
-            </form>
-            <h2>Join a game</h2>
+            {this.state.extend ? (
+              <div>
+                <button className="btn btn-primary" onClick={this.handleExtend}>
+                  -
+                </button>
+                <form onSubmit={this.createNewGame}>
+                  <input type="text" name="name" placeholder="Name" />
+                  <input type="submit" />
+                </form>
+              </div>
+            ) : (
+              <button className="btn btn-primary" onClick={this.handleExtend}>
+                +
+              </button>
+            )}
+            <h2>Join a game of chess!</h2>
             <div className="game-postings-container">
               {this.props.states.map(state => (
                 <div key={state._id} className="game-posting">
                   <h3 className="game-posting-title">{state.name}</h3>
                   <div className="game-posting-controls">
-                    <a className="linkButton" href={"/games/" + state._id}>
+                    <a
+                      className="btn btn-success margin"
+                      href={"/games/" + state._id}
+                    >
                       Join
                     </a>
                     <button
-                      className="deleteButton"
+                      className="btn btn-danger margin"
                       onClick={() => this.handleDelete(state._id)}
                     >
-                      Delete!
+                      &times;
                     </button>
                   </div>
                 </div>
