@@ -23,7 +23,6 @@ class ChessApp extends React.Component {
   }
   handleClick = field => {
     if (this.props.game) {
-      console.log(this.props.id);
       let { row, col } = convertPos(field);
       let game = this.props.game;
       let figure = game.board[row][col].figure;
@@ -89,7 +88,6 @@ class ChessApp extends React.Component {
     if (this.props.game) {
       let game = this.props.game;
       let move = RevertLastMoveInstructions(game.moveHistory);
-      console.log(game.moveHistory.slice(0));
       Meteor.call("states.update", {
         _id: this.props.id,
         fieldsToUpdate: {

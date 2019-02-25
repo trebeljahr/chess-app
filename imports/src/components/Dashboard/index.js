@@ -5,10 +5,15 @@ import ResetBoard from "../ResetBoard";
 import UndoButton from "../UndoButton";
 const Dashboard = props => {
   return (
-    <div className="flex-container">
-      {/*props.moveHistory.map((move, index) => {
-        return <div key={index}>{move.figure.color}</div>;
-      })*/}
+    <div className="flex-container grey">
+      {props.moveHistory.map((move, index) => {
+        return (
+          <div
+            key={index}
+            className={move.figure.color + " fas fa-chess-" + move.figure.type}
+          />
+        );
+      })}
       <p className="dashboard-text">
         {props.checkmate
           ? invertColor(props.turn) + " wins!"
