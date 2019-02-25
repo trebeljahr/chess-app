@@ -23,6 +23,7 @@ class Home extends React.Component {
   createNewGame = e => {
     e.preventDefault();
     let name = e.target.name.value;
+    console.log(e.target.playAs.value);
     if (States.findOne({ name })) {
       alert("A game with this name already exists!");
       return;
@@ -36,14 +37,19 @@ class Home extends React.Component {
         {this.props.states ? (
           <div className="centerFlex">
             {this.state.extend ? (
-              <div>
-                <button className="btn btn-primary" onClick={this.handleExtend}>
-                  -
-                </button>
-                <form onSubmit={this.createNewGame}>
-                  <input type="text" name="name" placeholder="Name" />
-                  <input type="submit" />
-                </form>
+              <div className="fullScreen">
+                <div
+                  className="fullScreen opaque"
+                  onClick={this.handleExtend}
+                />
+                <div className="formContainer">
+                  <form onSubmit={this.createNewGame}>
+                    <input type="text" name="name" placeholder="Name" />
+                    <input type="submit" name="playAs" value="White" />
+                    <input type="submit" name="playAs" value="Random" />
+                    <input type="submit" name="playAs" value="Black" />
+                  </form>
+                </div>
               </div>
             ) : (
               <button className="btn btn-primary" onClick={this.handleExtend}>

@@ -2,7 +2,27 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 5%;
+  padding-top: 5%;
+}
+.formContainer {
+  background: white;
+  z-index: 2;
+  position: relative;
+}
+.fullScreen {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+.opaque {
+  z-index: 1;
+  background: rgb(30, 30, 30);
+  opacity: 0.5;
 }
 .game-postings-container {
   display: flex;
@@ -33,6 +53,9 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+}
+.engaged-dropdown-menu {
+  background-color: blue;
 }
 .margin {
   margin: 4%;
