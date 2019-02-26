@@ -7,6 +7,7 @@ body {
   transform: translateZ(0px) rotate(180deg);
 }
 .sidebar {
+  font-size: calc(1em + 1vmin);
   border: solid;
   text-align: left;
 }
