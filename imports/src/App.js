@@ -110,17 +110,25 @@ class ChessApp extends React.Component {
   };
   render() {
     return this.props.game ? (
-      <div className="gameContainer">
-        <h2 id="name">{this.props.game.name}</h2>
+      <div className="gridContainer">
+        <div className="sidebar">
+          <p>
+            Welcome to a round of chess! If you want to invite somebody to play
+            - simply give them this link:
+          </p>
+          <a href={"/games/" + this.props.game._id}>Link to the game!</a>
+        </div>
         <Board board={this.props.game.board} handleClick={this.handleClick} />
-        <Dashboard
-          checkmate={this.props.game.checkmate}
-          remis={this.props.game.remis}
-          turn={this.props.game.turn}
-          resetBoard={this.resetBoard}
-          handleUndo={this.handleUndo}
-          moveHistory={this.props.game.moveHistory}
-        />
+        <div className="sidebar">
+          <Dashboard
+            checkmate={this.props.game.checkmate}
+            remis={this.props.game.remis}
+            turn={this.props.game.turn}
+            resetBoard={this.resetBoard}
+            handleUndo={this.handleUndo}
+            moveHistory={this.props.game.moveHistory}
+          />
+        </div>
       </div>
     ) : (
       <div>Loading...</div>

@@ -1,35 +1,66 @@
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 .turnToBlackPlayer {
   transform: translateZ(0px) rotate(180deg);
 }
-#name {
-  margin: 0;
-  margin-bottom: 0.5%;
-  padding: 0;
+.sidebar {
+  border: solid;
+  text-align: left;
+}
+.sidebar > a {
+  margin: 2% 0;
+  text-align: center;
+}
+.sidebar > p {
+  margin: 2% 0;
 }
 .turnToWhitePlayer {
   transform: rotate(0deg);
 }
 .board {
   border: none;
-  margin: auto;
   display: grid;
-  width: 80vmin;
-  height: 80vmin;
-  grid-template-rows:
-    minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)
-    minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-columns:
-    minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)
-    minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  width: 90vmin;
+  height: 90vmin;
+  grid-template-rows: repeat(8, 11.25vmin);
+  grid-template-columns: repeat(8, 11.25vmin);
 }
-.gameContainer {
-  width: 100%;
-  margin: 0;
-  display: flex;
+
+@media (orientation: landscape) {
+  .sidebar {
+    height: 90vmin;
+    margin: 0 2%;
+  }
+  .gridContainer {
+    margin-top: 2%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+@media (orientation: portrait) {
+  .sidebar {
+    width: 90vmin;
+    margin: 2% 0;
+  }
+  .gridContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+.gridContainer {
+  height: 100vh;
+}
+
+.row {
+  flex-direction: row;
+}
+.column {
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
 }
 .board div {
   font-size: 3vmin;
@@ -54,7 +85,7 @@
   border-radius: 100%;
 }
 span {
-  font-size: 2em;
+  font-size: 8vmin;
 }
 
 .black-tile {
