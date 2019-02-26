@@ -2,12 +2,15 @@ import React from "react";
 import { withTracker } from "meteor/react-meteor-data";
 import { States } from "../../imports/api/states.js";
 import "./Home.css";
+import Alert from "react-s-alert";
+import "react-s-alert/dist/s-alert-default.css";
+import "react-s-alert/dist/s-alert-css-effects/genie.css";
 
 class Home extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      extend: false
+      extend: true
     };
   }
   handleDelete = _id => {
@@ -20,16 +23,33 @@ class Home extends React.Component {
       };
     });
   };
-  createNewGame = e => {
+  createNewGame = (e, color) => {
     e.preventDefault();
     let name = e.target.name.value;
-    console.log(e.target.playAs.value);
     if (States.findOne({ name })) {
-      alert("A game with this name already exists!");
-      return;
+      Alert.error("A game with this name already exists!", {
+        position: "top",
+        effect: "genie"
+      });
+      //return;
+    } else {
+      Meteor.call("states.createNew", { name }, (err, res) => {
+        if (err) {
+          alert(err);
+        } else {
+          Alert.success("Success! You have created a new game!", {
+            position: "top",
+            effect: "genie"
+          });
+          console.log(res._id);
+          window.location.href = "/games/" + res._id;
+          //window.
+        }
+      });
+      States.findOne({ name });
+
+      e.target.name.value = "";
     }
-    Meteor.call("states.createNew", { name });
-    e.target.name.value = "";
   };
   render() {
     return (
@@ -43,11 +63,23 @@ class Home extends React.Component {
                   onClick={this.handleExtend}
                 />
                 <div className="formContainer">
-                  <form onSubmit={this.createNewGame}>
-                    <input type="text" name="name" placeholder="Name" />
-                    <input type="submit" name="playAs" value="White" />
-                    <input type="submit" name="playAs" value="Random" />
-                    <input type="submit" name="playAs" value="Black" />
+                  <h2>Create a new game</h2>
+                  <form
+                    onSubmit={this.createNewGame}
+                    className="createGameForm"
+                  >
+                    <input
+                      className="formInput"
+                      type="text"
+                      name="name"
+                      placeholder="Name"
+                    />
+                    <h4>Play as</h4>
+                    <div className="submitButtonsContainer">
+                      <input type="submit" name="play" value="White" />
+                      <input type="submit" name="play" value="Random" />
+                      <input type="submit" name="play" value="Black" />
+                    </div>
                   </form>
                 </div>
               </div>
@@ -82,6 +114,7 @@ class Home extends React.Component {
         ) : (
           <div>Loading...</div>
         )}
+        <Alert stack={{ limit: 1 }} timeout={3000} />
       </div>
     );
   }
