@@ -8,10 +8,18 @@ const Dashboard = props => {
     <div className="flex-container grey">
       {props.moveHistory.map((move, index) => {
         return (
-          <div
+          <p
             key={index}
             className={move.figure.color + " fas fa-chess-" + move.figure.type}
-          />
+          >
+            {"" +
+              String.fromCharCode(move.oldPos.col + 65) +
+              move.oldPos.row +
+              "->" +
+              String.fromCharCode(move.newPos.col + 65) +
+              move.newPos.row +
+              move.secondFigure[0]}
+          </p>
         );
       })}
       <p className="dashboard-text">

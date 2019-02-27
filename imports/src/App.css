@@ -8,7 +8,7 @@ body {
 }
 .sidebar {
   font-size: calc(1em + 1vmin);
-  border: solid;
+  /*border: solid;*/
   text-align: left;
 }
 .sidebar > a {
@@ -44,6 +44,7 @@ body {
 
 @media (orientation: portrait) {
   .sidebar {
+    flex-grow: 3;
     width: 90vmin;
     margin: 2% 0;
   }
