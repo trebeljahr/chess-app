@@ -1,15 +1,17 @@
 import React from "react";
-import { Route, BrowserRouter as Router, Switch } from "react-router-dom";
+import { Route, BrowserRouter as Router } from "react-router-dom";
 // route components
 import ChessAppContainer from "../../src/App.js";
 import HomeContainer from "../../src/Home.js";
+import Navbar from "../../src/components/Navbar";
 
 const renderRoutes = () => (
   <Router>
-    <Switch>
+    <div>
+      <Route path="/" component={Navbar} />
       <Route exact path="/" component={HomeContainer} />
       <Route exact path="/games/:id" component={ChessAppContainer} />
-    </Switch>
+    </div>
   </Router>
 );
 
