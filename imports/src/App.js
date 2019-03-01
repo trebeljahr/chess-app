@@ -30,7 +30,7 @@ class ChessApp extends React.Component {
       if (game.movePart === 1) {
         if (figure.color === game.figure.color) {
           Meteor.call("states.update", {
-            id: "test-game",
+            _id: this.props.id,
             fieldsToUpdate: {
               board: createFieldMarkers(game.board, row, col, "valid"),
               movePart: 1,
@@ -47,7 +47,7 @@ class ChessApp extends React.Component {
             secondFigure: figure
           };
           Meteor.call("states.update", {
-            id: "test-game",
+            _id: this.props.id,
             fieldsToUpdate: {
               board: updateBoard(game.board, move),
               turn: changeTurns(game.turn),
@@ -64,7 +64,7 @@ class ChessApp extends React.Component {
           });
         } else {
           Meteor.call("states.update", {
-            id: "test-game",
+            _id: this.props.id,
             fieldsToUpdate: {
               board: removeMarkers(game.board, ["valid", "selected"]),
               movePart: 0
@@ -73,7 +73,7 @@ class ChessApp extends React.Component {
         }
       } else if (figure.color === game.turn) {
         Meteor.call("states.update", {
-          id: "test-game",
+          _id: this.props.id,
           fieldsToUpdate: {
             board: createFieldMarkers(game.board, row, col, "valid"),
             movePart: 1,
@@ -89,12 +89,12 @@ class ChessApp extends React.Component {
       let game = this.props.game;
       let move = RevertLastMoveInstructions(game.moveHistory);
       Meteor.call("states.update", {
-        id: "test-game",
+        _id: this.props.id,
         fieldsToUpdate: {
           board: updateBoard(game.board, move, false, true),
           turn: changeTurns(game.turn),
           movePart: 0,
-          moveHistory: game.moveHistory.slice(0, -1),
+          moveHistory: game.moveHistory.slice(0),
           check: checkForCheck(game.board, game.turn),
           checkmate: false,
           remis: false
@@ -102,44 +102,44 @@ class ChessApp extends React.Component {
       });
     }
   };
-  /*  handleNewGame = () => {
-    if (!!States.find({ id: "test-game" }).fetch()[0]) return;
-    Meteor.call("states.createNew", "test-game");
-  };*/
   resetBoard = () => {
     Meteor.call("states.update", {
-      id: "test-game",
+      _id: this.props.id,
       fieldsToUpdate: getDefaultState()
     });
   };
   render() {
-    return (
-      <div>
-        {this.props.game ? (
-          <div>
-            <Board
-              board={this.props.game.board}
-              handleClick={this.handleClick}
-            />
-            <Dashboard
-              checkmate={this.props.game.checkmate}
-              remis={this.props.game.remis}
-              turn={this.props.game.turn}
-              resetBoard={this.resetBoard}
-              handleUndo={this.handleUndo}
-              moveHistory={this.props.game.moveHistory}
-            />
-          </div>
-        ) : (
-          <div>Loading...</div>
-        )}
+    return this.props.game ? (
+      <div className="gridContainer">
+        <div className="sidebar">
+          <p>
+            Welcome to a round of chess! If you want to invite somebody to play
+            - simply give them this link:
+          </p>
+          <a href={"/games/" + this.props.game._id}>Link to the game!</a>
+        </div>
+        <Board board={this.props.game.board} handleClick={this.handleClick} />
+        <div className="sidebar">
+          <Dashboard
+            checkmate={this.props.game.checkmate}
+            remis={this.props.game.remis}
+            turn={this.props.game.turn}
+            resetBoard={this.resetBoard}
+            handleUndo={this.handleUndo}
+            moveHistory={this.props.game.moveHistory}
+          />
+        </div>
       </div>
+    ) : (
+      <div>Loading...</div>
     );
   }
 }
-const ChessAppContainer = withTracker(({ id }) => {
-  let game = States.find({}).fetch()[0];
+const ChessAppContainer = withTracker(props => {
+  let _id = props.match.params.id;
+  let game = States.find({ _id }).fetch()[0];
   return {
+    id: _id,
     game
   };
 })(ChessApp);
