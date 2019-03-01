@@ -119,6 +119,7 @@ class Home extends React.Component {
   }
 }
 const HomeContainer = withTracker(({}) => {
+  let handle = Meteor.subscribe("states");
   let states = States.find({}).fetch();
   return { states };
 })(Home);
