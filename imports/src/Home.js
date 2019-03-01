@@ -47,7 +47,6 @@ class Home extends React.Component {
         }
       });
       States.findOne({ name });
-
       e.target.name.value = "";
     }
   };

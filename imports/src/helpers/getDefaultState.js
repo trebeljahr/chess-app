@@ -8,15 +8,6 @@ export function getDefaultState() {
     check: false,
     checkmate: false,
     remis: false,
-    white: {
-      hasMovedKing: false,
-      hasMovedRightRook: false,
-      hasMovedLeftRook: false
-    },
-    black: {
-      hasMovedKing: false,
-      hasMovedRightRook: false,
-      hasMovedLeftRook: false
-    }
+    messages: [{ text: "Test", user: "Rico" }]
   };
 }
