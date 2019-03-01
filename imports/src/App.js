@@ -138,6 +138,7 @@ class ChessApp extends React.Component {
 }
 const ChessAppContainer = withTracker(props => {
   let _id = props.match.params.id;
+  let handle = Meteor.subscribe("states");
   let game = States.find({ _id }).fetch()[0];
   return {
     id: _id,

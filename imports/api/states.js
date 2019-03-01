@@ -2,6 +2,12 @@ import { Mongo } from "meteor/mongo";
 import { getDefaultState } from "../src/helpers/getDefaultState.js";
 export const States = new Mongo.Collection("states");
 
+if (Meteor.isServer) {
+  Meteor.publish("states", function statesPublication() {
+    return States.find();
+  });
+}
+
 Meteor.methods({
   "states.createNew"({ name }) {
     States.insert({ name, ...getDefaultState() });
