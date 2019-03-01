@@ -20,9 +20,23 @@ import { States } from "../../imports/api/states.js";
 class ChessApp extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {};
   }
+  componentDidUpdate = () => {
+    if (this.props.game && !this.state.color) {
+      let game = this.props.game;
+      let color =
+        game.users.findIndex(user => user.userId === Meteor.userId()) === 0
+          ? "white"
+          : game.users.findIndex(user => user.userId === Meteor.userId()) === 1
+          ? "black"
+          : "spectating";
+      this.setState({ color });
+    }
+  };
+
   handleClick = field => {
-    if (this.props.game) {
+    if (this.props.game && this.state.color === this.props.game.turn) {
       let { row, col } = convertPos(field);
       let game = this.props.game;
       let figure = game.board[row][col].figure;
@@ -71,7 +85,7 @@ class ChessApp extends React.Component {
             }
           });
         }
-      } else if (figure.color === game.turn) {
+      } else if (figure.color === game.turn && game.turn) {
         Meteor.call("states.update", {
           _id: this.props.id,
           fieldsToUpdate: {
@@ -118,7 +132,11 @@ class ChessApp extends React.Component {
           </p>
           <a href={"/games/" + this.props.game._id}>Link to the game!</a>
         </div>
-        <Board board={this.props.game.board} handleClick={this.handleClick} />
+        <Board
+          board={this.props.game.board}
+          turnAround={this.state.color === "black" ? true : false}
+          handleClick={this.handleClick}
+        />
         <div className="sidebar">
           <Dashboard
             _id={this.props.game._id}
@@ -137,9 +155,9 @@ class ChessApp extends React.Component {
   }
 }
 const ChessAppContainer = withTracker(props => {
-  let _id = props.match.params.id;
-  let handle = Meteor.subscribe("states");
-  let game = States.find({ _id }).fetch()[0];
+  const _id = props.match.params.id;
+  const handle = Meteor.subscribe("states");
+  const game = States.find({ _id }).fetch()[0];
   return {
     id: _id,
     game
