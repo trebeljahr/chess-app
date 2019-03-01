@@ -21,9 +21,6 @@ body {
 .sidebar > p {
   margin: 2% 0;
 }
-.turnToWhitePlayer {
-  transform: rotate(0deg);
-}
 .board {
   border: none;
   display: grid;

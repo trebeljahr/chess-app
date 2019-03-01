@@ -8,6 +8,7 @@ export function getDefaultState() {
     check: false,
     checkmate: false,
     remis: false,
+    users: [],
     messages: [{ text: "Please stay friendly in the chat!", user: "Chess-App" }]
   };
 }

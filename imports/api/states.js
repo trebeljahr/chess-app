@@ -9,6 +9,13 @@ if (Meteor.isServer) {
 }
 
 Meteor.methods({
+  "states.userEntersGame"({ gameId, users }) {
+    States.update(gameId, {
+      $set: {
+        users: [...users]
+      }
+    });
+  },
   "states.createNew"({ name }) {
     States.insert({ name, ...getDefaultState() });
     return States.findOne({ name });
