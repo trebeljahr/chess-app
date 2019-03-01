@@ -8,7 +8,10 @@ body {
 }
 .sidebar {
   font-size: calc(1em + 1vmin);
-  /*border: solid;*/
+  padding: 5%;
+  display: flex;
+  flex-direction: column;
+  background: darkgrey;
   text-align: left;
 }
 .sidebar > a {

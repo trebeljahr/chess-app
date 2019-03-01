@@ -1,6 +1,21 @@
-.flex-container {
+.moveHistoryDisplay {
+  overflow: scroll;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  flex-direction: row;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+.moveHistoryDisplay > span {
+  font-size: 0.8em;
+  margin: 3%;
+}
+.controlElements {
+  margin: 3%;
+  align-self: flex-end;
+}
+.moveHistoryDisplay > span > span {
+  font-size: 1em;
+}
+.dashboard-text {
+  margin: 3%;
 }
