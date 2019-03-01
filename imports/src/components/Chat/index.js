@@ -26,7 +26,7 @@ class Chat extends React.Component {
         <div className="toolbar">
           <form action="submit" onSubmit={this.newMessage}>
             <input type="text" name="messageInput" placeholder="New Message" />
-            <input type="submit" className="btn btn-success" />
+            <input type="submit" value="➤" className="btn btn-success" />
           </form>
 
           <button onClick={this.handleClick} className="btn btn-primary">
