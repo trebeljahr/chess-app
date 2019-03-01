@@ -12,5 +12,8 @@ Meteor.methods({
   },
   "states.deleteById"({ _id }) {
     States.remove({ _id });
+  },
+  "states.addNewMessage"({ _id, messages }) {
+    States.update(_id, { $set: { messages: [...messages] } });
   }
 });

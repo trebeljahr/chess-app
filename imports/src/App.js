@@ -121,6 +121,7 @@ class ChessApp extends React.Component {
         <Board board={this.props.game.board} handleClick={this.handleClick} />
         <div className="sidebar">
           <Dashboard
+            _id={this.props.game._id}
             checkmate={this.props.game.checkmate}
             remis={this.props.game.remis}
             turn={this.props.game.turn}
