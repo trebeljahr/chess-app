@@ -3,25 +3,41 @@ import "./Dashboard.css";
 import { invertColor } from "../../helpers/invertColor.js";
 import ResetBoard from "../ResetBoard";
 import UndoButton from "../UndoButton";
+import Chat from "../Chat";
+
 const Dashboard = props => {
   return (
-    <div className="flex-container grey">
-      {props.moveHistory.map((move, index) => {
-        return (
-          <p
-            key={index}
-            className={move.figure.color + " fas fa-chess-" + move.figure.type}
-          >
-            {"" +
-              String.fromCharCode(move.oldPos.col + 65) +
-              move.oldPos.row +
-              "->" +
-              String.fromCharCode(move.newPos.col + 65) +
-              move.newPos.row +
-              move.secondFigure[0]}
-          </p>
-        );
-      })}
+    <div>
+      <div className="moveHistoryDisplay">
+        {props.moveHistory.map((move, index) => {
+          return (
+            <span
+              key={index}
+              className={
+                move.figure.color + " fas fa-chess-" + move.figure.type
+              }
+            >
+              {"" +
+                String.fromCharCode(move.oldPos.col + 65) +
+                move.oldPos.row +
+                "↠" +
+                String.fromCharCode(move.newPos.col + 65) +
+                move.newPos.row}
+              {move.secondFigure === "noFigure" ? (
+                ""
+              ) : (
+                <span
+                  className={
+                    move.secondFigure.color +
+                    " fas fa-chess-" +
+                    move.secondFigure.type
+                  }
+                />
+              )}
+            </span>
+          );
+        })}
+      </div>
       <p className="dashboard-text">
         {props.checkmate
           ? invertColor(props.turn) + " wins!"
@@ -29,11 +45,17 @@ const Dashboard = props => {
           ? "It's a draw!"
           : "It's " + props.turn + "'s turn"}
       </p>
-      <ResetBoard resetBoard={props.resetBoard} />
-      <UndoButton
-        handleUndo={props.handleUndo}
-        moveHistory={props.moveHistory}
-      />
+      <div className="controlElements">
+        <a className="btn btn-success" href="/">
+          Home
+        </a>
+        <ResetBoard resetBoard={props.resetBoard} />
+        <UndoButton
+          handleUndo={props.handleUndo}
+          moveHistory={props.moveHistory}
+        />
+        <Chat />
+      </div>
     </div>
   );
 };
