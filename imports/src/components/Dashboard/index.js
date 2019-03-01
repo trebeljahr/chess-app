@@ -3,13 +3,13 @@ import "./Dashboard.css";
 import { invertColor } from "../../helpers/invertColor.js";
 import ResetBoard from "../ResetBoard";
 import UndoButton from "../UndoButton";
-import Chat from "../Chat";
+import ChatContainer from "../Chat";
 
-const Dashboard = props => {
+const Dashboard = game => {
   return (
     <div>
       <div className="moveHistoryDisplay">
-        {props.moveHistory.map((move, index) => {
+        {game.moveHistory.map((move, index) => {
           return (
             <span
               key={index}
@@ -39,22 +39,22 @@ const Dashboard = props => {
         })}
       </div>
       <p className="dashboard-text">
-        {props.checkmate
-          ? invertColor(props.turn) + " wins!"
-          : props.remis
+        {game.checkmate
+          ? invertColor(game.turn) + " wins!"
+          : game.remis
           ? "It's a draw!"
-          : "It's " + props.turn + "'s turn"}
+          : "It's " + game.turn + "'s turn"}
       </p>
       <div className="controlElements">
         <a className="btn btn-success" href="/">
           Home
         </a>
-        <ResetBoard resetBoard={props.resetBoard} />
+        <ResetBoard resetBoard={game.resetBoard} />
         <UndoButton
-          handleUndo={props.handleUndo}
-          moveHistory={props.moveHistory}
+          handleUndo={game.handleUndo}
+          moveHistory={game.moveHistory}
         />
-        <Chat />
+        <ChatContainer _id={game._id} messages={game.messages} />
       </div>
     </div>
   );
