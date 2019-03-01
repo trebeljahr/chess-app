@@ -1,0 +1,14 @@
+.Navbar {
+  display: flex;
+  justify-content: flex-start;
+  padding-right: 5%;
+  padding-top: 0.5%;
+  z-index: 4;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 5vh;
+  background: navy;
+  color: white;
+}

@@ -28,7 +28,7 @@ class Chat extends React.Component {
           ...this.props.messages,
           {
             text: e.target.messageInput.value,
-            user: "nrin"
+            user: Meteor.user().username
           }
         ]
       },
