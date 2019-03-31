@@ -51,8 +51,10 @@ const Dashboard = game => {
         </a>
         <ResetBoard resetBoard={game.resetBoard} />
         <UndoButton
+          proposeUndo={game.proposeUndo}
           handleUndo={game.handleUndo}
           moveHistory={game.moveHistory}
+          offerTakeback={game.offerTakeback}
         />
         <ChatContainer _id={game._id} messages={game.messages} />
       </div>
