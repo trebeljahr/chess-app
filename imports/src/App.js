@@ -136,7 +136,7 @@ class ChessApp extends React.Component {
   };
   render() {
     return this.props.game ? (
-      <div className="gridContainer">
+      <div>
         <div className="sidebar">
           <p>
             Welcome to a round of chess! If you want to invite somebody to play

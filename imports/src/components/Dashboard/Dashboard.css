@@ -1,5 +1,8 @@
 .moveHistoryDisplay {
+  width: 90vmin;
+  margin: auto;
   overflow: scroll;
+  background: lightblue;
   display: flex;
   flex-direction: row;
   justify-content: space-around;
@@ -7,15 +10,10 @@
 }
 .moveHistoryDisplay > span {
   font-size: 0.8em;
-  margin: 3%;
 }
 .controlElements {
-  margin: 3%;
   align-self: flex-end;
 }
 .moveHistoryDisplay > span > span {
   font-size: 1em;
-}
-.dashboard-text {
-  margin: 3%;
 }
