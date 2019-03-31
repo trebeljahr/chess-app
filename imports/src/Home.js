@@ -138,12 +138,16 @@ class Home extends React.Component {
                     >
                       {state.users.length < 2 ? "Join" : "Spectate"}
                     </button>
+                    {/*
+
+
                     <button
                       className="btn btn-danger margin"
                       onClick={() => this.handleDelete(state._id)}
                     >
                       &times;
                     </button>
+                    */}
                   </div>
                 </div>
               ))}
