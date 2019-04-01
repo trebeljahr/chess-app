@@ -7,8 +7,8 @@
   position: fixed;
   top: 0;
   left: 0;
+  padding-bottom: 1%;
   width: 100vw;
-  height: 5vh;
   background: navy;
   color: white;
 }

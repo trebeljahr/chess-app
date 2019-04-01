@@ -6,7 +6,6 @@
   width: 100vw;
   height: 100vh;
   padding: auto;
-
   display: grid;
   grid-template-rows: 95vh 5vh;
   grid-template-columns: 1fr;
@@ -38,11 +37,13 @@
   flex-direction: row;
   flex-wrap: nowrap;
 }
+
 @media only screen and (min-width: 600px) {
   .messageDisplay {
     margin-top: 8%;
   }
 }
+
 @media only screen and (min-width: 1000px) {
   .messageDisplay {
     margin-top: 6%;
