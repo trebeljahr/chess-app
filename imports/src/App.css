@@ -1,71 +1,53 @@
 body {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  font-size: 1.6em;
 }
+@media only screen and (orientation: portrait) {
+  .AppContainer {
+    padding-top: 10%;
+    display: block;
+    text-align: center;
+    height: 100vh;
+    width: 100vw;
+  }
+  .sidebar {
+    width: 90vmin;
+    margin: auto;
+  }
+}
+
+@media only screen and (orientation: landscape) {
+  .AppContainer {
+    padding-top: 2.5%;
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+  }
+  .GameTitle {
+    visibility: hidden;
+  }
+  .sidebar {
+    height: 90vmin;
+    margin: auto;
+  }
+}
+
 .turnToBlackPlayer {
   transform: translateZ(0px) rotate(180deg);
 }
-.sidebar {
-  font-size: calc(1em + 1vmin);
-  padding: 5%;
-  display: flex;
-  flex-direction: column;
-  background: darkgrey;
-  text-align: left;
-}
-.sidebar > a {
-  margin: 2% 0;
-  text-align: center;
-}
-.sidebar > p {
-  margin: 2% 0;
-}
-.turnToWhitePlayer {
-  transform: rotate(0deg);
-}
-.board {
-  border: none;
-  display: grid;
-  width: 90vmin;
-  height: 90vmin;
-  grid-template-rows: repeat(8, 11.25vmin);
-  grid-template-columns: repeat(8, 11.25vmin);
-}
-
-@media (orientation: landscape) {
-  .sidebar {
-    height: 90vmin;
-    margin: 0 2%;
-  }
-  .gridContainer {
-    margin-top: 2%;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-}
-
-@media (orientation: portrait) {
-  .sidebar {
-    flex-grow: 3;
-    width: 90vmin;
-    margin: 2% 0;
-  }
-  .gridContainer {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-}
-.gridContainer {
-  height: 100vh;
-}
-
 .row {
   flex-direction: row;
 }
 .column {
   flex-direction: column;
+}
+.board {
+  border: none;
+  display: grid;
+  margin: auto;
+  width: 90vmin;
+  height: 90vmin;
+  grid-template-rows: repeat(8, 11.25vmin);
+  grid-template-columns: repeat(8, 11.25vmin);
 }
 .board div {
   font-size: 3vmin;
@@ -92,7 +74,6 @@ body {
 span {
   font-size: 8vmin;
 }
-
 .black-tile {
   background: #a15e49;
   border: none;

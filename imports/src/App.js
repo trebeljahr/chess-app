@@ -6,10 +6,10 @@ import { createFieldMarkers } from "./tileMarkers/createFieldMarkers.js";
 import { validateMove } from "./helpers/validateMove.js";
 import { checkForCheck } from "./gameFunctions/checkForCheck.js";
 import { updateBoard, removeMarkers } from "./gameFunctions/updateBoard.js";
-import { changeTurns } from "./helpers/changeTurns.js";
 import { checkForCheckMate, checkForRemis } from "./gameFunctions/endGame.js";
 import { RevertLastMoveInstructions } from "./helpers/RevertLastMoveInstructions.js";
 import { invertColor } from "./helpers/invertColor.js";
+import { createTilesUnderThreat } from "./tileMarkers/createTilesUnderThreat.js";
 import Board from "./components/Board";
 import Dashboard from "./components/Dashboard";
 import { checkForMovedKing } from "./helpers/movedRochadeFigures.js";
@@ -20,9 +20,23 @@ import { States } from "../../imports/api/states.js";
 class ChessApp extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {};
   }
+  componentDidUpdate = () => {
+    if (this.props.game && !this.state.color) {
+      let game = this.props.game;
+      let color =
+        game.users.findIndex(user => user.userId === Meteor.userId()) === 0
+          ? "white"
+          : game.users.findIndex(user => user.userId === Meteor.userId()) === 1
+          ? "black"
+          : "spectating";
+      this.setState({ color });
+    }
+  };
+
   handleClick = field => {
-    if (this.props.game) {
+    if (this.props.game && this.state.color === this.props.game.turn) {
       let { row, col } = convertPos(field);
       let game = this.props.game;
       let figure = game.board[row][col].figure;
@@ -50,8 +64,9 @@ class ChessApp extends React.Component {
             _id: this.props.id,
             fieldsToUpdate: {
               board: updateBoard(game.board, move),
-              turn: changeTurns(game.turn),
+              turn: invertColor(game.turn),
               check: checkForCheck(game.board, game.turn),
+              offerTakeback: false,
               movePart: 0,
               checkmate: checkForCheckMate(game.board, game.turn),
               remis:
@@ -71,7 +86,7 @@ class ChessApp extends React.Component {
             }
           });
         }
-      } else if (figure.color === game.turn) {
+      } else if (figure.color === game.turn && game.turn) {
         Meteor.call("states.update", {
           _id: this.props.id,
           fieldsToUpdate: {
@@ -85,19 +100,34 @@ class ChessApp extends React.Component {
     }
   };
   handleUndo = () => {
-    if (this.props.game) {
+    if (this.props.game && this.props.game.offerTakeback) {
       let game = this.props.game;
       let move = RevertLastMoveInstructions(game.moveHistory);
+      let board = createTilesUnderThreat(
+        updateBoard(game.board, move, false, true),
+        game.turn
+      );
       Meteor.call("states.update", {
         _id: this.props.id,
         fieldsToUpdate: {
-          board: updateBoard(game.board, move, false, true),
-          turn: changeTurns(game.turn),
+          board: board,
           movePart: 0,
           moveHistory: game.moveHistory.slice(0),
-          check: checkForCheck(game.board, game.turn),
+          check: checkForCheck(board, game.turn),
+          turn: invertColor(game.turn),
           checkmate: false,
-          remis: false
+          remis: false,
+          offerTakeback: false
+        }
+      });
+    }
+  };
+  proposeUndo = () => {
+    if (this.props.game) {
+      Meteor.call("states.update", {
+        _id: this.props.id,
+        fieldsToUpdate: {
+          offerTakeback: true
         }
       });
     }
@@ -110,23 +140,22 @@ class ChessApp extends React.Component {
   };
   render() {
     return this.props.game ? (
-      <div className="gridContainer">
-        <div className="sidebar">
-          <p>
-            Welcome to a round of chess! If you want to invite somebody to play
-            - simply give them this link:
-          </p>
-          <a href={"/games/" + this.props.game._id}>Link to the game!</a>
-        </div>
-        <Board board={this.props.game.board} handleClick={this.handleClick} />
+      <div className="AppContainer">
+        <p className="GameTitle">Game: {this.props.game.name}</p>
+        <Board
+          board={this.props.game.board}
+          turnAround={this.state.color === "black" ? true : false}
+          handleClick={this.handleClick}
+        />
         <div className="sidebar">
           <Dashboard
             _id={this.props.game._id}
             checkmate={this.props.game.checkmate}
             remis={this.props.game.remis}
             turn={this.props.game.turn}
-            resetBoard={this.resetBoard}
+            proposeUndo={this.proposeUndo}
             handleUndo={this.handleUndo}
+            offerTakeback={this.props.game.offerTakeback}
             moveHistory={this.props.game.moveHistory}
           />
         </div>
@@ -137,8 +166,9 @@ class ChessApp extends React.Component {
   }
 }
 const ChessAppContainer = withTracker(props => {
-  let _id = props.match.params.id;
-  let game = States.find({ _id }).fetch()[0];
+  const _id = props.match.params.id;
+  const handle = Meteor.subscribe("states");
+  const game = States.find({ _id }).fetch()[0];
   return {
     id: _id,
     game

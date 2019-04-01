@@ -10,4 +10,5 @@ export function createTilesUnderThreat(board, turn) {
       }
     }
   }
+  return board;
 }
