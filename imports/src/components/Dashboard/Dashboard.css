@@ -4,6 +4,11 @@
   overflow: scroll;
   background: grey;
 }
+.WaitingText {
+  background-color: #f0ad4e;
+  color: white;
+  margin-bottom: 0;
+}
 .Dashboard {
   padding-top: 3%;
   width: 90vmin;

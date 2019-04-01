@@ -49,6 +49,7 @@ const Dashboard = game => {
           Home
         </a>
         <UndoButton
+          color={game.color}
           proposeUndo={game.proposeUndo}
           handleUndo={game.handleUndo}
           moveHistory={game.moveHistory}
