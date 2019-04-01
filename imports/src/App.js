@@ -135,6 +135,17 @@ class ChessApp extends React.Component {
       });
     }
   };
+  revertUndoProposal = () => {
+    if (this.props.game) {
+      Meteor.call("states.update", {
+        _id: this.props.id,
+        fieldsToUpdate: {
+          offerTakeback: false
+        }
+      });
+    }
+  };
+
   resetBoard = () => {
     Meteor.call("states.update", {
       _id: this.props.id,
@@ -157,6 +168,7 @@ class ChessApp extends React.Component {
             remis={this.props.game.remis}
             turn={this.props.game.turn}
             color={this.state.color}
+            revertUndoProposal={this.revertUndoProposal}
             proposeUndo={this.proposeUndo}
             handleUndo={this.handleUndo}
             offerTakeback={this.props.game.offerTakeback}
