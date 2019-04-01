@@ -38,7 +38,6 @@ const Dashboard = game => {
         })}
       </div>
       <div className="controlElements">
-<<<<<<< HEAD
         {game.color === "spectating" ? (
           <p>
             {game.checkmate
@@ -60,15 +59,6 @@ const Dashboard = game => {
                 " turn"}
           </p>
         )}
-=======
-        <p>
-          {game.checkmate
-            ? invertColor(game.turn) + " wins!"
-            : game.remis
-            ? "It's a draw!"
-            : "It's " + game.turn + "'s turn"}
-        </p>
->>>>>>> e4add77f518d90eb320c4d3516dcd2c1cf435782
         <a className="btn btn-success" href="/">
           Home
         </a>
