@@ -46,8 +46,6 @@ const Dashboard = game => {
           : "It's " + game.turn + "'s turn"}
       </p>
       <div className="controlElements">
-<<<<<<< Updated upstream
-=======
         {game.color === "spectating" ? (
           <p>
             {game.checkmate
@@ -69,7 +67,6 @@ const Dashboard = game => {
                 " turn"}
           </p>
         )}
->>>>>>> Stashed changes
         <a className="btn btn-success" href="/">
           Home
         </a>
