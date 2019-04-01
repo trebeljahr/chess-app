@@ -9,7 +9,15 @@ const UndoButton = props => {
           Confirm Undo?
         </button>
       ) : props.offerTakeback ? (
-        <p className="WaitingText">Awaiting confirmation...</p>
+        <div className="undoProposal">
+          <p className="WaitingText">Waiting...</p>
+          <button
+            className="btn btn-danger"
+            onClick={() => props.revertUndoProposal()}
+          >
+            &times;
+          </button>
+        </div>
       ) : (
         <button onClick={() => props.proposeUndo()}>⤾</button>
       )}
