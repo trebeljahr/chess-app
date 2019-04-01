@@ -6,10 +6,10 @@ import { createFieldMarkers } from "./tileMarkers/createFieldMarkers.js";
 import { validateMove } from "./helpers/validateMove.js";
 import { checkForCheck } from "./gameFunctions/checkForCheck.js";
 import { updateBoard, removeMarkers } from "./gameFunctions/updateBoard.js";
-import { changeTurns } from "./helpers/changeTurns.js";
 import { checkForCheckMate, checkForRemis } from "./gameFunctions/endGame.js";
 import { RevertLastMoveInstructions } from "./helpers/RevertLastMoveInstructions.js";
 import { invertColor } from "./helpers/invertColor.js";
+import { createTilesUnderThreat } from "./tileMarkers/createTilesUnderThreat.js";
 import Board from "./components/Board";
 import Dashboard from "./components/Dashboard";
 import { checkForMovedKing } from "./helpers/movedRochadeFigures.js";
@@ -64,7 +64,7 @@ class ChessApp extends React.Component {
             _id: this.props.id,
             fieldsToUpdate: {
               board: updateBoard(game.board, move),
-              turn: changeTurns(game.turn),
+              turn: invertColor(game.turn),
               check: checkForCheck(game.board, game.turn),
               offerTakeback: false,
               movePart: 0,
@@ -103,14 +103,18 @@ class ChessApp extends React.Component {
     if (this.props.game && this.props.game.offerTakeback) {
       let game = this.props.game;
       let move = RevertLastMoveInstructions(game.moveHistory);
+      let board = createTilesUnderThreat(
+        updateBoard(game.board, move, false, true),
+        game.turn
+      );
       Meteor.call("states.update", {
         _id: this.props.id,
         fieldsToUpdate: {
-          board: updateBoard(game.board, move, false, true),
-          turn: changeTurns(game.turn),
+          board: board,
           movePart: 0,
           moveHistory: game.moveHistory.slice(0),
-          check: checkForCheck(game.board, game.turn),
+          check: checkForCheck(board, game.turn),
+          turn: invertColor(game.turn),
           checkmate: false,
           remis: false,
           offerTakeback: false
