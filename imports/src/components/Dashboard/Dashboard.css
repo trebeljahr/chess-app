@@ -7,7 +7,13 @@
 .WaitingText {
   background-color: #f0ad4e;
   color: white;
+  padding: 10%;
   margin-bottom: 0;
+  border-radius: 10%;
+}
+.undoProposal {
+  display: flex;
+  flex-direction: row;
 }
 .Dashboard {
   padding-top: 3%;
