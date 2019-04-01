@@ -51,6 +51,7 @@ const Dashboard = game => {
         <UndoButton
           color={game.color}
           proposeUndo={game.proposeUndo}
+          revertUndoProposal={game.revertUndoProposal}
           handleUndo={game.handleUndo}
           moveHistory={game.moveHistory}
           offerTakeback={game.offerTakeback}
