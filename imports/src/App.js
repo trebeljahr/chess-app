@@ -136,14 +136,8 @@ class ChessApp extends React.Component {
   };
   render() {
     return this.props.game ? (
-      <div>
-        <div className="sidebar">
-          <p>
-            Welcome to a round of chess! If you want to invite somebody to play
-            - simply give them this link:
-          </p>
-          <a href={"/games/" + this.props.game._id}>Link to the game!</a>
-        </div>
+      <div className="AppContainer">
+        <p className="GameTitle">Game: {this.props.game.name}</p>
         <Board
           board={this.props.game.board}
           turnAround={this.state.color === "black" ? true : false}
@@ -155,7 +149,6 @@ class ChessApp extends React.Component {
             checkmate={this.props.game.checkmate}
             remis={this.props.game.remis}
             turn={this.props.game.turn}
-            resetBoard={this.resetBoard}
             proposeUndo={this.proposeUndo}
             handleUndo={this.handleUndo}
             offerTakeback={this.props.game.offerTakeback}

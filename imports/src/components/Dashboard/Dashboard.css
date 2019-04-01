@@ -1,18 +1,55 @@
 .moveHistoryDisplay {
-  width: 90vmin;
-  margin: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   overflow: scroll;
-  background: lightblue;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-around;
-  flex-wrap: wrap;
+  background: grey;
 }
-.moveHistoryDisplay > span {
-  font-size: 0.8em;
+.Dashboard {
+  padding-top: 3%;
+  width: 90vmin;
+  height: 25vh;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
 }
 .controlElements {
-  align-self: flex-end;
+  display: flex;
+  flex-direction: column;
+  padding-left: 2em;
+}
+@media only screen and (min-width: 410px) {
+  .Dashboard {
+    padding-top: 1%;
+    grid-template-columns: 1fr;
+    grid-template-rows: 2fr 3fr;
+  }
+  .btn {
+    height: 2em;
+  }
+  .controlElements {
+    display: flex;
+    flex-direction: row;
+    padding-left: 0em;
+    padding-top: 1%;
+    justify-content: space-around;
+  }
+}
+@media only screen and (orientation: landscape) {
+  .Dashboard {
+    height: 90vmin;
+    width: 100%;
+    display: grid;
+    grid-template-rows: auto auto;
+  }
+  .controlElements {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+}
+
+.moveHistoryDisplay > span {
+  font-size: 0.8em;
 }
 .moveHistoryDisplay > span > span {
   font-size: 1em;
