@@ -100,7 +100,10 @@ class ChessApp extends React.Component {
     }
   };
   handleUndo = () => {
-    if (this.props.game && this.props.game.offerTakeback) {
+    if (
+      this.props.game &&
+      this.props.game.offerTakeback === invertColor(this.state.color)
+    ) {
       let game = this.props.game;
       let move = RevertLastMoveInstructions(game.moveHistory);
       let board = createTilesUnderThreat(
@@ -127,7 +130,7 @@ class ChessApp extends React.Component {
       Meteor.call("states.update", {
         _id: this.props.id,
         fieldsToUpdate: {
-          offerTakeback: true
+          offerTakeback: this.state.color
         }
       });
     }
@@ -153,6 +156,7 @@ class ChessApp extends React.Component {
             checkmate={this.props.game.checkmate}
             remis={this.props.game.remis}
             turn={this.props.game.turn}
+            color={this.state.color}
             proposeUndo={this.proposeUndo}
             handleUndo={this.handleUndo}
             offerTakeback={this.props.game.offerTakeback}
