@@ -46,6 +46,30 @@ const Dashboard = game => {
           : "It's " + game.turn + "'s turn"}
       </p>
       <div className="controlElements">
+<<<<<<< Updated upstream
+=======
+        {game.color === "spectating" ? (
+          <p>
+            {game.checkmate
+              ? invertColor(game.turn) + " wins!"
+              : game.remis
+              ? "It's a draw!"
+              : "It's " + game.turn + "'s turn"}
+          </p>
+        ) : (
+          <p>
+            {game.checkmate
+              ? invertColor(game.turn) === game.color
+                ? "You win"
+                : "Your opponent wins!"
+              : game.remis
+              ? "It's a draw!"
+              : "It's " +
+                (game.turn === game.color ? "your" : "your opponents") +
+                " turn"}
+          </p>
+        )}
+>>>>>>> Stashed changes
         <a className="btn btn-success" href="/">
           Home
         </a>
