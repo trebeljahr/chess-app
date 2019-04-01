@@ -1,13 +1,12 @@
 import React from "react";
 import "./Dashboard.css";
 import { invertColor } from "../../helpers/invertColor.js";
-import ResetBoard from "../ResetBoard";
 import UndoButton from "../UndoButton";
 import ChatContainer from "../Chat";
 
 const Dashboard = game => {
   return (
-    <div>
+    <div className="Dashboard">
       <div className="moveHistoryDisplay">
         {game.moveHistory.map((move, index) => {
           return (
@@ -38,14 +37,8 @@ const Dashboard = game => {
           );
         })}
       </div>
-      <p className="dashboard-text">
-        {game.checkmate
-          ? invertColor(game.turn) + " wins!"
-          : game.remis
-          ? "It's a draw!"
-          : "It's " + game.turn + "'s turn"}
-      </p>
       <div className="controlElements">
+<<<<<<< HEAD
         {game.color === "spectating" ? (
           <p>
             {game.checkmate
@@ -67,12 +60,22 @@ const Dashboard = game => {
                 " turn"}
           </p>
         )}
+=======
+        <p>
+          {game.checkmate
+            ? invertColor(game.turn) + " wins!"
+            : game.remis
+            ? "It's a draw!"
+            : "It's " + game.turn + "'s turn"}
+        </p>
+>>>>>>> e4add77f518d90eb320c4d3516dcd2c1cf435782
         <a className="btn btn-success" href="/">
           Home
         </a>
-        <ResetBoard resetBoard={game.resetBoard} />
         <UndoButton
+          color={game.color}
           proposeUndo={game.proposeUndo}
+          revertUndoProposal={game.revertUndoProposal}
           handleUndo={game.handleUndo}
           moveHistory={game.moveHistory}
           offerTakeback={game.offerTakeback}

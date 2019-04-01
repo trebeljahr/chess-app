@@ -6,10 +6,10 @@ import { createFieldMarkers } from "./tileMarkers/createFieldMarkers.js";
 import { validateMove } from "./helpers/validateMove.js";
 import { checkForCheck } from "./gameFunctions/checkForCheck.js";
 import { updateBoard, removeMarkers } from "./gameFunctions/updateBoard.js";
-import { changeTurns } from "./helpers/changeTurns.js";
 import { checkForCheckMate, checkForRemis } from "./gameFunctions/endGame.js";
 import { RevertLastMoveInstructions } from "./helpers/RevertLastMoveInstructions.js";
 import { invertColor } from "./helpers/invertColor.js";
+import { createTilesUnderThreat } from "./tileMarkers/createTilesUnderThreat.js";
 import Board from "./components/Board";
 import Dashboard from "./components/Dashboard";
 import { checkForMovedKing } from "./helpers/movedRochadeFigures.js";
@@ -64,7 +64,7 @@ class ChessApp extends React.Component {
             _id: this.props.id,
             fieldsToUpdate: {
               board: updateBoard(game.board, move),
-              turn: changeTurns(game.turn),
+              turn: invertColor(game.turn),
               check: checkForCheck(game.board, game.turn),
               offerTakeback: false,
               movePart: 0,
@@ -100,17 +100,24 @@ class ChessApp extends React.Component {
     }
   };
   handleUndo = () => {
-    if (this.props.game && this.props.game.offerTakeback) {
+    if (
+      this.props.game &&
+      this.props.game.offerTakeback === invertColor(this.state.color)
+    ) {
       let game = this.props.game;
       let move = RevertLastMoveInstructions(game.moveHistory);
+      let board = createTilesUnderThreat(
+        updateBoard(game.board, move, false, true),
+        game.turn
+      );
       Meteor.call("states.update", {
         _id: this.props.id,
         fieldsToUpdate: {
-          board: updateBoard(game.board, move, false, true),
-          turn: changeTurns(game.turn),
+          board: board,
           movePart: 0,
           moveHistory: game.moveHistory.slice(0),
-          check: checkForCheck(game.board, game.turn),
+          check: checkForCheck(board, game.turn),
+          turn: invertColor(game.turn),
           checkmate: false,
           remis: false,
           offerTakeback: false
@@ -123,11 +130,22 @@ class ChessApp extends React.Component {
       Meteor.call("states.update", {
         _id: this.props.id,
         fieldsToUpdate: {
-          offerTakeback: true
+          offerTakeback: this.state.color
         }
       });
     }
   };
+  revertUndoProposal = () => {
+    if (this.props.game) {
+      Meteor.call("states.update", {
+        _id: this.props.id,
+        fieldsToUpdate: {
+          offerTakeback: false
+        }
+      });
+    }
+  };
+
   resetBoard = () => {
     Meteor.call("states.update", {
       _id: this.props.id,
@@ -136,14 +154,8 @@ class ChessApp extends React.Component {
   };
   render() {
     return this.props.game ? (
-      <div className="gridContainer">
-        <div className="sidebar">
-          <p>
-            Welcome to a round of chess! If you want to invite somebody to play
-            - simply give them this link:
-          </p>
-          <a href={"/games/" + this.props.game._id}>Link to the game!</a>
-        </div>
+      <div className="AppContainer">
+        <p className="GameTitle">Game: {this.props.game.name}</p>
         <Board
           board={this.props.game.board}
           turnAround={this.state.color === "black" ? true : false}
@@ -155,7 +167,8 @@ class ChessApp extends React.Component {
             checkmate={this.props.game.checkmate}
             remis={this.props.game.remis}
             turn={this.props.game.turn}
-            resetBoard={this.resetBoard}
+            color={this.state.color}
+            revertUndoProposal={this.revertUndoProposal}
             proposeUndo={this.proposeUndo}
             handleUndo={this.handleUndo}
             offerTakeback={this.props.game.offerTakeback}
