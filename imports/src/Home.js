@@ -13,9 +13,6 @@ class Home extends React.Component {
       extend: false
     };
   }
-  handleDelete = _id => {
-    Meteor.call("states.deleteById", { _id });
-  };
   handleExtend = () => {
     this.setState(state => {
       return {
@@ -23,27 +20,66 @@ class Home extends React.Component {
       };
     });
   };
+  handleJoin = _id => {
+    const game = States.findOne({ _id });
+
+    if (!Meteor.userId()) {
+      return Alert.error("Please log in to join or spectate a game", {
+        position: "top",
+        effect: "genie"
+      });
+    }
+    if (game.users.filter(u => u.userId === Meteor.userId()).length > 0) {
+      window.location.href = "/games/" + _id;
+    }
+    Meteor.call(
+      "states.userEntersGame",
+      {
+        gameId: _id,
+        users: [...game.users, { userId: Meteor.userId() }]
+      },
+      (err, res) => {
+        if (err) {
+          alert(err);
+        } else {
+          window.location.href = "/games/" + _id;
+        }
+      }
+    );
+  };
   createNewGame = (e, color) => {
     e.preventDefault();
     let name = e.target.name.value;
+    if (name === "") {
+      return Alert.error("Please enter a name for your game!", {
+        position: "top",
+        effect: "genie"
+      });
+    }
     if (States.findOne({ name })) {
       Alert.error("A game with this name already exists!", {
         position: "top",
         effect: "genie"
       });
-      //return;
     } else {
       Meteor.call("states.createNew", { name }, (err, res) => {
         if (err) {
           alert(err);
         } else {
-          Alert.success("Success! You have created a new game!", {
-            position: "top",
-            effect: "genie"
-          });
-          console.log(res._id);
-          window.location.href = "/games/" + res._id;
-          //window.
+          Meteor.call(
+            "states.userEntersGame",
+            {
+              users: [...res.users, { userId: Meteor.userId() }],
+              gameId: res._id
+            },
+            (err, response) => {
+              if (err) {
+                alert(err);
+              } else {
+                window.location.href = "/games/" + res._id;
+              }
+            }
+          );
         }
       });
       States.findOne({ name });
@@ -93,17 +129,11 @@ class Home extends React.Component {
                 <div key={state._id} className="game-posting">
                   <h3 className="game-posting-title">{state.name}</h3>
                   <div className="game-posting-controls">
-                    <a
-                      className="btn btn-success margin"
-                      href={"/games/" + state._id}
-                    >
-                      Join
-                    </a>
                     <button
-                      className="btn btn-danger margin"
-                      onClick={() => this.handleDelete(state._id)}
+                      className="btn btn-success margin"
+                      onClick={() => this.handleJoin(state._id)}
                     >
-                      &times;
+                      {state.users.length < 2 ? "Join" : "Spectate"}
                     </button>
                   </div>
                 </div>
@@ -119,6 +149,7 @@ class Home extends React.Component {
   }
 }
 const HomeContainer = withTracker(({}) => {
+  let handle = Meteor.subscribe("states");
   let states = States.find({}).fetch();
   return { states };
 })(Home);

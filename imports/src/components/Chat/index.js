@@ -28,7 +28,7 @@ class Chat extends React.Component {
           ...this.props.messages,
           {
             text: e.target.messageInput.value,
-            user: "nrin"
+            user: Meteor.user().username
           }
         ]
       },
@@ -42,7 +42,7 @@ class Chat extends React.Component {
     e.target.messageInput.value = "";
   };
   render() {
-    return this.state.show ? (
+    return this.state.show && this.props.messages ? (
       <div className="overlay">
         <ul className="messageDisplay">
           {this.props.messages.map((message, index) => {
@@ -80,6 +80,7 @@ class Chat extends React.Component {
   }
 }
 const ChatContainer = withTracker(props => {
+  let handle = Meteor.subscribe("states");
   let game = States.find({ _id: props._id }).fetch()[0];
   let messages = game.messages;
   return { messages };
