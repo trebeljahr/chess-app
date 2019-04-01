@@ -1,7 +1,7 @@
 import React from "react";
 
 const UndoButton = props => {
-  return props.moveHistory.length >= 1 ? (
+  return props.moveHistory.length >= 1 && props.color != "spectating" ? (
     <div>
       {props.offerTakeback ? (
         <button className="btn btn-warning" onClick={() => props.handleUndo()}>
