@@ -38,27 +38,29 @@ const Dashboard = game => {
         })}
       </div>
       <div>
-        {game.color === "spectating" ? (
-          <p>
-            {game.checkmate
-              ? invertColor(game.turn) + " wins!"
-              : game.remis
-              ? "It's a draw!"
-              : "It's " + game.turn + "'s turn"}
-          </p>
-        ) : (
-          <p>
-            {game.checkmate
-              ? invertColor(game.turn) === game.color
-                ? "You win"
-                : "Your opponent wins!"
-              : game.remis
-              ? "It's a draw!"
-              : "It's " +
-                (game.turn === game.color ? "your" : "your opponents") +
-                " turn"}
-          </p>
-        )}
+        <div className="textContainer">
+          {game.color === "spectating" ? (
+            <p>
+              {game.checkmate
+                ? invertColor(game.turn) + " wins!"
+                : game.remis
+                ? "It's a draw!"
+                : "It's " + game.turn + "'s turn"}
+            </p>
+          ) : (
+            <p>
+              {game.checkmate
+                ? invertColor(game.turn) === game.color
+                  ? "You win"
+                  : "Your opponent wins!"
+                : game.remis
+                ? "It's a draw!"
+                : "It's " +
+                  (game.turn === game.color ? "your" : "your opponents") +
+                  " turn"}
+            </p>
+          )}
+        </div>
         <div className="controlElements">
           <div>
             <a className="btn btn-success" href="/">
