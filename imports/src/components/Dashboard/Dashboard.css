@@ -4,16 +4,25 @@
   overflow: scroll;
   background: grey;
 }
-.WaitingText {
-  background-color: #f0ad4e;
-  color: white;
-  padding: 10%;
-  margin-bottom: 0;
-  border-radius: 10%;
-}
 .undoProposal {
   display: flex;
   flex-direction: row;
+  justify-content: space-around;
+}
+.hourglass {
+  color: #fff;
+  background-color: #f0ad4e;
+  border-color: #eea236;
+  display: inline-block;
+  padding: 6px 12px;
+  margin-bottom: 0;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.42857143;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  border-radius: 4px;
 }
 .Dashboard {
   padding-top: 3%;
@@ -34,9 +43,6 @@
     grid-template-columns: 1fr;
     grid-template-rows: 2fr 3fr;
   }
-  .btn {
-    height: 2em;
-  }
   .controlElements {
     display: flex;
     flex-direction: row;
@@ -48,14 +54,14 @@
 @media only screen and (orientation: landscape) {
   .Dashboard {
     height: 90vmin;
-    width: 100%;
     display: grid;
+    flex-grow: 2;
     grid-template-rows: auto auto;
   }
   .controlElements {
     flex-direction: row;
     flex-wrap: wrap;
-    justify-content: space-between;
+    justify-content: space-around;
   }
 }
 

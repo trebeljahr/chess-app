@@ -17,7 +17,7 @@ body {
 
 @media only screen and (orientation: landscape) {
   .AppContainer {
-    padding-top: 2.5%;
+    padding-top: 4%;
     display: flex;
     height: 100vh;
     width: 100vw;
@@ -30,7 +30,6 @@ body {
     margin: auto;
   }
 }
-
 .turnToBlackPlayer {
   transform: translateZ(0px) rotate(180deg);
 }

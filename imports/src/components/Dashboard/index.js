@@ -37,7 +37,7 @@ const Dashboard = game => {
           );
         })}
       </div>
-      <div className="controlElements">
+      <div>
         {game.color === "spectating" ? (
           <p>
             {game.checkmate
@@ -59,18 +59,22 @@ const Dashboard = game => {
                 " turn"}
           </p>
         )}
-        <a className="btn btn-success" href="/">
-          Home
-        </a>
-        <UndoButton
-          color={game.color}
-          proposeUndo={game.proposeUndo}
-          revertUndoProposal={game.revertUndoProposal}
-          handleUndo={game.handleUndo}
-          moveHistory={game.moveHistory}
-          offerTakeback={game.offerTakeback}
-        />
-        <ChatContainer _id={game._id} messages={game.messages} />
+        <div className="controlElements">
+          <div>
+            <a className="btn btn-success" href="/">
+              <i className="fas fa-home" />
+            </a>
+          </div>
+          <UndoButton
+            color={game.color}
+            proposeUndo={game.proposeUndo}
+            revertUndoProposal={game.revertUndoProposal}
+            handleUndo={game.handleUndo}
+            moveHistory={game.moveHistory}
+            offerTakeback={game.offerTakeback}
+          />
+          <ChatContainer _id={game._id} messages={game.messages} />
+        </div>
       </div>
     </div>
   );
