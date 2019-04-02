@@ -24,6 +24,11 @@
   vertical-align: middle;
   border-radius: 4px;
 }
+.textContainer {
+  margin-top: 2%;
+  display: flex;
+  justify-content: space-around;
+}
 .Dashboard {
   padding-top: 3%;
   width: 90vmin;
@@ -37,7 +42,7 @@
   flex-direction: column;
   padding-left: 2em;
 }
-@media only screen and (min-width: 410px) {
+@media only screen and (orientation: portrait) {
   .Dashboard {
     padding-top: 1%;
     grid-template-columns: 1fr;
@@ -53,10 +58,12 @@
 }
 @media only screen and (orientation: landscape) {
   .Dashboard {
+    padding: 0%;
     height: 90vmin;
     display: grid;
     flex-grow: 2;
     grid-template-rows: auto auto;
+    grid-template-columns: 100%;
   }
   .controlElements {
     flex-direction: row;
