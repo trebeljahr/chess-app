@@ -6,5 +6,13 @@ export function RevertLastMoveInstructions(moveHistory) {
     figure: oldMove.figure,
     secondFigure: oldMove.secondFigure
   };
+  if (oldMove.rochadeRook) {
+    backwardsMove.rochadeRook = {
+      oldPos: oldMove.rochadeRook.newPos,
+      newPos: oldMove.rochadeRook.oldPos,
+      figure: oldMove.rochadeRook.figure,
+      secondFigure: "noFigure"
+    };
+  }
   return backwardsMove;
 }
