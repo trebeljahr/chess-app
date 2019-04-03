@@ -1,12 +1,23 @@
 import { checkForCheck } from "../gameFunctions/checkForCheck.js";
 import { updateBoard } from "../gameFunctions/updateBoard.js";
+import { enPassenMove } from "./enPassenMove.js";
 
-export function determinePawnMarkers(board, row, col, color, mark) {
+export function determinePawnMarkers(
+  board,
+  row,
+  col,
+  color,
+  mark,
+  moveHistory
+) {
   let pawnRowTransformation = getPawnRowTransformations(row, color);
   if (mark === "valid") {
     board = straightPawnSteps(board, row, col, pawnRowTransformation);
   }
   board = diagonalPawnCaptures(board, row, col, color, mark);
+  if (moveHistory) {
+    board = enPassenMove(board, row, col, moveHistory, color);
+  }
   return board;
 }
 
