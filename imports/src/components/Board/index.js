@@ -22,7 +22,8 @@ const Board = props => {
                   : "") +
                 " " +
                 (col.selected ? col.selected : "") +
-                col.rochade
+                col.rochade +
+                col.check
               }
             >
               <div className={col.valid}>
