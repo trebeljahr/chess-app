@@ -42,10 +42,10 @@ const Dashboard = game => {
               >
                 {"" +
                   String.fromCharCode(move.oldPos.col + 65) +
-                  move.oldPos.row +
+                  (move.oldPos.row + 1) +
                   "↠" +
                   String.fromCharCode(move.newPos.col + 65) +
-                  move.newPos.row}
+                  (move.newPos.row + 1)}
                 {move.secondFigure === "noFigure" ? (
                   ""
                 ) : (
