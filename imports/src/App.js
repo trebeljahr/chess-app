@@ -46,7 +46,14 @@ class ChessApp extends React.Component {
           Meteor.call("states.update", {
             _id: this.props.id,
             fieldsToUpdate: {
-              board: createFieldMarkers(game.board, row, col, "valid"),
+              board: createFieldMarkers(
+                game.board,
+                row,
+                col,
+                "valid",
+                false,
+                game.moveHistory
+              ),
               movePart: 1,
               oldPos: { row, col },
               figure
@@ -60,6 +67,13 @@ class ChessApp extends React.Component {
             newPos,
             secondFigure: figure
           };
+          if (game.board[row][col].rochade) {
+            move.rochadeRook = {
+              figure: game.board[row][col === 6 ? 7 : 0].figure,
+              oldPos: { row, col: col === 6 ? 7 : 0 },
+              newPos: { row, col: col === 6 ? 5 : 3 }
+            };
+          }
           Meteor.call("states.update", {
             _id: this.props.id,
             fieldsToUpdate: {
@@ -81,7 +95,11 @@ class ChessApp extends React.Component {
           Meteor.call("states.update", {
             _id: this.props.id,
             fieldsToUpdate: {
-              board: removeMarkers(game.board, ["valid", "selected"]),
+              board: removeMarkers(game.board, [
+                "valid",
+                "selected",
+                "rochade"
+              ]),
               movePart: 0
             }
           });
@@ -90,7 +108,14 @@ class ChessApp extends React.Component {
         Meteor.call("states.update", {
           _id: this.props.id,
           fieldsToUpdate: {
-            board: createFieldMarkers(game.board, row, col, "valid"),
+            board: createFieldMarkers(
+              game.board,
+              row,
+              col,
+              "valid",
+              false,
+              game.moveHistory
+            ),
             movePart: 1,
             oldPos: { row, col },
             figure

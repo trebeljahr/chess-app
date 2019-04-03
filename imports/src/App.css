@@ -70,6 +70,9 @@ body {
   background: #28c958d2;
   border-radius: 100%;
 }
+.rochade {
+  background: blue !important;
+}
 span {
   font-size: 8vmin;
 }

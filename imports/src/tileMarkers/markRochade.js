@@ -6,36 +6,35 @@ import {
 
 export function markRochade(board, row, col, moveHistory, color) {
   if (isLongRochadePossible(board, row, col, moveHistory, color)) {
-    console.log("RochadeIsPossible!");
     board[row][col - 2].valid = "valid";
+    board[row][col - 2].rochade = "rochade";
   }
   if (isShortRochadePossible(board, row, col, moveHistory, color)) {
-    console.log("RochadeIsPossible!");
     board[row][col + 2].valid = "valid";
+    board[row][col + 2].rochade = "rochade";
   }
 }
 
 function isLongRochadePossible(board, row, col, moveHistory, color) {
-  if (
-    longRochadeUnblocked(board, row, col) &&
-    moveHistory.forEach(move => checkForMovedKing(move, color)) &&
-    moveHistory.forEach(move => checkForMovedLeftRook(move, color))
-  ) {
-    return true;
-  }
+  return (
+    !checkForMovedKing(moveHistory, color) &&
+    !checkForMovedLeftRook(moveHistory, color) &&
+    longRochadeUnblocked(board, row, col)
+  );
 }
 
 function isShortRochadePossible(board, row, col, moveHistory, color) {
-  if (
-    shortRochadeUnblocked(board, row, col) &&
-    moveHistory.forEach(move => checkForMovedKing(move, color)) &&
-    moveHistory.forEach(move => checkForMovedRightRook(move, color))
-  ) {
-    return true;
-  }
+  return (
+    !checkForMovedKing(moveHistory, color) &&
+    !checkForMovedRightRook(moveHistory, color) &&
+    shortRochadeUnblocked(board, row, col)
+  );
 }
 
 function longRochadeUnblocked(board, row, col) {
+  if (col <= -1) {
+    return;
+  }
   let tile = board[row][col];
   if (col === 0 && tile.figure.type === "rook") {
     return true;
@@ -50,6 +49,9 @@ function longRochadeUnblocked(board, row, col) {
 }
 
 function shortRochadeUnblocked(board, row, col) {
+  if (col >= 8) {
+    return;
+  }
   let tile = board[row][col];
   if (col === 7 && tile.figure.type === "rook") {
     return true;
