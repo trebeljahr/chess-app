@@ -1,6 +1,12 @@
 body {
   font-size: 1.6em;
 }
+.grey {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 3%;
+  background-color: grey;
+}
 @media only screen and (orientation: portrait) {
   .AppContainer {
     padding-top: 10%;
