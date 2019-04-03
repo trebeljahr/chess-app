@@ -20,7 +20,7 @@ import { States } from "../../imports/api/states.js";
 class ChessApp extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = { baseLinePawn: false };
   }
   componentDidUpdate = () => {
     if (this.props.game && !this.state.color) {
@@ -36,11 +36,14 @@ class ChessApp extends React.Component {
   };
 
   handleClick = field => {
-    if (this.props.game && this.state.color === this.props.game.turn) {
+    if (
+      this.props.game &&
+      this.state.color === this.props.game.turn &&
+      this.state.baseLinePawn === false
+    ) {
       let { row, col } = convertPos(field);
       let game = this.props.game;
       let figure = game.board[row][col].figure;
-
       if (game.movePart === 1) {
         if (figure.color === game.figure.color) {
           Meteor.call("states.update", {
@@ -67,6 +70,7 @@ class ChessApp extends React.Component {
             newPos,
             secondFigure: figure
           };
+
           if (game.board[row][col].rochade) {
             move.rochadeRook = {
               figure: game.board[row][col === 6 ? 7 : 0].figure,
@@ -83,23 +87,38 @@ class ChessApp extends React.Component {
               pos: { row: enPassenRow, col: enPassenCol }
             };
           }
-          Meteor.call("states.update", {
-            _id: this.props.id,
-            fieldsToUpdate: {
-              board: updateBoard(game.board, move),
-              turn: invertColor(game.turn),
-              check: checkForCheck(game.board, game.turn),
-              offerTakeback: false,
-              movePart: 0,
-              checkmate: checkForCheckMate(game.board, game.turn),
-              remis:
-                !checkForCheckMate(game.board, game.turn) &&
-                checkForRemis(game.board, game.turn)
-                  ? true
-                  : false,
-              moveHistory: [...game.moveHistory, move]
-            }
-          });
+          let baseLinePawn = false;
+          if (game.figure.type === "pawn" && (row === 0 || row === 7)) {
+            this.setState(() => ({ baseLinePawn: { row, col } }));
+            baseLinePawn = true;
+          }
+          if (baseLinePawn === false) {
+            Meteor.call("states.update", {
+              _id: this.props.id,
+              fieldsToUpdate: {
+                board: updateBoard(game.board, move),
+                turn: invertColor(game.turn),
+                check: checkForCheck(game.board, game.turn),
+                offerTakeback: false,
+                movePart: 0,
+                checkmate: checkForCheckMate(game.board, game.turn),
+                remis:
+                  !checkForCheckMate(game.board, game.turn) &&
+                  checkForRemis(game.board, game.turn)
+                    ? true
+                    : false,
+                moveHistory: [...game.moveHistory, move]
+              }
+            });
+          } else {
+            Meteor.call("states.update", {
+              _id: this.props.id,
+              fieldsToUpdate: {
+                board: updateBoard(game.board, move),
+                moveHistory: [...game.moveHistory, move]
+              }
+            });
+          }
         } else {
           Meteor.call("states.update", {
             _id: this.props.id,
@@ -182,6 +201,36 @@ class ChessApp extends React.Component {
       });
     }
   };
+  continueTurn = figure => {
+    if (this.props.game) {
+      let game = this.props.game;
+      let { row, col } = this.state.baseLinePawn;
+      game.board[row][col].figure.type = figure;
+      game.board = createTilesUnderThreat(game.board, game.turn);
+      Meteor.call(
+        "states.update",
+        {
+          _id: this.props.id,
+          fieldsToUpdate: {
+            board: game.board,
+            turn: invertColor(game.turn),
+            check: checkForCheck(game.board, game.turn),
+            offerTakeback: false,
+            movePart: 0,
+            checkmate: checkForCheckMate(game.board, game.turn),
+            remis:
+              !checkForCheckMate(game.board, game.turn) &&
+              checkForRemis(game.board, game.turn)
+                ? true
+                : false
+          }
+        },
+        () => {
+          this.setState({ baseLinePawn: false });
+        }
+      );
+    }
+  };
 
   resetBoard = () => {
     Meteor.call("states.update", {
@@ -199,6 +248,26 @@ class ChessApp extends React.Component {
           handleClick={this.handleClick}
         />
         <div className="sidebar">
+          {this.state.baseLinePawn ? (
+            <div className="grey">
+              <span
+                onClick={() => this.continueTurn("knight")}
+                className={"fas fa-chess-knight " + this.state.color}
+              />
+              <span
+                onClick={() => this.continueTurn("bishop")}
+                className={"fas fa-chess-bishop " + this.state.color}
+              />
+              <span
+                onClick={() => this.continueTurn("rook")}
+                className={"fas fa-chess-rook " + this.state.color}
+              />
+              <span
+                onClick={() => this.continueTurn("queen")}
+                className={"fas fa-chess-queen " + this.state.color}
+              />
+            </div>
+          ) : null}
           <Dashboard
             _id={this.props.game._id}
             checkmate={this.props.game.checkmate}

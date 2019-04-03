@@ -33,7 +33,12 @@ function getPawnRowTransformations(row, color) {
 function diagonalPawnCaptures(board, row, col, color, mark) {
   let rowChange = color === "white" ? -1 : 1;
   [-1, 1].forEach(y => {
-    if (0 <= col + y && col + y <= 7) {
+    if (
+      0 <= col + y &&
+      col + y <= 7 &&
+      row + rowChange <= 7 &&
+      0 <= row + rowChange
+    ) {
       let tile = board[row + rowChange][col + y];
       if (tile.figure !== "noFigure" && tile.figure.color !== color) {
         if (mark === "valid") {
