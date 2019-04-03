@@ -18,7 +18,7 @@ export function createFieldMarkers(
   }
   switch (figure.type) {
     case "pawn":
-      determinePawnMarkers(board, row, col, figure.color, mark);
+      determinePawnMarkers(board, row, col, figure.color, mark, moveHistory);
       break;
     case "king":
       if (mark === "valid" && moveHistory) {
