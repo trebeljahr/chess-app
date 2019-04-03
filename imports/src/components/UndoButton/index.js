@@ -10,15 +10,19 @@ const UndoButton = props => {
         </button>
       ) : props.offerTakeback ? (
         <div className="undoProposal">
-          <div className="hourglass">
-            <i className="fas fa-hourglass-half" />
+          <div>
+            <div className="hourglass">
+              <i className="fas fa-hourglass-half" />
+            </div>
           </div>
-          <button
-            className="btn btn-danger"
-            onClick={() => props.revertUndoProposal()}
-          >
-            <i className="fas fa-times" />
-          </button>
+          <div>
+            <button
+              className="btn btn-danger"
+              onClick={() => props.revertUndoProposal()}
+            >
+              <i className="fas fa-times" />
+            </button>
+          </div>
         </div>
       ) : (
         <div className="btn btn-info" onClick={() => props.proposeUndo()}>
