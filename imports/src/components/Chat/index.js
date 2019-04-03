@@ -67,15 +67,17 @@ class Chat extends React.Component {
             />
             <input type="submit" value="➤" className="btn btn-success" />
           </form>
-          <button onClick={this.handleClick} className="btn btn-primary">
+          <div onClick={this.handleClick} className="btn btn-primary">
             Hide the chat!
-          </button>
+          </div>
         </div>
       </div>
     ) : (
-      <button onClick={this.handleClick} className="btn btn-primary">
-        Show the chat!
-      </button>
+      <div>
+        <div onClick={this.handleClick} className="btn btn-primary">
+          <i className="fas fa-comments" />
+        </div>
+      </div>
     );
   }
 }
