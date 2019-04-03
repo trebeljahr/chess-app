@@ -1,15 +1,24 @@
 import { createTilesUnderThreat } from "../tileMarkers/createTilesUnderThreat";
 
 export function updateBoard(board, move, virtual, undo) {
-  removeMarkers(board, ["valid", "selected", "check", "rochade"]);
+  removeMarkers(board, ["valid", "selected", "check", "rochade", "enpassen"]);
   if (!undo) {
     removePiece(board, move.oldPos);
+    if (move.enPassen) {
+      removePiece(board, move.enPassen.pos);
+    }
   } else {
+    console.log(move);
+    if (move.enPassen) {
+      console.log(move.enPassen.pos, move.enPassen.figure);
+      generatePiece(board, move.enPassen.pos, move.enPassen.figure, false);
+    }
     generatePiece(board, move.oldPos, move.secondFigure, virtual);
   }
   if (move.rochadeRook) {
     updateBoard(board, move.rochadeRook, true);
   }
+
   generatePiece(board, move.newPos, move.figure, virtual);
   return board;
 }
