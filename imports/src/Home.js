@@ -30,7 +30,7 @@ class Home extends React.Component {
       });
     }
     if (game.users.filter(u => u.userId === Meteor.userId()).length > 0) {
-      window.location.href = "/games/" + _id;
+      return (window.location.href = "/games/" + _id);
     }
     Meteor.call(
       "states.userEntersGame",
@@ -133,7 +133,12 @@ class Home extends React.Component {
                       className="btn btn-success margin"
                       onClick={() => this.handleJoin(state._id)}
                     >
-                      {state.users.length < 2 ? "Join" : "Spectate"}
+                      {state.users.filter(u => u.userId === Meteor.userId())
+                        .length > 0
+                        ? "Join again"
+                        : state.users.length < 2
+                        ? "Join"
+                        : "Spectate"}
                     </button>
                   </div>
                 </div>
