@@ -131,10 +131,13 @@ class ChessApp extends React.Component {
     ) {
       let game = this.props.game;
       let move = RevertLastMoveInstructions(game.moveHistory);
-      let board = createTilesUnderThreat(
-        updateBoard(game.board, move, false, true),
-        game.turn
-      );
+      let board = removeMarkers(updateBoard(game.board, move, false, true), [
+        "valid",
+        "selected",
+        "rochade",
+        "check"
+      ]);
+      board = createTilesUnderThreat(board, game.turn);
       Meteor.call("states.update", {
         _id: this.props.id,
         fieldsToUpdate: {
