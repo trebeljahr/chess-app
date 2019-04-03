@@ -74,6 +74,7 @@ class ChessApp extends React.Component {
               newPos: { row, col: col === 6 ? 5 : 3 }
             };
           }
+          console.log(move.rochadeRook);
           Meteor.call("states.update", {
             _id: this.props.id,
             fieldsToUpdate: {

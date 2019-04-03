@@ -4,11 +4,14 @@ export function updateBoard(board, move, virtual, undo) {
   removeMarkers(board, ["valid", "selected", "check", "rochade"]);
   if (!undo) {
     removePiece(board, move.oldPos);
+    if (move.rochadeRook) {
+      updateBoard(board, move.rochadeRook, virtual, undo);
+    }
   } else {
     generatePiece(board, move.oldPos, move.secondFigure, virtual);
-  }
-  if (move.rochadeRook) {
-    updateBoard(board, move.rochadeRook, true, undo);
+    if (move.rochadeRook) {
+      updateBoard(board, move.rochadeRook, true, undo);
+    }
   }
   generatePiece(board, move.newPos, move.figure, virtual);
   return board;

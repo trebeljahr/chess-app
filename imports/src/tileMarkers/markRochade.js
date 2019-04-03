@@ -36,6 +36,7 @@ function longRochadeUnblocked(board, row, col) {
     return;
   }
   let tile = board[row][col];
+  console.log(tile.figure);
   if (col === 0 && tile.figure.type === "rook") {
     return true;
   }
