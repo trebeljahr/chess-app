@@ -8,7 +8,7 @@ export function updateBoard(board, move, virtual, undo) {
     generatePiece(board, move.oldPos, move.secondFigure, virtual);
   }
   if (move.rochadeRook) {
-    updateBoard(board, move.rochadeRook);
+    updateBoard(board, move.rochadeRook, true);
   }
   generatePiece(board, move.newPos, move.figure, virtual);
   return board;
