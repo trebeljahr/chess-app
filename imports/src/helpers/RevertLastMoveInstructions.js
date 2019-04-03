@@ -14,5 +14,8 @@ export function RevertLastMoveInstructions(moveHistory) {
       secondFigure: "noFigure"
     };
   }
+  if (oldMove.enPassen) {
+    backwardsMove.enPassen = oldMove.enPassen;
+  }
   return backwardsMove;
 }

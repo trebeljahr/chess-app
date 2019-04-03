@@ -74,6 +74,15 @@ class ChessApp extends React.Component {
               newPos: { row, col: col === 6 ? 5 : 3 }
             };
           }
+          if (game.board[row][col].enpassen) {
+            let lastMove = game.moveHistory[game.moveHistory.length - 1];
+            let enPassenRow = lastMove.newPos.row;
+            let enPassenCol = lastMove.newPos.col;
+            move.enPassen = {
+              figure: game.board[enPassenRow][enPassenCol].figure,
+              pos: { row: enPassenRow, col: enPassenCol }
+            };
+          }
           Meteor.call("states.update", {
             _id: this.props.id,
             fieldsToUpdate: {
