@@ -8,15 +8,9 @@ export function updateBoard(board, move, virtual, undo) {
     generatePiece(board, move.oldPos, move.secondFigure, virtual);
   }
   if (move.rochadeRook) {
-    updateBoard(
-      generatePiece(board, move.newPos, move.figure, virtual),
-      move.rochadeRook,
-      undo,
-      undo
-    );
-  } else {
-    generatePiece(board, move.newPos, move.figure, virtual);
+    updateBoard(board, move.rochadeRook);
   }
+  generatePiece(board, move.newPos, move.figure, virtual);
   return board;
 }
 
