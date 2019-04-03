@@ -8,9 +8,7 @@ export function updateBoard(board, move, virtual, undo) {
       removePiece(board, move.enPassen.pos);
     }
   } else {
-    console.log(move);
     if (move.enPassen) {
-      console.log(move.enPassen.pos, move.enPassen.figure);
       generatePiece(board, move.enPassen.pos, move.enPassen.figure, false);
     }
     generatePiece(board, move.oldPos, move.secondFigure, virtual);
