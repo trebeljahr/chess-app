@@ -24,13 +24,10 @@ class Chat extends React.Component {
       "states.addNewMessage",
       {
         _id: this.props._id,
-        messages: [
-          ...this.props.messages,
-          {
-            text: e.target.messageInput.value,
-            user: Meteor.user().username
-          }
-        ]
+        message: {
+          text: e.target.messageInput.value,
+          user: Meteor.user().username
+        }
       },
       (err, res) => {
         if (err) {
