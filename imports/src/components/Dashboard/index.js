@@ -9,7 +9,7 @@ const Dashboard = game => {
     <div className="Dashboard">
       <div>
         <div className="textContainer">
-          {game.color === "spectating" ? (
+          {game.color === "none" ? (
             <p>
               {game.checkmate
                 ? invertColor(game.turn) + " wins!"
