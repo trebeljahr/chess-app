@@ -22,7 +22,6 @@ class Home extends React.Component {
   };
   handleJoin = _id => {
     const game = States.findOne({ _id });
-
     if (!Meteor.userId()) {
       return Alert.error("Please log in to join or spectate a game", {
         position: "top",
@@ -32,11 +31,17 @@ class Home extends React.Component {
     if (game.users.filter(u => u.userId === Meteor.userId()).length > 0) {
       return (window.location.href = "/games/" + _id);
     }
+    let color =
+      game.users.length >= 2
+        ? "none"
+        : game.users[0].color === "white"
+        ? "black"
+        : "white";
     Meteor.call(
       "states.userEntersGame",
       {
-        gameId: _id,
-        users: [...game.users, { userId: Meteor.userId() }]
+        _id,
+        user: { userId: Meteor.userId(), color, name: Meteor.user().username }
       },
       (err, res) => {
         if (err) {
@@ -47,11 +52,18 @@ class Home extends React.Component {
       }
     );
   };
-  createNewGame = (e, color) => {
+  createNewGame = e => {
     e.preventDefault();
+    let color = e.target.color.value;
     let name = e.target.name.value;
     if (name === "") {
       return Alert.error("Please enter a name for your game!", {
+        position: "top",
+        effect: "genie"
+      });
+    }
+    if (!Meteor.userId()) {
+      return Alert.error("Please login to create a game!", {
         position: "top",
         effect: "genie"
       });
@@ -69,8 +81,12 @@ class Home extends React.Component {
           Meteor.call(
             "states.userEntersGame",
             {
-              users: [...res.users, { userId: Meteor.userId() }],
-              gameId: res._id
+              _id: res._id,
+              user: {
+                userId: Meteor.userId(),
+                color,
+                name: Meteor.user().username
+              }
             },
             (err, response) => {
               if (err) {
@@ -110,11 +126,18 @@ class Home extends React.Component {
                       placeholder="Name"
                     />
                     <h4>Play as</h4>
-                    <div className="submitButtonsContainer">
-                      <input type="submit" name="play" value="White" />
-                      <input type="submit" name="play" value="Random" />
-                      <input type="submit" name="play" value="Black" />
-                    </div>
+                    <label htmlFor="white">White</label>
+                    <input id="white" type="radio" name="color" value="white" />
+                    {/*<label htmlFor="random">Random</label>
+                    <input
+                      id="random"
+                      type="radio"
+                      name="color"
+                      value="random"
+                    />*/}
+                    <label htmlFor="black">Black</label>
+                    <input id="black" type="radio" name="color" value="black" />
+                    <input type="submit" value="Create Game!" />
                   </form>
                 </div>
               </div>
