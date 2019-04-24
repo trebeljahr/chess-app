@@ -146,63 +146,9 @@ class ChessApp extends React.Component {
             .column {
               flex-direction: column;
             }
-            .board {
-              border: none;
-              display: grid;
-              margin: auto;
-              width: 90vmin;
-              height: 90vmin;
-              grid-template-rows: repeat(8, 11.25vmin);
-              grid-template-columns: repeat(8, 11.25vmin);
-            }
-            .board div {
-              font-size: 3vmin;
-              text-align: center;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-            }
-            .selected {
-              background: #5f939b !important;
-            }
-            .check {
-              background: #f55d3e !important;
-            }
+
             .grey {
               background-color: darkgrey;
-            }
-            .valid {
-              width: 90%;
-              height: 90%;
-              background: #28c958d2;
-              border-radius: 100%;
-            }
-            .rochade {
-              background: blue !important;
-            }
-            span {
-              font-size: 8vmin;
-            }
-            .black-tile {
-              background: #a15e49;
-              border: none;
-              z-index: 2;
-            }
-            .white-tile {
-              background: #ca895f;
-              border: none;
-              z-index: 2;
-            }
-            .white {
-              color: white;
-            }
-            .black {
-              color: black;
-            }
-            .figures {
-              width: 80%;
-              height: 80%;
-              line-height: 3em;
             }
           `}</style>
         </div>
