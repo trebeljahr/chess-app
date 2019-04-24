@@ -3,72 +3,22 @@ import "./Dashboard.css";
 import { invertColor } from "../../helpers/invertColor.js";
 import UndoButton from "../UndoButton";
 import ChatContainer from "../Chat";
+import TextContainer from "../TextContainer";
+import MoveHistory from "../MoveHistory";
+import HomeButton from "../HomeButton";
 
 const Dashboard = game => {
   return (
     <div className="Dashboard">
-      <div>
-        <div className="textContainer">
-          {game.color === "none" ? (
-            <p>
-              {game.checkmate
-                ? invertColor(game.turn) + " wins!"
-                : game.remis
-                ? "It's a draw!"
-                : "It's " + game.turn + "'s turn"}
-            </p>
-          ) : (
-            <p>
-              {game.checkmate
-                ? invertColor(game.turn) === game.color
-                  ? "You win"
-                  : "Your opponent wins!"
-                : game.remis
-                ? "It's a draw!"
-                : "It's " +
-                  (game.turn === game.color ? "your" : "your opponents") +
-                  " turn"}
-            </p>
-          )}
-        </div>
-        <div className="moveHistoryDisplay">
-          {game.moveHistory.map((move, index) => {
-            return (
-              <span
-                key={index}
-                className={
-                  move.figure.color + " fas fa-chess-" + move.figure.type
-                }
-              >
-                {"" +
-                  String.fromCharCode(move.oldPos.col + 65) +
-                  (move.oldPos.row + 1) +
-                  "↠" +
-                  String.fromCharCode(move.newPos.col + 65) +
-                  (move.newPos.row + 1)}
-                {move.secondFigure === "noFigure" ? (
-                  ""
-                ) : (
-                  <span
-                    className={
-                      move.secondFigure.color +
-                      " fas fa-chess-" +
-                      move.secondFigure.type
-                    }
-                  />
-                )}
-              </span>
-            );
-          })}
-        </div>
-      </div>
-
+      <MoveHistory moveHistory={game.moveHistory} />
       <div className="controlElements">
-        <div>
-          <a className="btn btn-success" href="/">
-            <i className="fas fa-home" />
-          </a>
-        </div>
+        <TextContainer
+          color={game.color}
+          checkmate={game.checkmate}
+          turn={game.turn}
+          remis={game.remis}
+        />
+        <HomeButton />
         <UndoButton
           color={game.color}
           proposeUndo={game.proposeUndo}

@@ -29,6 +29,10 @@ Meteor.methods({
       }
     });
   },
+  "states.deleteFinishedGame"({ _id }) {
+    console.log(Meteor.userId());
+    States.remove({ _id });
+  },
   "states.createNew"({ name }) {
     States.insert({ name, ...getDefaultState() });
     return States.findOne({ name });
@@ -171,8 +175,8 @@ Meteor.methods({
       }
     }
   },
-  "states.handlePawnChange"({ _id, userId, figure }) {
-    if (!userId) {
+  "states.handlePawnChange"({ _id, figure }) {
+    if (!this.userId) {
       return;
     }
     let { board, baseLinePawn, turn } = States.findOne(_id);
@@ -195,8 +199,8 @@ Meteor.methods({
       }
     });
   },
-  "states.proposeUndo"({ _id, userId }) {
-    if (!userId) {
+  "states.proposeUndo"({ _id }) {
+    if (!this.userId) {
       return;
     }
     let { users } = States.findOne(_id);
@@ -207,8 +211,8 @@ Meteor.methods({
       }
     });
   },
-  "states.revertUndoProposal"({ _id, userId }) {
-    if (!userId) {
+  "states.revertUndoProposal"({ _id }) {
+    if (!Meteor.userId()) {
       return;
     }
     let { users } = States.findOne(_id);
@@ -219,8 +223,8 @@ Meteor.methods({
       }
     });
   },
-  "states.handleUndo"({ _id, userId }) {
-    if (!userId) {
+  "states.handleUndo"({ _id }) {
+    if (!Meteor.userId()) {
       return;
     }
     let {
