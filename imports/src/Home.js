@@ -172,6 +172,94 @@ class Home extends React.Component {
           <div>Loading...</div>
         )}
         <Alert stack={{ limit: 1 }} timeout={3000} />
+        <style jsx>
+          {" "}
+          {`
+            .centerFlex {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              padding-top: 5%;
+            }
+            .formContainer {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              padding: 5vmin;
+              background: white;
+              z-index: 2;
+              position: relative;
+            }
+
+            .formInput {
+              text-align: center;
+            }
+            .submitButtonsContainer {
+              width: 100%;
+              margin: 2%;
+              display: flex;
+              flex-direction: row;
+              justify-content: space-between;
+            }
+            .createGameForm {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+            }
+            .fullScreen {
+              width: 100vw;
+              height: 100vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              position: fixed;
+              top: 0;
+              left: 0;
+            }
+            .opaque {
+              z-index: 1;
+              background: rgb(30, 30, 30);
+              opacity: 0.5;
+            }
+            .game-postings-container {
+              display: flex;
+              flex-direction: column;
+              margin: auto;
+            }
+            .game-posting {
+              width: 80vw;
+              border: 1px solid;
+              margin: 4px;
+              display: flex;
+              flex-direction: row;
+              text-align: center;
+              justify-content: space-between;
+              align-items: center;
+            }
+            .game-posting-title {
+              margin-left: 2%;
+              text-align: left;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+
+            .game-posting-controls {
+              margin: 0 4%;
+              align-self: center;
+              display: flex;
+              flex-direction: row;
+              justify-content: space-between;
+            }
+            .engaged-dropdown-menu {
+              background-color: blue;
+            }
+            .margin {
+              margin: 4%;
+            }
+          `}
+        </style>
       </div>
     );
   }
