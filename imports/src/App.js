@@ -2,7 +2,7 @@ import React from "react";
 import "./App.css";
 import Board from "./components/Board";
 import Dashboard from "./components/Dashboard";
-
+import PawnChangeInterface from "./components/PawnChangeInterface";
 import { withTracker } from "meteor/react-meteor-data";
 import { States } from "../../imports/api/states.js";
 
@@ -65,55 +65,39 @@ class ChessApp extends React.Component {
   };
   render() {
     if (this.props.game) {
-      let color = this.props.game.users.find(
-        user => user.userId === Meteor.userId()
-      ).color;
+      let game = this.props.game;
+      let color = game.users.find(user => user.userId === Meteor.userId())
+        .color;
       return (
         <div className="AppContainer">
-          <p className="GameTitle">Game: {this.props.game.name}</p>
+          <p className="GameTitle">Game: {game.name}</p>
           <Board
-            board={this.props.game.board}
+            board={game.board}
             turnAround={color === "black" ? true : false}
             handleClick={
-              this.props.game.movePart === 0
+              game.movePart === 0
                 ? this.handleFirstClick
                 : this.handleSecondClick
             }
           />
-          <div className="sidebar">
-            {this.props.game.baseLinePawn && color === this.props.game.turn ? (
-              <div className="grey">
-                <span
-                  onClick={() => this.continueTurn("knight")}
-                  className={"fas fa-chess-knight " + color}
-                />
-                <span
-                  onClick={() => this.continueTurn("bishop")}
-                  className={"fas fa-chess-bishop " + color}
-                />
-                <span
-                  onClick={() => this.continueTurn("rook")}
-                  className={"fas fa-chess-rook " + color}
-                />
-                <span
-                  onClick={() => this.continueTurn("queen")}
-                  className={"fas fa-chess-queen " + color}
-                />
-              </div>
-            ) : null}
-            <Dashboard
-              _id={this.props.game._id}
-              checkmate={this.props.game.checkmate}
-              remis={this.props.game.remis}
-              turn={this.props.game.turn}
-              color={color}
-              revertUndoProposal={this.revertUndoProposal}
-              proposeUndo={this.proposeUndo}
-              handleUndo={this.handleUndo}
-              offerTakeback={this.props.game.offerTakeback}
-              moveHistory={this.props.game.moveHistory}
-            />
-          </div>
+          <PawnChangeInterface
+            baseLinePawn={game.baseLinePawn}
+            turn={game.turn}
+            color={color}
+            continueTurn={this.continueTurn}
+          />
+          <Dashboard
+            _id={game._id}
+            checkmate={game.checkmate}
+            remis={game.remis}
+            turn={game.turn}
+            color={color}
+            revertUndoProposal={this.revertUndoProposal}
+            proposeUndo={this.proposeUndo}
+            handleUndo={this.handleUndo}
+            offerTakeback={game.offerTakeback}
+            moveHistory={game.moveHistory}
+          />
         </div>
       );
     } else {
