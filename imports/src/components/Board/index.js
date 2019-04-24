@@ -24,7 +24,7 @@ const Board = props => {
                 (col.selected ? col.selected : "")
               }
             >
-              <div className={col.valid}>
+              <div className={col.valid + " " + col.rochade}>
                 <span
                   className={
                     col.figure.type

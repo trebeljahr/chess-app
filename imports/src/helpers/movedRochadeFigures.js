@@ -13,7 +13,7 @@ export const checkForMovedLeftRook = (moveHistory, color) => {
     if (
       move.figure.color === color &&
       move.figure.type === "rook" &&
-      move.oldPos === 0
+      move.oldPos === 7
     ) {
       return true;
     }
@@ -22,7 +22,7 @@ export const checkForMovedLeftRook = (moveHistory, color) => {
     : false;
 };
 
-export const checkForMovedRightRook = (move, color) => {
+export const checkForMovedRightRook = (moveHistory, color) => {
   return moveHistory.filter(move => {
     if (
       move.figure.color === color &&
