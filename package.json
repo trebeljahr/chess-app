@@ -16,6 +16,13 @@
     "react-s-alert": "^1.4.1",
     "styled-jsx": "^3.2.1"
   },
+  "babel": {
+    "plugins": [
+      [
+        "styled-jsx/babel"
+      ]
+    ]
+  },
   "meteor": {
     "mainModule": {
       "client": "client/public/main.jsx",
