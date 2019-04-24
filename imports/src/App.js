@@ -5,6 +5,7 @@ import Dashboard from "./components/Dashboard";
 import PawnChangeInterface from "./components/PawnChangeInterface";
 import { withTracker } from "meteor/react-meteor-data";
 import { States } from "../../imports/api/states.js";
+import Title from "./components/Title";
 
 class ChessApp extends React.Component {
   constructor(props) {
@@ -70,7 +71,7 @@ class ChessApp extends React.Component {
         .color;
       return (
         <div className="AppContainer">
-          <p className="GameTitle">Game: {game.name}</p>
+          <Title name={game.name} />
           <Board
             board={game.board}
             turnAround={color === "black" ? true : false}
