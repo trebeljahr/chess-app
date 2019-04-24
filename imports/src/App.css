@@ -1,6 +1,12 @@
 body {
   font-size: 1.6em;
 }
+.grey {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 3%;
+  background-color: grey;
+}
 @media only screen and (orientation: portrait) {
   .AppContainer {
     padding-top: 10%;
@@ -69,6 +75,9 @@ body {
   height: 90%;
   background: #28c958d2;
   border-radius: 100%;
+}
+.rochade {
+  background: blue !important;
 }
 span {
   font-size: 8vmin;
