@@ -1,5 +1,4 @@
 import React from "react";
-import "./App.css";
 import Board from "./components/Board";
 import Dashboard from "./components/Dashboard";
 import PawnChangeInterface from "./components/PawnChangeInterface";

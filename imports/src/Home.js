@@ -1,7 +1,6 @@
 import React from "react";
 import { withTracker } from "meteor/react-meteor-data";
 import { States } from "../../imports/api/states.js";
-import "./Home.css";
 import Alert from "react-s-alert";
 import "react-s-alert/dist/s-alert-default.css";
 import "react-s-alert/dist/s-alert-css-effects/genie.css";
