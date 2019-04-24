@@ -71,6 +71,7 @@ class ChessApp extends React.Component {
         .color;
       return (
         <div className="AppContainer">
+          <div className="full" />
           <Title name={game.name} />
           <Board
             board={game.board}
@@ -99,6 +100,17 @@ class ChessApp extends React.Component {
             offerTakeback={game.offerTakeback}
             moveHistory={game.moveHistory}
           />
+          <style jsx>{`
+            .full {
+              background: blue;
+              position: absolute;
+              top: 0;
+              left: 0;
+              height: 100%;
+              width: 100%;
+              z-index: 100;
+            }
+          `}</style>
         </div>
       );
     } else {
