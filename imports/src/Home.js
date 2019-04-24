@@ -172,7 +172,6 @@ class Home extends React.Component {
         )}
         <Alert stack={{ limit: 1 }} timeout={3000} />
         <style jsx>
-          {" "}
           {`
             .centerFlex {
               display: flex;
