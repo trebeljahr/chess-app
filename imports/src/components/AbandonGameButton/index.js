@@ -28,7 +28,7 @@ class AbandonGameButton extends React.Component {
   };
   render() {
     return (
-      <div>
+      <div style={{ gridArea: "d" }}>
         {this.props.deleteGame && this.props.color !== "none" ? (
           this.props.deleteGame === invertColor(this.props.color) ? (
             <button onClick={this.handleSecondAbandon}>Abandon Game</button>
@@ -38,6 +38,7 @@ class AbandonGameButton extends React.Component {
         ) : (
           <button onClick={this.handleFirstAbandon}>Abandon Game</button>
         )}
+        <style jsx>{``}</style>
       </div>
     );
   }

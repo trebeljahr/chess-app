@@ -1,6 +1,6 @@
 import React from "react";
 const PawnChangeInterface = ({ baseLinePawn, turn, color, continueTurn }) => {
-  if (/*baseLinePawn && color === turn*/ true) {
+  if (baseLinePawn && color === turn) {
     return (
       <div className="attach">
         <div className="grey">

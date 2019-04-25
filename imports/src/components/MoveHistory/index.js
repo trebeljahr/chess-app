@@ -1,7 +1,7 @@
 import React from "react";
-const MoveHistory = ({ moveHistory }) => {
-  return moveHistory.map((move, index) => {
-    return (
+const MoveHistory = ({ moveHistory }) => (
+  <div>
+    {moveHistory.map((move, index) => (
       <span
         key={index}
         className={move.figure.color + " fas fa-chess-" + move.figure.type}
@@ -24,7 +24,14 @@ const MoveHistory = ({ moveHistory }) => {
           />
         )}
       </span>
-    );
-  });
-};
+    ))}
+    <style jsx>{`
+      div {
+        background: grey;
+        grid-area: a;
+      }
+    `}</style>
+  </div>
+);
+
 export default MoveHistory;

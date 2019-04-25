@@ -9,19 +9,21 @@ import AbandonGameButton from "../AbandonGameButton";
 const Dashboard = game => {
   return (
     <div className="Dashboard">
-      <div className="MoveHistory">
-        <MoveHistory moveHistory={game.moveHistory} />
-      </div>
-      <div className="TextContainer">
-        <TextContainer
+      <MoveHistory moveHistory={game.moveHistory} />
+      <TextContainer
+        color={game.color}
+        checkmate={game.checkmate}
+        turn={game.turn}
+        remis={game.remis}
+      />
+      <HomeButton />
+      {game.checkmate || game.remis ? (
+        <AbandonGameButton
+          deleteGame={game.deleteGame}
           color={game.color}
-          checkmate={game.checkmate}
-          turn={game.turn}
-          remis={game.remis}
+          _id={game._id}
         />
-      </div>
-      <div className="controls">
-        <HomeButton className="HomeButton" />
+      ) : (
         <UndoButton
           color={game.color}
           proposeUndo={game.proposeUndo}
@@ -31,50 +33,23 @@ const Dashboard = game => {
           deleteGame={game.deleteGame}
           offerTakeback={game.offerTakeback}
         />
-        {game.checkmate || game.remis ? (
-          <AbandonGameButton
-            deleteGame={game.deleteGame}
-            color={game.color}
-            _id={game._id}
-          />
-        ) : null}
-        <ChatContainer _id={game._id} messages={game.messages} />
-      </div>
+      )}
+      <ChatContainer _id={game._id} messages={game.messages} />
       <style jsx>{`
         .Dashboard {
           display: grid;
+          grid-template-areas:
+            "a a a"
+            "b b b"
+            "c d e";
+          grid-auto-rows: minmax(0, auto);
         }
         @media (orientation: landscape) {
           .Dashboard {
-            display: flex;
-            text-align: center;
-            flex-direction: column;
-            justify-content: center;
-            margin: 10vmin 5px;
-          }
-          .controls {
-            grid-area: c;
-            display: flex;
-            justify-content: space-around;
-          }
-        }
-        @media (orientation: portrait) {
-          .Dashboard {
-            margin: 10vmin;
-            grid-template-areas:
-              "a"
-              "b"
-              "c";
-          }
-          .controls {
-            display: flex;
-            justify-content: space-around;
-          }
-          .MoveHistory,
-          .TextContainer {
-            display: flex;
-            width: 100%;
-            justify-content: center;
+            display: grid;
+            grid-template-areas: "a a a" "b b b" "c d e";
+            grid-template-rows: 4fr 1fr 1fr;
+            grid-template-columns: 1fr 2fr 1fr;
           }
         }
       `}</style>

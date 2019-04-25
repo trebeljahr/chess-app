@@ -1,12 +1,15 @@
 import React from "react";
 const Title = ({ name }) => (
   <div>
-    <h4 className="GameTitle">Game: {name}</h4>
+    <h1 className="GameTitle">Game: {name}</h1>
     <style jsx>{`
       div {
         width: 100%;
         text-align: center;
-        margin-top: 10px;
+        margin-top: 5vmin;
+      }
+      h4 {
+        margin: 0;
       }
     `}</style>
   </div>
