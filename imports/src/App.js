@@ -69,7 +69,7 @@ class ChessApp extends React.Component {
       let color = game.users.find(user => user.userId === Meteor.userId())
         .color;
       return (
-        <div className="AppContainer">
+        <div>
           <Title name={game.name} />
           <Board
             board={game.board}
@@ -91,66 +91,15 @@ class ChessApp extends React.Component {
             checkmate={game.checkmate}
             remis={game.remis}
             turn={game.turn}
+            offerTakeback={game.offerTakeback}
+            moveHistory={game.moveHistory}
+            deleteGame={game.deleteGame}
             color={color}
             revertUndoProposal={this.revertUndoProposal}
             proposeUndo={this.proposeUndo}
             handleUndo={this.handleUndo}
-            offerTakeback={game.offerTakeback}
-            moveHistory={game.moveHistory}
           />
-          <style jsx>{`
-            body {
-              font-size: 1.6em;
-            }
-            .grey {
-              display: flex;
-              justify-content: space-around;
-              margin-top: 3%;
-              background-color: grey;
-            }
-            @media only screen and (orientation: portrait) {
-              .AppContainer {
-                padding-top: 10%;
-                display: block;
-                text-align: center;
-                height: 100vh;
-                width: 100vw;
-              }
-              .sidebar {
-                width: 90vmin;
-                margin: auto;
-              }
-            }
-
-            @media only screen and (orientation: landscape) {
-              .AppContainer {
-                padding-top: 4.1%;
-                display: flex;
-                height: 100vh;
-                width: 100vw;
-              }
-              .GameTitle {
-                visibility: hidden;
-              }
-              .sidebar {
-                height: 90vmin;
-                margin: auto;
-              }
-            }
-            .turnToBlackPlayer {
-              transform: translateZ(0px) rotate(180deg);
-            }
-            .row {
-              flex-direction: row;
-            }
-            .column {
-              flex-direction: column;
-            }
-
-            .grey {
-              background-color: darkgrey;
-            }
-          `}</style>
+          <style jsx>{``}</style>
         </div>
       );
     } else {
@@ -159,11 +108,10 @@ class ChessApp extends React.Component {
   }
 }
 const ChessAppContainer = withTracker(props => {
-  const _id = props.match.params.id;
+  const name = props.match.params.name;
   const handle = Meteor.subscribe("states");
-  const game = States.find({ _id }).fetch()[0];
+  const game = States.find({ name }).fetch()[0];
   return {
-    id: _id,
     game
   };
 })(ChessApp);

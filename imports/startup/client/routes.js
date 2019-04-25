@@ -8,9 +8,9 @@ import Navbar from "../../src/components/Navbar";
 const renderRoutes = () => (
   <Router>
     <div>
-      <Route path="/" component={Navbar} />
+      <Route exact path="/" component={Navbar} />
       <Route exact path="/" component={HomeContainer} />
-      <Route exact path="/games/:id" component={ChessAppContainer} />
+      <Route exact path="/games/:name" component={ChessAppContainer} />
     </div>
   </Router>
 );
