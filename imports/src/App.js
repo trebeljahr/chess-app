@@ -69,23 +69,25 @@ class ChessApp extends React.Component {
       let color = game.users.find(user => user.userId === Meteor.userId())
         .color;
       return (
-        <div>
+        <div className="mainGrid">
           <Title name={game.name} />
-          <Board
-            board={game.board}
-            turnAround={color === "black" ? true : false}
-            handleClick={
-              game.movePart === 0
-                ? this.handleFirstClick
-                : this.handleSecondClick
-            }
-          />
-          <PawnChangeInterface
-            baseLinePawn={game.baseLinePawn}
-            turn={game.turn}
-            color={color}
-            continueTurn={this.continueTurn}
-          />
+          <div className="game">
+            <Board
+              board={game.board}
+              turnAround={color === "black" ? true : false}
+              handleClick={
+                game.movePart === 0
+                  ? this.handleFirstClick
+                  : this.handleSecondClick
+              }
+            />
+            <PawnChangeInterface
+              baseLinePawn={game.baseLinePawn}
+              turn={game.turn}
+              color={color}
+              continueTurn={this.continueTurn}
+            />
+          </div>
           <Dashboard
             _id={game._id}
             checkmate={game.checkmate}
@@ -99,7 +101,28 @@ class ChessApp extends React.Component {
             proposeUndo={this.proposeUndo}
             handleUndo={this.handleUndo}
           />
-          <style jsx>{``}</style>
+          <style jsx>{`
+            .mainGrid {
+              position: absolute;
+              top: 0;
+              left: 0;
+              height: 100vh;
+              width: 100vw;
+              display: grid;
+            }
+
+            @media (orientation: portrait) {
+              grid-template-rows: repeat(4, 1fr);
+            }
+            @media (orientation: landscape) {
+              .game {
+                display: flex;
+              }
+              .mainGrid {
+                grid-template-columns: repeat(3, 1fr);
+              }
+            }
+          `}</style>
         </div>
       );
     } else {
