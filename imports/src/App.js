@@ -5,6 +5,9 @@ import PawnChangeInterface from "./components/PawnChangeInterface";
 import { withTracker } from "meteor/react-meteor-data";
 import { States } from "../../imports/api/states.js";
 import Title from "./components/Title";
+import WhoPlays from "./components/WhoPlays";
+import YAxis from "./components/YAxis";
+import XAxis from "./components/XAxis";
 import queryString from "query-string";
 
 class ChessApp extends React.Component {
@@ -70,7 +73,6 @@ class ChessApp extends React.Component {
         .color;
       return (
         <div className="mainGrid">
-          <Title name={game.name} />
           <div className="game">
             <Board
               board={game.board}
@@ -81,6 +83,8 @@ class ChessApp extends React.Component {
                   : this.handleSecondClick
               }
             />
+            <XAxis turnAround={color === "black" ? true : false} />
+            <YAxis turnAround={color === "black" ? true : false} />
             <PawnChangeInterface
               baseLinePawn={game.baseLinePawn}
               turn={game.turn}
@@ -88,6 +92,8 @@ class ChessApp extends React.Component {
               continueTurn={this.continueTurn}
             />
           </div>
+          <Title name={game.name} />
+          <WhoPlays users={game.users} />
           <Dashboard
             _id={game._id}
             checkmate={game.checkmate}
@@ -108,18 +114,24 @@ class ChessApp extends React.Component {
               left: 0;
               height: 100vh;
               width: 100vw;
-              display: grid;
+              text-align: center;
+            }
+            .game {
+              position: relative;
+              padding: 2vmin 5vmin 5vmin 5vmin;
             }
 
-            @media (orientation: portrait) {
-              grid-template-rows: repeat(4, 1fr);
-            }
             @media (orientation: landscape) {
               .game {
                 display: flex;
+                grid-area: b;
+                position: relative;
               }
               .mainGrid {
-                grid-template-columns: repeat(3, 1fr);
+                display: grid;
+                grid-template-areas: "b ." "b ." "b .";
+                grid-template-rows: 1fr 1fr 10fr;
+                overflow: hidden;
               }
             }
           `}</style>
@@ -131,10 +143,9 @@ class ChessApp extends React.Component {
   }
 }
 const ChessAppContainer = withTracker(props => {
-  //const name = props.match.params.name;
   const { name } = queryString.parse(props.location.search);
   const handle = Meteor.subscribe("states");
-  const game = States.findOne({ name }); //.fetch()[0];
+  const game = States.findOne({ name });
   return {
     game
   };

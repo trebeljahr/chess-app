@@ -1,7 +1,7 @@
 import React from "react";
 import { invertColor } from "../../helpers/invertColor.js";
 const TextContainer = ({ color, checkmate, turn, remis }) => (
-  <div className="textContainer">
+  <div style={{ gridArea: "b" }} className="textContainer">
     {color === "none" ? (
       <p>
         {checkmate

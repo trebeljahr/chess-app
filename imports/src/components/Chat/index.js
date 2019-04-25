@@ -1,8 +1,8 @@
 import React from "react";
-import "./Chat.css";
 
 import { States } from "../../../../imports/api/states.js";
 import { withTracker } from "meteor/react-meteor-data";
+import ChatOverlay from "./ChatOverlay.js";
 
 class Chat extends React.Component {
   constructor(props) {
@@ -18,62 +18,18 @@ class Chat extends React.Component {
       };
     });
   };
-  newMessage = e => {
-    e.preventDefault();
-    Meteor.call(
-      "states.addNewMessage",
-      {
-        _id: this.props._id,
-        message: {
-          text: e.target.messageInput.value,
-          user: Meteor.user().username
-        }
-      },
-      (err, res) => {
-        if (err) {
-          alert(err);
-        } else {
-        }
-      }
-    );
-    e.target.messageInput.value = "";
-  };
+
   render() {
     return this.state.show && this.props.messages ? (
-      <div className="overlay">
-        <ul className="messageDisplay">
-          {this.props.messages.map((message, index) => {
-            return (
-              <li key={index}>
-                <label>{message.user}: </label> {message.text}
-              </li>
-            );
-          })}
-        </ul>
-        <div className="toolbar">
-          <form
-            className="messageForm"
-            action="submit"
-            onSubmit={this.newMessage}
-          >
-            <input
-              className="messageInput"
-              type="text"
-              name="messageInput"
-              placeholder="New Message"
-            />
-            <input type="submit" value="➤" className="btn btn-success" />
-          </form>
-          <div onClick={this.handleClick} className="btn btn-primary">
-            Hide the chat!
-          </div>
-        </div>
-      </div>
+      <ChatOverlay
+        messages={this.props.messages}
+        handleClick={this.handleClick}
+      />
     ) : (
       <div>
-        <div onClick={this.handleClick} className="btn btn-primary">
-          <i className="fas fa-comments" />
-        </div>
+        <button onClick={this.handleClick} className="btn btn-primary">
+          <i className="fas fa-comments fa-2x" />
+        </button>
       </div>
     );
   }

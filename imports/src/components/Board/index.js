@@ -48,7 +48,6 @@ const Board = props => {
         .board {
           border: none;
           display: grid;
-          margin: auto;
           width: 90vmin;
           height: 90vmin;
           grid-template-rows: repeat(8, 11.25vmin);
