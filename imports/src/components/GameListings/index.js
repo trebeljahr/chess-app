@@ -1,4 +1,5 @@
 import React from "react";
+import JoinButton from "./JoinButton.js";
 const GameListings = ({ games, handleJoin }) => (
   <div className="game-postings-container">
     {games.map(state => (
@@ -7,18 +8,7 @@ const GameListings = ({ games, handleJoin }) => (
         className={"game-posting " + (state.deleteGame ? "hidden" : "")}
       >
         <h3 className="game-posting-title">{state.name}</h3>
-        <div className="game-posting-controls">
-          <button
-            className="btn btn-success margin"
-            onClick={() => handleJoin(state._id)}
-          >
-            {state.users.filter(u => u.userId === Meteor.userId()).length > 0
-              ? "Join again"
-              : state.users.length < 2
-              ? "Join"
-              : "Spectate"}
-          </button>
-        </div>
+        <JoinButton handleJoin={handleJoin} state={state} />
       </div>
     ))}
     <style jsx>{`
@@ -48,13 +38,6 @@ const GameListings = ({ games, handleJoin }) => (
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-      }
-      .game-posting-controls {
-        margin: 0 4%;
-        align-self: center;
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
       }
     `}</style>
   </div>

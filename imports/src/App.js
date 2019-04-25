@@ -5,12 +5,12 @@ import PawnChangeInterface from "./components/PawnChangeInterface";
 import { withTracker } from "meteor/react-meteor-data";
 import { States } from "../../imports/api/states.js";
 import Title from "./components/Title";
+import queryString from "query-string";
 
 class ChessApp extends React.Component {
   constructor(props) {
     super(props);
   }
-
   handleFirstClick = field => {
     if (this.props.game) {
       Meteor.call("states.handleFirstClick", {
@@ -48,7 +48,7 @@ class ChessApp extends React.Component {
   revertUndoProposal = () => {
     if (this.props.game) {
       Meteor.call("states.revertUndoProposal", {
-        _id: this.props.id,
+        _id: this.props.game._id,
         userId: Meteor.userId()
       });
     }
@@ -108,9 +108,10 @@ class ChessApp extends React.Component {
   }
 }
 const ChessAppContainer = withTracker(props => {
-  const name = props.match.params.name;
+  //const name = props.match.params.name;
+  const { name } = queryString.parse(props.location.search);
   const handle = Meteor.subscribe("states");
-  const game = States.find({ name }).fetch()[0];
+  const game = States.findOne({ name }); //.fetch()[0];
   return {
     game
   };

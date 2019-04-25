@@ -10,7 +10,7 @@ const renderRoutes = () => (
     <div>
       <Route exact path="/" component={Navbar} />
       <Route exact path="/" component={HomeContainer} />
-      <Route exact path="/games/:name" component={ChessAppContainer} />
+      <Route exact path="/games/" component={ChessAppContainer} />
     </div>
   </Router>
 );

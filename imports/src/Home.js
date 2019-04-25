@@ -31,7 +31,7 @@ class Home extends React.Component {
       });
     }
     if (game.users.filter(u => u.userId === Meteor.userId()).length > 0) {
-      return (window.location.href = "/games/" + game.name);
+      return (window.location.href = "/games/?name=" + game.name);
     }
     let color =
       game.users.length >= 2
@@ -49,7 +49,7 @@ class Home extends React.Component {
         if (err) {
           alert(err);
         } else {
-          window.location.href = "/games/" + game.name;
+          window.location.href = "/games/?name=" + game.name;
         }
       }
     );
@@ -94,7 +94,7 @@ class Home extends React.Component {
               if (err) {
                 alert(err);
               } else {
-                window.location.href = "/games/" + res.name;
+                window.location.href = "/games/?name=" + res.name;
               }
             }
           );
