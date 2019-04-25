@@ -2,7 +2,7 @@ import React from "react";
 import { invertColor } from "../../helpers/invertColor.js";
 
 const UndoButton = props => {
-  return props.moveHistory.length >= 1 && props.color != "spectating" ? (
+  return props.moveHistory.length >= 1 && props.color !== "none" ? (
     <div>
       {props.offerTakeback === invertColor(props.color) ? (
         <button className="btn btn-warning" onClick={() => props.handleUndo()}>

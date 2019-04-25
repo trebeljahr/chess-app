@@ -61,6 +61,9 @@ const Board = props => {
           justify-content: center;
           align-items: center;
         }
+        .turnToBlackPlayer {
+          transform: translateZ(0px) rotate(180deg);
+        }
         .selected {
           background: #5f939b !important;
         }

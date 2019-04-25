@@ -30,7 +30,6 @@ Meteor.methods({
     });
   },
   "states.deleteFinishedGame"({ _id }) {
-    console.log(Meteor.userId());
     States.remove({ _id });
   },
   "states.createNew"({ name }) {
@@ -200,10 +199,10 @@ Meteor.methods({
     });
   },
   "states.proposeUndo"({ _id }) {
-    if (!this.userId) {
+    if (!Meteor.userId()) {
       return;
     }
-    let { users } = States.findOne(_id);
+    let { users } = States.findOne({ _id });
     let color = users.find(user => user.userId === Meteor.userId()).color;
     States.update(_id, {
       $set: {
@@ -212,10 +211,11 @@ Meteor.methods({
     });
   },
   "states.revertUndoProposal"({ _id }) {
+    console.log(Meteor.userId());
     if (!Meteor.userId()) {
       return;
     }
-    let { users } = States.findOne(_id);
+    let { users } = States.findOne({ _id });
     let color = users.find(user => user.userId === Meteor.userId()).color;
     States.update(_id, {
       $set: {
@@ -234,7 +234,7 @@ Meteor.methods({
       offerTakeback,
       moveHistory,
       users
-    } = States.findOne(_id);
+    } = States.findOne({ _id });
     let color = users.find(user => user.userId === Meteor.userId()).color;
     if (offerTakeback === invertColor(color)) {
       let move = RevertLastMoveInstructions(moveHistory);
@@ -258,6 +258,28 @@ Meteor.methods({
           offerTakeback: false
         }
       });
+    }
+  },
+  "states.firstStepDeleteGame"({ _id }) {
+    if (!this.userId) {
+      return;
+    }
+    let { users } = States.findOne(_id);
+    let color = users.find(user => user.userId === Meteor.userId()).color;
+    States.update(_id, {
+      $set: {
+        deleteGame: color
+      }
+    });
+  },
+  "states.secondStepDeleteGame"({ _id }) {
+    if (!Meteor.userId()) {
+      return;
+    }
+    let { deleteGame } = States.findOne(_id);
+    let color = users.find(user => user.userId === Meteor.userId()).color;
+    if (deleteGame === invertColor(color)) {
+      States.remove({ _id });
     }
   }
 });
