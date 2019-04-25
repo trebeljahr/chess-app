@@ -9,115 +9,75 @@ import AbandonGameButton from "../AbandonGameButton";
 const Dashboard = game => {
   return (
     <div className="Dashboard">
-      <MoveHistory moveHistory={game.moveHistory} />
-      <TextContainer
-        color={game.color}
-        checkmate={game.checkmate}
-        turn={game.turn}
-        remis={game.remis}
-      />
-      <HomeButton />
-      <UndoButton
-        color={game.color}
-        proposeUndo={game.proposeUndo}
-        revertUndoProposal={game.revertUndoProposal}
-        handleUndo={game.handleUndo}
-        moveHistory={game.moveHistory}
-        deleteGame={game.deleteGame}
-        offerTakeback={game.offerTakeback}
-      />
-      {game.checkmate || game.remis ? (
-        <AbandonGameButton
-          deleteGame={game.deleteGame}
+      <div className="MoveHistory">
+        <MoveHistory moveHistory={game.moveHistory} />
+      </div>
+      <div className="TextContainer">
+        <TextContainer
           color={game.color}
-          _id={game._id}
+          checkmate={game.checkmate}
+          turn={game.turn}
+          remis={game.remis}
         />
-      ) : null}
-      <ChatContainer _id={game._id} messages={game.messages} />
-      <style jsx>
-        {`
-          .moveHistoryDisplay {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            overflow: scroll;
-            background: grey;
-          }
-          .undoProposal {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-          }
-          .hourglass {
-            color: #fff;
-            background-color: #f0ad4e;
-            border-color: #eea236;
-            display: inline-block;
-            padding: 6px 12px;
-            margin-bottom: 0;
-            font-size: 14px;
-            font-weight: 400;
-            line-height: 1.42857143;
-            text-align: center;
-            white-space: nowrap;
-            vertical-align: middle;
-            border-radius: 4px;
-          }
-          .textContainer {
-            margin-top: 2%;
-            display: flex;
-            justify-content: space-around;
-          }
+      </div>
+      <div className="controls">
+        <HomeButton className="HomeButton" />
+        <UndoButton
+          color={game.color}
+          proposeUndo={game.proposeUndo}
+          revertUndoProposal={game.revertUndoProposal}
+          handleUndo={game.handleUndo}
+          moveHistory={game.moveHistory}
+          deleteGame={game.deleteGame}
+          offerTakeback={game.offerTakeback}
+        />
+        {game.checkmate || game.remis ? (
+          <AbandonGameButton
+            deleteGame={game.deleteGame}
+            color={game.color}
+            _id={game._id}
+          />
+        ) : null}
+        <ChatContainer _id={game._id} messages={game.messages} />
+      </div>
+      <style jsx>{`
+        .Dashboard {
+          display: grid;
+        }
+        @media (orientation: landscape) {
           .Dashboard {
-            padding-top: 3%;
-            width: 90vmin;
-            height: 25vh;
-            margin: auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-          }
-          .controlElements {
             display: flex;
+            text-align: center;
             flex-direction: column;
-            padding-left: 2em;
+            justify-content: center;
+            margin: 10vmin 5px;
           }
-          @media only screen and (orientation: portrait) {
-            .Dashboard {
-              padding-top: 1%;
-              grid-template-columns: 1fr;
-              grid-template-rows: 2fr 3fr;
-            }
-            .controlElements {
-              display: flex;
-              flex-direction: row;
-              padding-left: 0em;
-              padding-top: 1%;
-              justify-content: space-around;
-            }
+          .controls {
+            grid-area: c;
+            display: flex;
+            justify-content: space-around;
           }
-          @media only screen and (orientation: landscape) {
-            .Dashboard {
-              padding: 0%;
-              height: 90vmin;
-              display: grid;
-              flex-grow: 2;
-              grid-template-columns: auto auto;
-              grid-template-rows: 100%;
-            }
-            .controlElements {
-              flex-direction: column;
-              flex-wrap: wrap;
-              justify-content: space-around;
-            }
+        }
+        @media (orientation: portrait) {
+          .Dashboard {
+            margin: 10vmin;
+            grid-template-areas:
+              "a"
+              "b"
+              "c";
           }
-
-          .moveHistoryDisplay > span {
-            font-size: 0.8em;
+          .controls {
+            display: flex;
+            justify-content: space-around;
           }
-          .moveHistoryDisplay > span > span {
-            font-size: 1em;
+          .MoveHistory,
+          .TextContainer {
+            display: flex;
+            width: 100%;
+            justify-content: center;
           }
-        `}
-      </style>
+        }
+      `}</style>
     </div>
   );
 };
