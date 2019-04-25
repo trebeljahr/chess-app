@@ -56,7 +56,12 @@ class Home extends React.Component {
   };
   createNewGame = e => {
     e.preventDefault();
-    let color = e.target.color.value;
+    let color;
+    if (e.target.color.value === "random") {
+      color = Math.floor(Math.random() * 2) === 1 ? "white" : "black";
+    } else {
+      color = e.target.color.value;
+    }
     let name = e.target.name.value;
     if (name === "") {
       return Alert.error("Please enter a name for your game!", {

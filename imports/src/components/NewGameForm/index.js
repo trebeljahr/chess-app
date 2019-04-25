@@ -14,16 +14,17 @@ const NewGameForm = ({ extend, handleExtend, createNewGame }) =>
           />
           <h4>Play as</h4>
           <label htmlFor="white">White</label>
-          <input id="white" type="radio" name="color" value="white" />
-          {/*<label htmlFor="random">Random</label>
           <input
-            id="random"
+            id="white"
             type="radio"
             name="color"
-            value="random"
-          />*/}
+            value="white"
+            defaultChecked
+          />
           <label htmlFor="black">Black</label>
           <input id="black" type="radio" name="color" value="black" />
+          <label htmlFor="random">Random</label>
+          <input id="random" type="radio" name="color" value="random" />
           <input type="submit" value="Create Game!" />
         </form>
       </div>
@@ -70,8 +71,27 @@ const NewGameForm = ({ extend, handleExtend, createNewGame }) =>
       `}</style>
     </div>
   ) : (
-    <button className="btn btn-primary" onClick={handleExtend}>
-      +
-    </button>
+    <div className="absolute">
+      <button className="btn btn-primary" onClick={handleExtend}>
+        +
+      </button>
+      <style jsx>{`
+        .absolute {
+          position: absolute;
+          top: 10vh;
+          width: 100%;
+          z-index: 200;
+          display: flex;
+          justify-content: center;
+          pointer-events: none;
+        }
+        button {
+          position: absolute;
+          top: 0;
+          z-index: 1;
+          pointer-events: all;
+        }
+      `}</style>
+    </div>
   );
 export default NewGameForm;

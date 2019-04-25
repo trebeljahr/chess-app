@@ -23,6 +23,7 @@ const Dashboard = game => {
         revertUndoProposal={game.revertUndoProposal}
         handleUndo={game.handleUndo}
         moveHistory={game.moveHistory}
+        deleteGame={game.deleteGame}
         offerTakeback={game.offerTakeback}
       />
       {game.checkmate || game.remis ? (
