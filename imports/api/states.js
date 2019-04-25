@@ -211,7 +211,6 @@ Meteor.methods({
     });
   },
   "states.revertUndoProposal"({ _id }) {
-    console.log(Meteor.userId());
     if (!Meteor.userId()) {
       return;
     }
@@ -276,7 +275,7 @@ Meteor.methods({
     if (!Meteor.userId()) {
       return;
     }
-    let { deleteGame } = States.findOne(_id);
+    let { deleteGame, users } = States.findOne(_id);
     let color = users.find(user => user.userId === Meteor.userId()).color;
     if (deleteGame === invertColor(color)) {
       States.remove({ _id });

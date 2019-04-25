@@ -26,7 +26,11 @@ const Dashboard = game => {
         offerTakeback={game.offerTakeback}
       />
       {game.checkmate || game.remis ? (
-        <AbandonGameButton deleteGame={game.deleteGame} color={game.color} />
+        <AbandonGameButton
+          deleteGame={game.deleteGame}
+          color={game.color}
+          _id={game._id}
+        />
       ) : null}
       <ChatContainer _id={game._id} messages={game.messages} />
       <style jsx>
