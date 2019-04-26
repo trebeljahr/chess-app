@@ -6,36 +6,46 @@ import { Blaze } from "meteor/blaze";
 export default class Navbar extends Component {
   componentDidMount() {
     this.view = Blaze.render(
-      Template.loginButtons,
+      Template.atForm,
       ReactDOM.findDOMNode(this.refs.container)
+    );
+    this.navbar = Blaze.render(
+      Template.atNavButton,
+      ReactDOM.findDOMNode(this.refs.navbar)
     );
   }
   componentWillUnmount() {
     Blaze.remove(this.view);
+    Blaze.remove(this.navbar);
   }
   render() {
     return (
-      <div className="Navbar">
-        <div ref="container" className="login" />
+      <div>
+        <div
+          ref="navbar"
+          onClick={this.handleClick}
+          className={
+            AccountsTemplates.getState() !== "hide" ? "hidden" : "atTop"
+          }
+        />
+        <div ref="container" />
         <style jsx>{`
-          .Navbar {
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            padding-left: 2%;
-            padding-top: 1%;
-            z-index: 4;
+          div{
+            background: white;
+          }
+          .atTop {
             position: fixed;
             top: 0;
-            left: 0;
-            padding-bottom: 1%;
-            width: 100vw;
-            background: navy;
-            color: white;
+            z-index: 3;
+            width: 100%;
+            padding-left: 10px;
+            display: flex;
+            justify-content: flex-start;
+            background: blue;
           }
-          .login {
-            color: white;
-            text-decoration: none;
+          .hidden {
+            display: none;
+          }
           }
         `}</style>
       </div>
