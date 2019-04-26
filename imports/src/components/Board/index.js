@@ -102,6 +102,16 @@ const Board = props => {
           height: 80%;
           line-height: 3em;
         }
+        @media (orientation: portrait) {
+          .board {
+            width: 100vmin;
+            height: 100vmin;
+            grid-template-rows: repeat(8, 12.5vmin);
+            grid-template-columns: repeat(8, 12.5vmin);
+            margin-bottom: 30px;
+            padding: 0;
+          }
+        }
       `}</style>
     </div>
   );

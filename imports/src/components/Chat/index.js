@@ -24,7 +24,7 @@ class Chat extends React.Component {
   render() {
     let numberOfNewMessages =
       this.props.messages.length - this.state.numberOfMessages;
-    return (this.state.show && this.props.messages) || true ? (
+    return this.state.show && this.props.messages ? (
       <ChatOverlay
         messages={this.props.messages}
         handleClick={this.handleClick}

@@ -33,6 +33,17 @@ const MoveHistory = ({ moveHistory }) => (
         grid-area: a;
         height: 20vh;
         overflow-y: scroll;
+        scrollbar-color: #286090 #fff;
+      }
+      div::-webkit-scrollbar {
+        width: 15px;
+      }
+      div::-webkit-scrollbar-track-piece {
+        width: 15px;
+        background: white;
+      }
+      div::-webkit-scrollbar-thumb:vertical {
+        background: #286090;
       }
       @media only screen and (min-aspect-ratio: 7/5) {
         div {
@@ -47,6 +58,11 @@ const MoveHistory = ({ moveHistory }) => (
       }
       .black {
         color: black;
+      }
+      @media (orientation: portrait) {
+        div {
+          display: none;
+        }
       }
     `}</style>
   </div>

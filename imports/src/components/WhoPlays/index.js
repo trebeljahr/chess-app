@@ -1,12 +1,13 @@
 import React from "react";
 const WhoPlays = ({ users }) => (
-  <div>
+  <h2>
     {users.map((user, index) => "" + (index === 0 ? "" : " vs.") + user.name)}
     <style jsx>{`
-      div {
+      h2 {
         grid-area: g;
+        font-weight: bold;
       }
     `}</style>
-  </div>
+  </h2>
 );
 export default WhoPlays;

@@ -50,27 +50,28 @@ const Dashboard = game => {
           height: 100%;
           display: grid;
           grid-template-areas:
+            "b b b"
+            "c d e"
             "f f f"
             "g g g"
-            "a a a"
-            "b b b"
-            "c d e";
+            "a a a";
           grid-auto-rows: min-content;
           grid-row-gap: 10px;
         }
         .leave {
           grid-template-areas:
+            "d d e"
+            "b b b"
             "f f f"
             "g g g"
-            "a a a"
-            "b b b"
-            "d d e";
+            "a a a";
         }
+
         @media only screen and (min-aspect-ratio: 7/5) {
           .Dashboard {
             margin-top: 10vmin;
             width: 100%;
-            height: 80vh;
+            max-height: 80vh;
           }
         }
       `}</style>
