@@ -2,22 +2,39 @@ import React, { Component } from "react";
 import ReactDOM from "react-dom";
 import { Template } from "meteor/templating";
 import { Blaze } from "meteor/blaze";
-import "./Navbar.css";
 
 export default class Navbar extends Component {
   componentDidMount() {
-    this.view = Blaze.render(
-      Template.loginButtons,
-      ReactDOM.findDOMNode(this.refs.container)
+    this.navbar = Blaze.render(
+      Template.atNavButton,
+      ReactDOM.findDOMNode(this.refs.navbar)
     );
   }
   componentWillUnmount() {
-    Blaze.remove(this.view);
+    Blaze.remove(this.navbar);
   }
   render() {
     return (
-      <div className="Navbar">
-        <div ref="container" />
+      <div id="nav">
+        {Meteor.user() ? <h4>Signed in as: {Meteor.user().username}</h4> : null}
+        <div ref="navbar" />
+        <style jsx>{`
+          #nav {
+            position: relative;
+            padding: 5px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: blue;
+          }
+          h4 {
+            padding: 0;
+            margin: 0;
+            margin-right: 20px;
+            color: white;
+          }
+        `}</style>
       </div>
     );
   }

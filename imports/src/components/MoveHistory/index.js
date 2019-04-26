@@ -1,10 +1,12 @@
 import React from "react";
-const MoveHistory = ({ moveHistory }) => {
-  return moveHistory.map((move, index) => {
-    return (
+const MoveHistory = ({ moveHistory }) => (
+  <div>
+    {moveHistory.map((move, index) => (
       <span
         key={index}
-        className={move.figure.color + " fas fa-chess-" + move.figure.type}
+        className={
+          move.figure.color + " outer fas fa-chess-" + move.figure.type
+        }
       >
         {"" +
           String.fromCharCode(move.oldPos.col + 65) +
@@ -24,7 +26,36 @@ const MoveHistory = ({ moveHistory }) => {
           />
         )}
       </span>
-    );
-  });
-};
+    ))}
+    <style jsx>{`
+      div {
+        background: grey;
+        grid-area: a;
+        min-height: 0;
+        align-self: stretch;
+        overflow-y: scroll;
+        scrollbar-color: #286090 #fff;
+      }
+      div::-webkit-scrollbar {
+        width: 0;
+      }
+
+      .outer {
+        margin: 10px;
+      }
+      .white {
+        color: white;
+      }
+      .black {
+        color: black;
+      }
+      @media only screen and (max-aspect-ratio: 7/5) {
+        div {
+          display: none;
+        }
+      }
+    `}</style>
+  </div>
+);
+
 export default MoveHistory;
