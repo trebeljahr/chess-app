@@ -5,10 +5,16 @@ import TextContainer from "../TextContainer";
 import MoveHistory from "../MoveHistory";
 import HomeButton from "../HomeButton";
 import AbandonGameButton from "../AbandonGameButton";
+import Title from "../Title";
+import WhoPlays from "../WhoPlays";
 
 const Dashboard = game => {
   return (
-    <div className="Dashboard">
+    <div
+      className={"Dashboard " + (game.checkmate || game.remis ? "leave" : "")}
+    >
+      <Title name={game.name} />
+      <WhoPlays users={game.users} />
       <MoveHistory moveHistory={game.moveHistory} />
       <TextContainer
         color={game.color}
@@ -16,7 +22,7 @@ const Dashboard = game => {
         turn={game.turn}
         remis={game.remis}
       />
-      <HomeButton />
+      {game.checkmate || game.remis ? null : <HomeButton />}
       {game.checkmate || game.remis ? (
         <AbandonGameButton
           deleteGame={game.deleteGame}
@@ -37,19 +43,34 @@ const Dashboard = game => {
       <ChatContainer _id={game._id} messages={game.messages} />
       <style jsx>{`
         .Dashboard {
+          padding: 0 5vmin;
+          margin: 0;
+          margin-bottom: 10vmin;
+          width: 100vmin;
+          height: 100%;
           display: grid;
           grid-template-areas:
+            "f f f"
+            "g g g"
             "a a a"
             "b b b"
             "c d e";
-          grid-auto-rows: minmax(0, auto);
+          grid-auto-rows: min-content;
+          grid-row-gap: 10px;
         }
-        @media (orientation: landscape) {
+        .leave {
+          grid-template-areas:
+            "f f f"
+            "g g g"
+            "a a a"
+            "b b b"
+            "d d e";
+        }
+        @media only screen and (min-aspect-ratio: 7/5) {
           .Dashboard {
-            display: grid;
-            grid-template-areas: "a a a" "b b b" "c d e";
-            grid-template-rows: 4fr 1fr 1fr;
-            grid-template-columns: 1fr 2fr 1fr;
+            margin-top: 10vmin;
+            width: 100%;
+            height: 80vh;
           }
         }
       `}</style>

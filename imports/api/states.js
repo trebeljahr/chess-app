@@ -254,7 +254,8 @@ Meteor.methods({
           turn: invertColor(turn),
           checkmate: false,
           remis: false,
-          offerTakeback: false
+          offerTakeback: false,
+          baseLinePawn: false
         }
       });
     }

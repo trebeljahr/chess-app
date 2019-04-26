@@ -2,34 +2,52 @@ import React from "react";
 const PawnChangeInterface = ({ baseLinePawn, turn, color, continueTurn }) => {
   if (baseLinePawn && color === turn) {
     return (
-      <div className="attach">
-        <div className="grey">
-          <span
-            onClick={() => continueTurn("knight")}
-            className={"fas fa-chess-knight " + color}
-          />
-          <span
-            onClick={() => continueTurn("bishop")}
-            className={"fas fa-chess-bishop " + color}
-          />
-          <span
-            onClick={() => continueTurn("rook")}
-            className={"fas fa-chess-rook " + color}
-          />
-          <span
-            onClick={() => continueTurn("queen")}
-            className={"fas fa-chess-queen " + color}
-          />
-        </div>
+      <div className="blue">
+        <span
+          onClick={() => continueTurn("knight")}
+          className={"fas fa-chess-knight fa-2x " + color}
+        />
+        <span
+          onClick={() => continueTurn("bishop")}
+          className={"fas fa-chess-bishop fa-2x " + color}
+        />
+        <span
+          onClick={() => continueTurn("rook")}
+          className={"fas fa-chess-rook fa-2x " + color}
+        />
+        <span
+          className={"fas fa-chess-queen fa-2x " + color}
+          onClick={() => continueTurn("queen")}
+        />
         <style jsx>{`
-          .grey {
-            width: 90vmin;
-            height: 15vmin;
-            padding: 10px;
-            background: grey;
+          .blue {
+            position: relative;
+            z-index: 2;
+            width: 80vmin;
+            height: 10vmin;
+            background: #258ea6;
             display: flex;
             justify-content: space-around;
             align-items: center;
+          }
+          span {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .white {
+            color: white;
+          }
+          .black {
+            color: black;
+          }
+          .black:hover {
+            background: red;
+          }
+          .white:hover {
+            background: red;
           }
           .grey > span {
             font-size: 2em;
@@ -37,16 +55,16 @@ const PawnChangeInterface = ({ baseLinePawn, turn, color, continueTurn }) => {
             padding: 0;
           }
           .attach {
-            width: 100%;
             display: flex;
-            justify-content: center;
+            position: relative;
+            z-index: 2;
           }
-          @media (orientation: landscape) {
-            .grey {
+          @media only screen and (min-aspect-ratio: 7/5) {
+            .blue {
               width: auto;
               flex-direction: column;
-              height: 90vmin;
-              padding: 0 10px;
+              height: 80vmin;
+              width: 10vmin;
             }
             .attach {
               width: auto;

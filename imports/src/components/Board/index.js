@@ -48,10 +48,10 @@ const Board = props => {
         .board {
           border: none;
           display: grid;
-          width: 90vmin;
-          height: 90vmin;
-          grid-template-rows: repeat(8, 11.25vmin);
-          grid-template-columns: repeat(8, 11.25vmin);
+          width: 80vmin;
+          height: 80vmin;
+          grid-template-rows: repeat(8, 10vmin);
+          grid-template-columns: repeat(8, 10vmin);
         }
         .board div {
           font-size: 3vmin;

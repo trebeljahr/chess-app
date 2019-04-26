@@ -8,28 +8,62 @@ class Chat extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      show: false
+      show: false,
+      numberOfMessages: this.props.messages.length
     };
   }
   handleClick = () => {
     this.setState(state => {
       return {
-        show: !state.show
+        show: !state.show,
+        numberOfMessages: this.props.messages.length
       };
     });
   };
 
   render() {
-    return this.state.show && this.props.messages ? (
+    let numberOfNewMessages =
+      this.props.messages.length - this.state.numberOfMessages;
+    return (this.state.show && this.props.messages) || true ? (
       <ChatOverlay
         messages={this.props.messages}
         handleClick={this.handleClick}
+        _id={this.props._id}
       />
     ) : (
       <div>
         <button onClick={this.handleClick} className="btn btn-primary">
           <i className="fas fa-comments fa-2x" />
         </button>
+        {numberOfNewMessages > 0 ? (
+          <div className="align">
+            <div className="newMessages">{numberOfNewMessages}</div>
+          </div>
+        ) : null}
+        <style jsx>{`
+          div {
+            position: relative;
+            grid-area: e;
+          }
+          button {
+            background: #258ea6;
+          }
+          .align {
+            position: absolute;
+            bottom: 4px;
+            right: 5px;
+            display: flex;
+            flex-wrap: no-wrap;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            justify-content: center;
+            align-items: center;
+          }
+          .newMessages {
+            color: black;
+          }
+        `}</style>
       </div>
     );
   }

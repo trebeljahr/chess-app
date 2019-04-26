@@ -37,6 +37,9 @@ class ChatOverlay extends React.Component {
   render() {
     return (
       <div className="overlay">
+        <div className="header">
+          <h3>Chat</h3>
+        </div>
         <ul>
           {this.props.messages.map((message, index) => {
             return (
@@ -60,44 +63,75 @@ class ChatOverlay extends React.Component {
               name="messageInput"
               placeholder="New Message"
             />
-            <button type="submit" className="btn btn-success send">
+            <button id="yellow" type="submit" className="btn btn-success send">
               <i className="fas fa-paper-plane" />
             </button>
           </form>
-          <div onClick={this.props.handleClick} className="btn btn-primary">
-            Hide the chat!
+          <div
+            id="blue"
+            onClick={this.props.handleClick}
+            className="btn btn-primary"
+          >
+            <i className="fas fa-chevron-up" />
           </div>
         </div>
         <style>{`
-          .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
+          .header {
+            height: 8vh;
             padding: 10px;
             width: 100%;
-            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #C0D6DF;
+          }
+          #blue {
+            background: #258ea6;
+          }
+          #yellow {
+            background: #EFA00B;
+          }
+          .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
             background: white;
             z-index: 2;
-            display: grid;
-            grid-template-areas: "messages messages" "toolbar toolbar";
-            grid-template-rows: 9fr 1fr;
+            overflow: hidden;
           }
           ul {
             list-style-type: none;
             grid-area: messages;
+            height: 82vh;
+            max-height: 100%;
             margin: 0;
             padding: 0;
-            max-height: 100%;
+            padding-left: 20px;
             overflow-y: scroll;
             text-align: left;
+            scrollbar-color: #286090 #FFF;
+          }
+          ul::-webkit-scrollbar {
+              width: 15px;
+              }
+          ul::-webkit-scrollbar-track-piece  {
+              background: white;
+          }
+
+          ul::-webkit-scrollbar-thumb:vertical {
+              background: #286090;
           }
           .toolbar {
-            grid-area: toolbar;
-            display:flex;
+            display: flex;
+            height: 10vh;
             flex-direction: row;
             align-items: center;
             justify-content: space-around;
-            padding-right: 10px;
+            padding: 10px;
+            padding-left: 20px;
+            background: #C0D6DF;
           }
 
           form {

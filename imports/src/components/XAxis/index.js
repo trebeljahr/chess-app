@@ -9,10 +9,10 @@ const XAxis = ({ turnAround }) => (
       .axis {
         position: absolute;
         left: 5vmin;
-        top: 95vmin;
+        top: 85vmin;
         display: flex;
         justify-content: space-around;
-        width: 90vmin;
+        width: 80vmin;
       }
       .turnToBlackPlayer {
         flex-direction: row-reverse;

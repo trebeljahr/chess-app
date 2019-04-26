@@ -3,20 +3,23 @@ import { invertColor } from "../../helpers/invertColor.js";
 
 const UndoButton = props => (
   <div style={{ gridArea: "d" }}>
-    {props.moveHistory.length >= 1 &&
-    props.color !== "none" &&
-    !props.deleteGame ? (
+    {props.color !== "none" && !props.deleteGame ? (
       <div>
         {props.offerTakeback === invertColor(props.color) ? (
-          <button
-            className="btn btn-warning"
-            onClick={() => props.handleUndo()}
-          >
-            Confirm Undo?
-          </button>
+          <div>
+            <button
+              className="btn btn-danger"
+              onClick={() => props.revertUndoProposal()}
+            >
+              <i className="fas fa-ban fa-2x" />
+            </button>
+            <button className="btn btn-info" onClick={() => props.handleUndo()}>
+              <i className="fas fa-check fa-2x" />
+            </button>
+          </div>
         ) : props.offerTakeback ? (
           <div>
-            <button className="hourglass btn btn-warning">
+            <button className="noClick btn btn-warning">
               <i className="fas fa-hourglass-half fa-2x" />
             </button>
             <button
@@ -27,15 +30,24 @@ const UndoButton = props => (
             </button>
           </div>
         ) : (
-          <button className="btn btn-info" onClick={() => props.proposeUndo()}>
+          <button id="undo" className="btn" onClick={() => props.proposeUndo()}>
             <i className="fas fa-undo fa-2x" />
           </button>
         )}
       </div>
     ) : null}
     <style jsx>{`
-      .hourglass {
+      #undo {
+        background: #d9dcd6;
+      }
+      #undo:hover {
+        background: #c6c8c3;
+      }
+      .noClick {
         pointer-events: none;
+      }
+      button {
+        margin: 0 5px;
       }
     `}</style>
   </div>
