@@ -15,17 +15,24 @@ export default class Navbar extends Component {
   }
   render() {
     return (
-      <div ref="navbar">
+      <div id="nav">
+        {Meteor.user() ? <h4>Signed in as: {Meteor.user().username}</h4> : null}
+        <div ref="navbar" />
         <style jsx>{`
-          div {
-            position: fixed;
-            top: 0;
-            z-index: 3;
+          #nav {
+            position: relative;
+            padding: 5px;
             width: 100%;
-            padding-left: 10px;
             display: flex;
-            justify-content: flex-start;
+            justify-content: center;
+            align-items: center;
             background: blue;
+          }
+          h4 {
+            padding: 0;
+            margin: 0;
+            margin-right: 20px;
+            color: white;
           }
         `}</style>
       </div>

@@ -35,6 +35,17 @@ export default class Navbar extends Component {
             height: 100vh;
             background: white;
             overflow: scroll;
+            scrollbar-color: #286090 #fff;
+          }
+          .login::-webkit-scrollbar {
+            width: 15px;
+          }
+          .login::-webkit-scrollbar-track-piece {
+            background: white;
+          }
+
+          .login::-webkit-scrollbar-thumb:vertical {
+            background: #286090;
           }
           .banner {
             color: white;

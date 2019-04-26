@@ -35,6 +35,9 @@ const NewGameForm = ({ extend, handleExtend, createNewGame }) =>
           align-items: center;
         }
         .fullScreen {
+          position: fixed;
+          top: 0;
+          left: 0;
           width: 100vw;
           height: 100vh;
           display: flex;
@@ -76,11 +79,13 @@ const NewGameForm = ({ extend, handleExtend, createNewGame }) =>
       <style jsx>{`
         i {
           color: blue;
+          background: white;
+          border-radius: 50%;
         }
         div {
           position: absolute;
-          bottom: 5vh;
-          right: 5vh;
+          bottom: 3vh;
+          right: 3vh;
           z-index: 1;
         }
       `}</style>
