@@ -26,7 +26,8 @@ export default class Navbar extends Component {
             display: flex;
             justify-content: center;
             align-items: center;
-            background: blue;
+            background: #246EB9;
+            );
           }
           h4 {
             padding: 0;
