@@ -38,6 +38,7 @@ const NewGameForm = ({ extend, handleExtend, createNewGame }) =>
           position: fixed;
           top: 0;
           left: 0;
+          z-index: 3;
           width: 100vw;
           height: 100vh;
           display: flex;
@@ -58,7 +59,7 @@ const NewGameForm = ({ extend, handleExtend, createNewGame }) =>
           justify-content: center;
           padding: 5vmin;
           background: white;
-          z-index: 2;
+          z-index: 4;
           position: relative;
         }
         .formInput {
@@ -78,9 +79,12 @@ const NewGameForm = ({ extend, handleExtend, createNewGame }) =>
       <i className="fas fa-plus-circle fa-3x" onClick={handleExtend} />
       <style jsx>{`
         i {
-          color: blue;
+          color: #246eb9;
           background: white;
           border-radius: 50%;
+        }
+        i:hover {
+          color: #090c9b;
         }
         div {
           position: absolute;
