@@ -4,13 +4,17 @@ import { Route, BrowserRouter as Router } from "react-router-dom";
 import ChessAppContainer from "../../src/App.js";
 import HomeContainer from "../../src/Home.js";
 import Navbar from "../../src/components/Navbar";
+import Login from "../../src/components/Login";
 
 const renderRoutes = () => (
   <Router>
     <div>
-      <Route exact path="/" component={Navbar} />
-      <Route exact path="/" component={HomeContainer} />
-      <Route exact path="/games/" component={ChessAppContainer} />
+      <Switch>
+        <Route exact path="/games/" component={ChessAppContainer} />
+        <Route exact path="/login/" component={Login} />
+        <Route component={Navbar} />
+        <Route component={HomeContainer} />
+      </Switch>
     </div>
   </Router>
 );

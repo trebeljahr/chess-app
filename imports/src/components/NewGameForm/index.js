@@ -71,25 +71,17 @@ const NewGameForm = ({ extend, handleExtend, createNewGame }) =>
       `}</style>
     </div>
   ) : (
-    <div className="absolute">
-      <button className="btn btn-primary" onClick={handleExtend}>
-        +
-      </button>
+    <div>
+      <i className="fas fa-plus-circle fa-3x" onClick={handleExtend} />
       <style jsx>{`
-        .absolute {
-          position: absolute;
-          top: 10vh;
-          width: 100%;
-          z-index: 200;
-          display: flex;
-          justify-content: center;
-          pointer-events: none;
+        i {
+          color: blue;
         }
-        button {
+        div {
           position: absolute;
-          top: 0;
+          bottom: 5vh;
+          right: 5vh;
           z-index: 1;
-          pointer-events: all;
         }
       `}</style>
     </div>
