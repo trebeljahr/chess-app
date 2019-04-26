@@ -31,25 +31,15 @@ const MoveHistory = ({ moveHistory }) => (
       div {
         background: grey;
         grid-area: a;
-        height: 20vh;
+        min-height: 0;
+        align-self: stretch;
         overflow-y: scroll;
         scrollbar-color: #286090 #fff;
       }
       div::-webkit-scrollbar {
-        width: 15px;
+        width: 0;
       }
-      div::-webkit-scrollbar-track-piece {
-        width: 15px;
-        background: white;
-      }
-      div::-webkit-scrollbar-thumb:vertical {
-        background: #286090;
-      }
-      @media only screen and (min-aspect-ratio: 7/5) {
-        div {
-          height: 40vh;
-        }
-      }
+
       .outer {
         margin: 10px;
       }
@@ -59,7 +49,7 @@ const MoveHistory = ({ moveHistory }) => (
       .black {
         color: black;
       }
-      @media (orientation: portrait) {
+      @media only screen and (max-aspect-ratio: 7/5) {
         div {
           display: none;
         }
