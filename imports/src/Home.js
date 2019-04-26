@@ -100,7 +100,7 @@ class Home extends React.Component {
               if (err) {
                 alert(err);
               } else {
-                window.location.href = "/games/?name=" + res.name;
+                //window.location.href = "/games/?name=" + res.name;
               }
             }
           );
@@ -112,7 +112,7 @@ class Home extends React.Component {
   };
   render() {
     return (
-      <div>
+      <div className="flex">
         <Navbar />
         {this.props.states ? (
           <div>
@@ -130,6 +130,18 @@ class Home extends React.Component {
           <div>Loading...</div>
         )}
         <Alert stack={{ limit: 1 }} timeout={3000} />
+        <style jsx>{`
+          .flex {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            display: flex;
+            flex-direction: column;
+          }
+        `}</style>
       </div>
     );
   }

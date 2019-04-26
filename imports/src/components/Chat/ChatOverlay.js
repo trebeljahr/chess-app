@@ -103,7 +103,6 @@ class ChatOverlay extends React.Component {
           }
           ul {
             list-style-type: none;
-            grid-area: messages;
             height: 82vh;
             max-height: 100%;
             margin: 0;

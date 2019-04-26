@@ -1,7 +1,7 @@
 import React from "react";
 import JoinButton from "./JoinButton.js";
 const GameListings = ({ games, handleJoin }) => (
-  <div className="game-postings-container">
+  <div className="gpc">
     {games.map(state => (
       <div
         key={state._id}
@@ -15,12 +15,27 @@ const GameListings = ({ games, handleJoin }) => (
       .hidden {
         display: none;
       }
-      .game-postings-container {
+      .gpc {
+        position: relative;
         width: 100%;
+        height: 90vh;
+        margin: 0;
+        padding: 0;
+        padding-top: 5px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        margin-top: 10vh;
+        overflow: scroll;
+        scrollbar-color: #286090 #fff;
+      }
+      .gpc::-webkit-scrollbar {
+        width: 15px;
+      }
+      .gpc::-webkit-scrollbar-track-piece {
+        background: white;
+      }
+      .gpc::-webkit-scrollbar-thumb:vertical {
+        background: #286090;
       }
       .game-posting {
         width: 80vw;
