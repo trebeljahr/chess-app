@@ -4,6 +4,7 @@ import { States } from "../../imports/api/states.js";
 import Alert from "react-s-alert";
 import NewGameForm from "./components/NewGameForm";
 import GameListings from "./components/GameListings";
+import Navbar from "./components/Navbar";
 
 import "react-s-alert/dist/s-alert-default.css";
 import "react-s-alert/dist/s-alert-css-effects/genie.css";
@@ -112,6 +113,7 @@ class Home extends React.Component {
   render() {
     return (
       <div>
+        <Navbar />
         {this.props.states ? (
           <div>
             <NewGameForm

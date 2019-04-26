@@ -5,35 +5,19 @@ import { Blaze } from "meteor/blaze";
 
 export default class Navbar extends Component {
   componentDidMount() {
-    this.view = Blaze.render(
-      Template.atForm,
-      ReactDOM.findDOMNode(this.refs.container)
-    );
     this.navbar = Blaze.render(
       Template.atNavButton,
       ReactDOM.findDOMNode(this.refs.navbar)
     );
   }
   componentWillUnmount() {
-    Blaze.remove(this.view);
     Blaze.remove(this.navbar);
   }
   render() {
     return (
-      <div>
-        <div
-          ref="navbar"
-          onClick={this.handleClick}
-          className={
-            AccountsTemplates.getState() !== "hide" ? "hidden" : "atTop"
-          }
-        />
-        <div ref="container" />
+      <div ref="navbar">
         <style jsx>{`
-          div{
-            background: white;
-          }
-          .atTop {
+          div {
             position: fixed;
             top: 0;
             z-index: 3;
@@ -42,10 +26,6 @@ export default class Navbar extends Component {
             display: flex;
             justify-content: flex-start;
             background: blue;
-          }
-          .hidden {
-            display: none;
-          }
           }
         `}</style>
       </div>

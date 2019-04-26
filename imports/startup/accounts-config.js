@@ -44,7 +44,7 @@ AccountsTemplates.configure({
 
   // Hooks
   onLogoutHook: () => {
-    window.location.href = "/";
+    window.location.href = "/login/";
     AccountsTemplates.setState("signIn");
   },
   onSubmitHook: redirect,
