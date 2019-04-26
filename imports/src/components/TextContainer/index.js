@@ -1,7 +1,7 @@
 import React from "react";
 import { invertColor } from "../../helpers/invertColor.js";
 const TextContainer = ({ color, checkmate, turn, remis }) => (
-  <h2 style={{ gridArea: "b" }}>
+  <h4 style={{ gridArea: "b" }}>
     {color === "none"
       ? checkmate
         ? invertColor(turn) + " wins!"
@@ -16,12 +16,12 @@ const TextContainer = ({ color, checkmate, turn, remis }) => (
       ? "It's a draw!"
       : "It's" + (turn === color ? " your" : " your opponents") + " turn"}
     <style jsx>{`
-      h2 {
+      h4 {
         margin: 0;
         padding: 0;
         font-weight: bold;
       }
     `}</style>
-  </h2>
+  </h4>
 );
 export default TextContainer;

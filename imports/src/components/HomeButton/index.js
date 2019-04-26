@@ -10,6 +10,9 @@ const HomeButton = ({ moveHistory }) => (
         background: #258ea6;
         color: white;
       }
+      div {
+        justify-self: start;
+      }
     `}</style>
   </div>
 );

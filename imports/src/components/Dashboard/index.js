@@ -5,7 +5,6 @@ import TextContainer from "../TextContainer";
 import MoveHistory from "../MoveHistory";
 import HomeButton from "../HomeButton";
 import AbandonGameButton from "../AbandonGameButton";
-import Title from "../Title";
 import WhoPlays from "../WhoPlays";
 
 const Dashboard = game => {
@@ -13,7 +12,6 @@ const Dashboard = game => {
     <div
       className={"Dashboard " + (game.checkmate || game.remis ? "leave" : "")}
     >
-      <Title name={game.name} />
       <WhoPlays users={game.users} />
       <MoveHistory moveHistory={game.moveHistory} />
       <TextContainer
@@ -50,28 +48,29 @@ const Dashboard = game => {
           height: 100%;
           display: grid;
           grid-template-areas:
-            "b b b"
-            "c d e"
-            "f f f"
             "g g g"
-            "a a a";
-          grid-auto-rows: min-content;
+            "b b b"
+            "c d e";
+          grid-auto-rows: max-content max-content max-content auto;
           grid-row-gap: 10px;
         }
         .leave {
           grid-template-areas:
-            "d d e"
-            "b b b"
-            "f f f"
             "g g g"
-            "a a a";
+            "b b b"
+            "d d e";
         }
-
         @media only screen and (min-aspect-ratio: 7/5) {
           .Dashboard {
             margin-top: 10vmin;
             width: 100%;
             max-height: 80vh;
+            display: grid;
+            grid-template-areas:
+              "g g g"
+              "b b b"
+              "c d e"
+              "a a a";
           }
         }
       `}</style>

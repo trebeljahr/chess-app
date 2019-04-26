@@ -44,6 +44,7 @@ class Chat extends React.Component {
           div {
             position: relative;
             grid-area: e;
+            justify-self: end;
           }
           button {
             background: #258ea6;
