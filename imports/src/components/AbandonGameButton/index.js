@@ -31,14 +31,26 @@ class AbandonGameButton extends React.Component {
       <div style={{ gridArea: "d" }}>
         {this.props.deleteGame && this.props.color !== "none" ? (
           this.props.deleteGame === invertColor(this.props.color) ? (
-            <button onClick={this.handleSecondAbandon}>Abandon Game</button>
+            <div onClick={this.handleSecondAbandon}>
+              <i className="fas fa-door-open fa-2x" />
+            </div>
           ) : (
             <div>You already abandoned the game?</div>
           )
         ) : (
-          <button onClick={this.handleFirstAbandon}>Abandon Game</button>
+          <div onClick={this.handleFirstAbandon}>
+            <i className="fas fa-door-open fa-2x" />
+          </div>
         )}
-        <style jsx>{``}</style>
+        <style jsx>{`
+          div {
+            color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #d9dcd6;
+          }
+        `}</style>
       </div>
     );
   }

@@ -14,9 +14,8 @@ const YAxis = ({ turnAround }) => (
         flex-direction: column-reverse;
         justify-content: space-around;
         margin-top: 5vmin;
-        margin-top: 1.3vmin;
         margin-left: 2vmin;
-        height: 90vmin;
+        height: 80vmin;
       }
       .turnToBlackPlayer {
         flex-direction: column;

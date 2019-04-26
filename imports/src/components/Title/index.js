@@ -1,14 +1,19 @@
 import React from "react";
 const Title = ({ name }) => (
   <div>
-    <h1 className="GameTitle">Game: {name}</h1>
+    <h1 id="title">
+      Game:
+      {name.length > 10
+        ? " " + name.slice(0, 10) + "..."
+        : " " + name.slice(0, name.length - 1)}
+    </h1>
     <style jsx>{`
       div {
-        width: 100%;
+        word-wrap: break-word;
         text-align: center;
-        margin-top: 5vmin;
+        grid-area: f;
       }
-      h4 {
+      #title {
         margin: 0;
       }
     `}</style>

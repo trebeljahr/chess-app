@@ -4,7 +4,9 @@ const MoveHistory = ({ moveHistory }) => (
     {moveHistory.map((move, index) => (
       <span
         key={index}
-        className={move.figure.color + " fas fa-chess-" + move.figure.type}
+        className={
+          move.figure.color + " outer fas fa-chess-" + move.figure.type
+        }
       >
         {"" +
           String.fromCharCode(move.oldPos.col + 65) +
@@ -29,6 +31,22 @@ const MoveHistory = ({ moveHistory }) => (
       div {
         background: grey;
         grid-area: a;
+        height: 20vh;
+        overflow-y: scroll;
+      }
+      @media only screen and (min-aspect-ratio: 7/5) {
+        div {
+          height: 40vh;
+        }
+      }
+      .outer {
+        margin: 10px;
+      }
+      .white {
+        color: white;
+      }
+      .black {
+        color: black;
       }
     `}</style>
   </div>

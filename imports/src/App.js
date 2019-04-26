@@ -4,8 +4,6 @@ import Dashboard from "./components/Dashboard";
 import PawnChangeInterface from "./components/PawnChangeInterface";
 import { withTracker } from "meteor/react-meteor-data";
 import { States } from "../../imports/api/states.js";
-import Title from "./components/Title";
-import WhoPlays from "./components/WhoPlays";
 import YAxis from "./components/YAxis";
 import XAxis from "./components/XAxis";
 import queryString from "query-string";
@@ -41,7 +39,7 @@ class ChessApp extends React.Component {
     }
   };
   proposeUndo = () => {
-    if (this.props.game) {
+    if (this.props.game && this.props.game.moveHistory.length > 0) {
       Meteor.call("states.proposeUndo", {
         _id: this.props.game._id,
         userId: Meteor.userId()
@@ -72,7 +70,7 @@ class ChessApp extends React.Component {
       let color = game.users.find(user => user.userId === Meteor.userId())
         .color;
       return (
-        <div className="mainGrid">
+        <div className="main">
           <div className="game">
             <Board
               board={game.board}
@@ -92,9 +90,10 @@ class ChessApp extends React.Component {
               continueTurn={this.continueTurn}
             />
           </div>
-          <Title name={game.name} />
-          <WhoPlays users={game.users} />
+
           <Dashboard
+            name={game.name}
+            users={game.users}
             _id={game._id}
             checkmate={game.checkmate}
             remis={game.remis}
@@ -108,30 +107,33 @@ class ChessApp extends React.Component {
             handleUndo={this.handleUndo}
           />
           <style jsx>{`
-            .mainGrid {
+            .main {
               position: absolute;
               top: 0;
               left: 0;
               height: 100vh;
               width: 100vw;
               text-align: center;
+              overflow-x: hidden;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
             }
             .game {
               position: relative;
-              padding: 2vmin 5vmin 5vmin 5vmin;
+              padding: 5vmin;
+              margin: 5vmin;
+              background: lightbrown;
             }
 
-            @media (orientation: landscape) {
+            @media only screen and (min-aspect-ratio: 7/5) {
               .game {
                 display: flex;
                 grid-area: b;
                 position: relative;
               }
-              .mainGrid {
-                display: grid;
-                grid-template-areas: "b ." "b ." "b .";
-                grid-template-rows: 1fr 1fr 10fr;
-                overflow: hidden;
+              .main {
+                flex-direction: row;
               }
             }
           `}</style>
