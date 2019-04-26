@@ -1,8 +1,11 @@
 import React from "react";
 import { withTracker } from "meteor/react-meteor-data";
 import { States } from "../../imports/api/states.js";
-import "./Home.css";
 import Alert from "react-s-alert";
+import NewGameForm from "./components/NewGameForm";
+import GameListings from "./components/GameListings";
+import Navbar from "./components/Navbar";
+
 import "react-s-alert/dist/s-alert-default.css";
 import "react-s-alert/dist/s-alert-css-effects/genie.css";
 
@@ -29,7 +32,7 @@ class Home extends React.Component {
       });
     }
     if (game.users.filter(u => u.userId === Meteor.userId()).length > 0) {
-      return (window.location.href = "/games/" + _id);
+      return (window.location.href = "/games/?name=" + game.name);
     }
     let color =
       game.users.length >= 2
@@ -47,14 +50,19 @@ class Home extends React.Component {
         if (err) {
           alert(err);
         } else {
-          window.location.href = "/games/" + _id;
+          window.location.href = "/games/?name=" + game.name;
         }
       }
     );
   };
   createNewGame = e => {
     e.preventDefault();
-    let color = e.target.color.value;
+    let color;
+    if (e.target.color.value === "random") {
+      color = Math.floor(Math.random() * 2) === 1 ? "white" : "black";
+    } else {
+      color = e.target.color.value;
+    }
     let name = e.target.name.value;
     if (name === "") {
       return Alert.error("Please enter a name for your game!", {
@@ -92,7 +100,7 @@ class Home extends React.Component {
               if (err) {
                 alert(err);
               } else {
-                window.location.href = "/games/" + res._id;
+                //window.location.href = "/games/?name=" + res.name;
               }
             }
           );
@@ -104,74 +112,36 @@ class Home extends React.Component {
   };
   render() {
     return (
-      <div>
+      <div className="flex">
+        <Navbar />
         {this.props.states ? (
-          <div className="centerFlex">
-            {this.state.extend ? (
-              <div className="fullScreen">
-                <div
-                  className="fullScreen opaque"
-                  onClick={this.handleExtend}
-                />
-                <div className="formContainer">
-                  <h2>Create a new game</h2>
-                  <form
-                    onSubmit={this.createNewGame}
-                    className="createGameForm"
-                  >
-                    <input
-                      className="formInput"
-                      type="text"
-                      name="name"
-                      placeholder="Name"
-                    />
-                    <h4>Play as</h4>
-                    <label htmlFor="white">White</label>
-                    <input id="white" type="radio" name="color" value="white" />
-                    {/*<label htmlFor="random">Random</label>
-                    <input
-                      id="random"
-                      type="radio"
-                      name="color"
-                      value="random"
-                    />*/}
-                    <label htmlFor="black">Black</label>
-                    <input id="black" type="radio" name="color" value="black" />
-                    <input type="submit" value="Create Game!" />
-                  </form>
-                </div>
-              </div>
-            ) : (
-              <button className="btn btn-primary" onClick={this.handleExtend}>
-                +
-              </button>
-            )}
-            <h2>Join a game of chess!</h2>
-            <div className="game-postings-container">
-              {this.props.states.map(state => (
-                <div key={state._id} className="game-posting">
-                  <h3 className="game-posting-title">{state.name}</h3>
-                  <div className="game-posting-controls">
-                    <button
-                      className="btn btn-success margin"
-                      onClick={() => this.handleJoin(state._id)}
-                    >
-                      {state.users.filter(u => u.userId === Meteor.userId())
-                        .length > 0
-                        ? "Join again"
-                        : state.users.length < 2
-                        ? "Join"
-                        : "Spectate"}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div>
+            <NewGameForm
+              extend={this.state.extend}
+              handleExtend={this.handleExtend}
+              createNewGame={this.createNewGame}
+            />
+            <GameListings
+              games={this.props.states}
+              handleJoin={this.handleJoin}
+            />
           </div>
         ) : (
           <div>Loading...</div>
         )}
         <Alert stack={{ limit: 1 }} timeout={3000} />
+        <style jsx>{`
+          .flex {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            display: flex;
+            flex-direction: column;
+          }
+        `}</style>
       </div>
     );
   }

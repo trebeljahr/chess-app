@@ -1,9 +1,19 @@
 import React from "react";
+
 const HomeButton = ({ moveHistory }) => (
-  <div>
-    <a className="btn btn-success" href="/">
-      <i className="fas fa-home" />
+  <div style={{ gridArea: "c" }}>
+    <a className="btn btn-primary" href="/">
+      <i className="fas fa-home fa-2x" />
     </a>
+    <style jsx>{`
+      a {
+        background: #258ea6;
+        color: white;
+      }
+      div {
+        justify-self: start;
+      }
+    `}</style>
   </div>
 );
 export default HomeButton;
