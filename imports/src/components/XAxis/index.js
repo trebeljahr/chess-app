@@ -17,6 +17,11 @@ const XAxis = ({ turnAround }) => (
       .turnToBlackPlayer {
         flex-direction: row-reverse;
       }
+      @media (orientation: portrait) {
+        div {
+          display: none;
+        }
+      }
     `}</style>
   </div>
 );

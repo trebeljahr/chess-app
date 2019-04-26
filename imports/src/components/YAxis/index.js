@@ -20,6 +20,11 @@ const YAxis = ({ turnAround }) => (
       .turnToBlackPlayer {
         flex-direction: column;
       }
+      @media (orientation: portrait) {
+        div {
+          display: none;
+        }
+      }
     `}</style>
   </div>
 );
