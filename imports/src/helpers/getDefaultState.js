@@ -11,6 +11,7 @@ export function getDefaultState() {
     offerTakeback: false,
     baseLinePawn: false,
     users: [],
+    timestamp: Date.now(),
     messages: [{ text: "Please stay friendly in the chat!", user: "Chess-App" }]
   };
 }

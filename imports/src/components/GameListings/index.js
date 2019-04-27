@@ -1,5 +1,6 @@
 import React from "react";
 import JoinButton from "./JoinButton.js";
+import GameCreationTime from "./GameCreationTime.js";
 const GameListings = ({ games, handleJoin, handleDelete }) => (
   <div className="gpc">
     {games.map(state => (
@@ -8,6 +9,7 @@ const GameListings = ({ games, handleJoin, handleDelete }) => (
         className={"game-posting " + (state.deleteGame ? "hidden" : "")}
       >
         <h3 className="game-posting-title">{state.name}</h3>
+        <GameCreationTime timestamp={state.timestamp} />
         <JoinButton
           handleDelete={handleDelete}
           handleJoin={handleJoin}
