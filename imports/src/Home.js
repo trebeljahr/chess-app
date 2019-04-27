@@ -44,7 +44,7 @@ class Home extends React.Component {
       "states.userEntersGame",
       {
         _id,
-        user: { userId: Meteor.userId(), color, name: Meteor.user().username }
+        color
       },
       (err, res) => {
         if (err) {
@@ -86,29 +86,35 @@ class Home extends React.Component {
         if (err) {
           alert(err);
         } else {
-          Meteor.call(
-            "states.userEntersGame",
-            {
-              _id: res._id,
-              user: {
-                userId: Meteor.userId(),
-                color,
-                name: Meteor.user().username
+          if (res) {
+            Meteor.call(
+              "states.userEntersGame",
+              {
+                _id: res._id,
+                color
+              },
+              (err, response) => {
+                if (err) {
+                  alert(err);
+                } else {
+                  //window.location.href = "/games/?name=" + res.name;
+                }
               }
-            },
-            (err, response) => {
-              if (err) {
-                alert(err);
-              } else {
-                window.location.href = "/games/?name=" + res.name;
-              }
-            }
-          );
+            );
+          } else {
+            Alert.error("You shall not create more than 20 games!", {
+              position: "top",
+              effect: "genie"
+            });
+          }
         }
       });
       States.findOne({ name });
       e.target.name.value = "";
     }
+  };
+  handleDelete = _id => {
+    Meteor.call("states.deleteEmptyGame", { _id });
   };
   render() {
     return (
@@ -124,6 +130,7 @@ class Home extends React.Component {
             <GameListings
               games={this.props.states}
               handleJoin={this.handleJoin}
+              handleDelete={this.handleDelete}
             />
           </div>
         ) : (
@@ -148,6 +155,7 @@ class Home extends React.Component {
 }
 const HomeContainer = withTracker(({}) => {
   let handle = Meteor.subscribe("states");
+  let userHandle = Meteor.subscribe("userData");
   let states = States.find({}).fetch();
   return { states };
 })(Home);
