@@ -9,7 +9,7 @@ const GameListings = ({ games, handleJoin, handleDelete }) => (
         className={"game-posting " + (state.deleteGame ? "hidden" : "")}
       >
         <h3 className="game-posting-title">{state.name}</h3>
-        <GameCreationTime timestamp={state.timestamp} />
+        <GameCreationTime timestamp={state.timestamp} user={state.users[0]} />
         <JoinButton
           handleDelete={handleDelete}
           handleJoin={handleJoin}
@@ -48,9 +48,9 @@ const GameListings = ({ games, handleJoin, handleDelete }) => (
         border: 1px solid;
         margin: 4px;
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         text-align: center;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
       }
       .game-posting-title {
