@@ -19,7 +19,16 @@ class GameCreationTime extends React.Component {
     clearInterval(this.state.interval);
   };
   render() {
-    return <div>created {this.state.now} minutes ago</div>;
+    return this.props.user ? (
+      <div>
+        {this.props.user.userId === Meteor.userId()
+          ? "You "
+          : this.props.user.name + " "}
+        created this game {this.state.now} minutes ago
+      </div>
+    ) : (
+      <div />
+    );
   }
 }
 export default GameCreationTime;
