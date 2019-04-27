@@ -1,14 +1,28 @@
 import React from "react";
 
-const JoinButton = ({ state, handleJoin }) => (
+const JoinButton = ({ state, handleJoin, handleDelete }) => (
   <div className="game-posting-controls">
     {state.users.length < 2 ||
     state.users.filter(u => u.userId === Meteor.userId()).length > 0 ? (
-      <button className="btn btn-success" onClick={() => handleJoin(state._id)}>
-        {state.users.filter(u => u.userId === Meteor.userId()).length > 0
-          ? "Join again"
-          : "Join"}
-      </button>
+      <div>
+        <button
+          className="btn btn-success"
+          onClick={() => handleJoin(state._id)}
+        >
+          {state.users.filter(u => u.userId === Meteor.userId()).length > 0
+            ? "Join again"
+            : "Join"}
+        </button>
+        {state.users.length === 1 &&
+        Meteor.userId() === state.users[0].userId ? (
+          <button
+            className="btn btn-danger"
+            onClick={() => handleDelete(state._id)}
+          >
+            <i className="fas fa-trash" />{" "}
+          </button>
+        ) : null}
+      </div>
     ) : (
       <div className="btn btn-success">Full</div>
     )}
@@ -20,6 +34,13 @@ const JoinButton = ({ state, handleJoin }) => (
         display: flex;
         flex-direction: row;
         justify-content: space-between;
+      }
+      div {
+        display: flex;
+        flex-direction: row;
+      }
+      button {
+        margin: 5px;
       }
     `}</style>
   </div>
