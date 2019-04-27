@@ -24,7 +24,7 @@ const PawnChangeInterface = ({ baseLinePawn, turn, color, continueTurn }) => {
             position: relative;
             z-index: 2;
             width: 80vmin;
-            height: 10vmin;
+            min-height: 10vmin;
             background: #258ea6;
             display: flex;
             justify-content: space-around;
@@ -49,27 +49,24 @@ const PawnChangeInterface = ({ baseLinePawn, turn, color, continueTurn }) => {
           .white:hover {
             background: red;
           }
-          .grey > span {
-            font-size: 2em;
-            margin: 0;
-            padding: 0;
-          }
-          .attach {
-            display: flex;
-            position: relative;
-            z-index: 2;
+          @media (orientation: portrait) {
+            .blue {
+              width: 100vmin;
+              position: absolute;
+              bottom: 10vmin;
+            }
+            span {
+              min-height: 10vmin;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
           }
           @media only screen and (min-aspect-ratio: 7/5) {
             .blue {
-              width: auto;
-              flex-direction: column;
+              width: 12vmin;
               height: 80vmin;
-              width: 10vmin;
-            }
-            .attach {
-              width: auto;
               flex-direction: column;
-              align-items: center;
             }
           }
         `}</style>
