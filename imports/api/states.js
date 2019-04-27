@@ -13,28 +13,67 @@ import { createTilesUnderThreat } from "../src/tileMarkers/createTilesUnderThrea
 import { RevertLastMoveInstructions } from "../src/helpers/RevertLastMoveInstructions.js";
 
 export const States = new Mongo.Collection("states");
-
 if (Meteor.isServer) {
   Meteor.publish("states", function statesPublication() {
     return States.find();
   });
+  Meteor.publish("userData", function() {
+    if (this.userId) {
+      return Meteor.users.find(
+        { _id: this.userId },
+        {
+          fields: { games: 1 }
+        }
+      );
+    } else {
+      this.ready();
+    }
+  });
 }
 
 Meteor.methods({
-  "states.userEntersGame"({ _id, user }) {
+  "states.userEntersGame"({ _id, color }) {
     let { users } = States.findOne(_id);
     States.update(_id, {
       $set: {
-        users: [...users, user]
+        users: [
+          ...users,
+          {
+            color,
+            userId: Meteor.userId(),
+            name: Meteor.user().username
+          }
+        ]
       }
     });
   },
-  "states.deleteFinishedGame"({ _id }) {
-    States.remove({ _id });
+  "states.deleteEmptyGame"({ _id }) {
+    let users = States.findOne({ _id }).users;
+    if (users.length === 1 && Meteor.userId() === users[0].userId) {
+      States.remove({ _id });
+      Meteor.users.update(Meteor.userId(), {
+        $set: {
+          games: Meteor.user().games - 1
+        }
+      });
+    }
   },
   "states.createNew"({ name }) {
-    States.insert({ name, ...getDefaultState() });
-    return States.findOne({ name });
+    let user = Meteor.users.findOne({ _id: Meteor.userId() });
+    if (user.games > 20 || !Meteor.userId()) {
+      return false;
+    } else {
+      Meteor.users.update(
+        { _id: Meteor.userId() },
+        {
+          $set: {
+            games: user.games ? user.games + 1 : 1
+          }
+        }
+      );
+      States.insert({ name, ...getDefaultState() });
+      return States.findOne({ name });
+    }
   },
   "states.addNewMessage"({ _id, message }) {
     let { messages } = States.findOne(_id);
