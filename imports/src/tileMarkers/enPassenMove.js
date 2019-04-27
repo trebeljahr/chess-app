@@ -19,7 +19,8 @@ export function enPassenMove(board, row, col, moveHistory, color) {
       let enPassen = {
         oldPos: { row: row, col: col },
         newPos: { row: eProw, col: ePcol },
-        figure: boardCopy[row][col].figure
+        figure: boardCopy[row][col].figure,
+        enPassen: { pos: move.newPos }
       };
       boardCopy = updateBoard(boardCopy, enPassen, true);
 
