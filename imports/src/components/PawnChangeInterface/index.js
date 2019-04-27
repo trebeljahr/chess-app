@@ -32,7 +32,7 @@ const PawnChangeInterface = ({ baseLinePawn, turn, color, continueTurn }) => {
           }
           span {
             width: 100%;
-            height: 100%;
+            min-height: 10vmin;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -67,6 +67,9 @@ const PawnChangeInterface = ({ baseLinePawn, turn, color, continueTurn }) => {
               width: 12vmin;
               height: 80vmin;
               flex-direction: column;
+            }
+            span {
+              height: 100%;
             }
           }
         `}</style>
