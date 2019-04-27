@@ -20,12 +20,12 @@ class GameCreationTime extends React.Component {
   };
   render() {
     return this.props.user ? (
-      <div>
+      <p>
         {this.props.user.userId === Meteor.userId()
           ? "You "
           : this.props.user.name + " "}
         created this game {this.state.now} minutes ago
-      </div>
+      </p>
     ) : (
       <div />
     );
