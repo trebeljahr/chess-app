@@ -21,11 +21,15 @@ if (Meteor.isServer) {
 }
 
 Meteor.methods({
-  "states.userEntersGame"({ _id, user }) {
+  "states.userEntersGame"({ _id, color }) {
     let { users } = States.findOne(_id);
+    console.log(Meteor.user);
     States.update(_id, {
       $set: {
-        users: [...users, user]
+        users: [
+          ...users,
+          { color, userId: Meteor.userId(), name: Meteor.user().username }
+        ]
       }
     });
   },
