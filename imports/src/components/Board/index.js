@@ -21,10 +21,16 @@ const Board = props => {
                   ? col.check
                   : "") +
                 " " +
-                (col.selected ? col.selected : "")
+                (col.selected && props.color === props.turn ? col.selected : "")
               }
             >
-              <div className={col.valid + " " + col.rochade}>
+              <div
+                className={
+                  props.color === props.turn
+                    ? col.valid + " " + col.rochade
+                    : ""
+                }
+              >
                 <span
                   className={
                     col.figure.type
