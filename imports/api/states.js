@@ -23,7 +23,6 @@ if (Meteor.isServer) {
 Meteor.methods({
   "states.userEntersGame"({ _id, color }) {
     let { users } = States.findOne(_id);
-    console.log(Meteor.user);
     States.update(_id, {
       $set: {
         users: [
@@ -33,6 +32,23 @@ Meteor.methods({
       }
     });
   },
+  /*"states.handleClientDisconnect"({ _id }) {
+    let { users } = States.findOne(_id);
+    console.log(users[0].userId === Meteor.userId());
+    let newUsersArray = users.filter(user => {
+      if (user.userId === Meteor.userId()) {
+        return false;
+      } else {
+        return true;
+      }
+    });
+    console.log(newUsersArray);
+    States.update(_id, {
+      $set: {
+        users: newUsersArray
+      }
+    });
+  },*/
   "states.deleteFinishedGame"({ _id }) {
     States.remove({ _id });
   },
