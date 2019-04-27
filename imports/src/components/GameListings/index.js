@@ -1,6 +1,6 @@
 import React from "react";
 import JoinButton from "./JoinButton.js";
-const GameListings = ({ games, handleJoin }) => (
+const GameListings = ({ games, handleJoin, handleDelete }) => (
   <div className="gpc">
     {games.map(state => (
       <div
@@ -8,7 +8,11 @@ const GameListings = ({ games, handleJoin }) => (
         className={"game-posting " + (state.deleteGame ? "hidden" : "")}
       >
         <h3 className="game-posting-title">{state.name}</h3>
-        <JoinButton handleJoin={handleJoin} state={state} />
+        <JoinButton
+          handleDelete={handleDelete}
+          handleJoin={handleJoin}
+          state={state}
+        />
       </div>
     ))}
     <style jsx>{`

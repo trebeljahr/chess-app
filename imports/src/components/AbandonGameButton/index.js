@@ -45,10 +45,12 @@ class AbandonGameButton extends React.Component {
         <style jsx>{`
           div {
             color: black;
+            width: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
             background: #d9dcd6;
+            cursor: pointer;
           }
         `}</style>
       </div>
