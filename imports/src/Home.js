@@ -97,7 +97,7 @@ class Home extends React.Component {
                 if (err) {
                   alert(err);
                 } else {
-                  //window.location.href = "/games/?name=" + res.name;
+                  window.location.href = "/games/?name=" + res.name;
                 }
               }
             );

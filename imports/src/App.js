@@ -92,6 +92,8 @@ class ChessApp extends React.Component {
                   ? this.handleFirstClick
                   : this.handleSecondClick
               }
+              turn={game.turn}
+              color={color}
             />
             <XAxis turnAround={color === "black" ? true : false} />
             <YAxis turnAround={color === "black" ? true : false} />
