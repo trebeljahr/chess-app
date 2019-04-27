@@ -54,7 +54,6 @@ class ChessApp extends React.Component {
       });
     }
   };
-
   continueTurn = figure => {
     if (this.props.game) {
       Meteor.call("states.handlePawnChange", {

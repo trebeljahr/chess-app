@@ -44,7 +44,7 @@ class Home extends React.Component {
       "states.userEntersGame",
       {
         _id,
-        user: { userId: Meteor.userId(), color, name: Meteor.user().username }
+        color
       },
       (err, res) => {
         if (err) {
@@ -90,17 +90,13 @@ class Home extends React.Component {
             "states.userEntersGame",
             {
               _id: res._id,
-              user: {
-                userId: Meteor.userId(),
-                color,
-                name: Meteor.user().username
-              }
+              color
             },
             (err, response) => {
               if (err) {
                 alert(err);
               } else {
-                window.location.href = "/games/?name=" + res.name;
+                //window.location.href = "/games/?name=" + res.name;
               }
             }
           );
