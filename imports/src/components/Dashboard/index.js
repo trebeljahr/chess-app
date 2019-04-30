@@ -44,6 +44,7 @@ const Dashboard = game => {
           padding: 0 5vmin;
           margin: 0;
           margin-bottom: 10vmin;
+          position: relative;
           width: 100vmin;
           height: 100%;
           display: grid;
