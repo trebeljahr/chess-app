@@ -141,8 +141,9 @@ class ChessApp extends React.Component {
             @media (orientation: portrait) {
               .game {
                 display: flex;
-                align-items: flex-start;
-                justify-content: flex-start;
+                min-height: 120vmin;
+                width: 100vmin;
+                flex-direction: column;
                 padding: 0;
                 margin: 0;
               }
@@ -150,6 +151,7 @@ class ChessApp extends React.Component {
             @media only screen and (min-aspect-ratio: 7/5) {
               .game {
                 display: flex;
+                flex-direction: row;
                 grid-area: b;
                 position: relative;
               }
