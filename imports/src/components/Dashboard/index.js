@@ -12,7 +12,7 @@ const Dashboard = game => {
     <div
       className={"Dashboard " + (game.checkmate || game.remis ? "leave" : "")}
     >
-      <WhoPlays users={game.users} />
+      <WhoPlays users={game.users} _id={game._id} />
       <MoveHistory moveHistory={game.moveHistory} />
       <TextContainer
         color={game.color}
