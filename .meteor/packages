@@ -22,3 +22,6 @@ accounts-password
 accounts-ui
 useraccounts:bootstrap
 #meteortoys:allthings
+useraccounts:flow-routing
+ostrio:flow-router-extra
+kadira:blaze-layout

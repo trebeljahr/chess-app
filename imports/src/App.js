@@ -168,7 +168,7 @@ class ChessApp extends React.Component {
   }
 }
 const ChessAppContainer = withTracker(props => {
-  const { name } = queryString.parse(props.location.search);
+  const name = FlowRouter.getQueryParam("name");
   const handle = Meteor.subscribe("states");
   const game = States.findOne({ name });
   return {
