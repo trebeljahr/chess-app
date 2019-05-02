@@ -27,19 +27,19 @@ const Board = props => {
                 " " +
                 (tile.selected && props.color === props.turn
                   ? tile.selected
-                  : "") +
-                " " +
-                ((oldP.row === pos.row && oldP.col === pos.col) ||
-                (newP.row === pos.row && newP.col === pos.col)
-                  ? "old"
                   : "")
               }
             >
               <div
                 className={
-                  props.color === props.turn
+                  (props.color === props.turn
                     ? tile.valid + " " + tile.rochade
-                    : ""
+                    : "") +
+                  " " +
+                  ((oldP.row === pos.row && oldP.col === pos.col) ||
+                  (newP.row === pos.row && newP.col === pos.col)
+                    ? "old"
+                    : "")
                 }
               >
                 <span
@@ -71,7 +71,10 @@ const Board = props => {
           grid-template-columns: repeat(8, 10vmin);
         }
         .old {
-          background: lightblue !important;
+          width: 90%;
+          height: 90%;
+          border-radius: 100%;
+          background: darkgray;
         }
         .board div {
           font-size: 3vmin;
