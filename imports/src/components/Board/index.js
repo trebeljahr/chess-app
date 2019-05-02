@@ -12,8 +12,12 @@ const Board = props => {
       {props.board.map(row =>
         row.map(tile => {
           let pos = convertPos(tile.field);
-          let oldP = props.lastMove.oldPos;
-          let newP = props.lastMove.newPos;
+          let oldP;
+          let newP;
+          if (props.lastMove) {
+            oldP = props.lastMove.oldPos;
+            newP = props.lastMove.newPos;
+          }
           return (
             <div
               onClick={() => props.handleClick(tile.field)}
@@ -36,8 +40,8 @@ const Board = props => {
                     ? tile.valid + " " + tile.rochade
                     : "") +
                   " " +
-                  ((oldP.row === pos.row && oldP.col === pos.col) ||
-                  (newP.row === pos.row && newP.col === pos.col)
+                  ((oldP && oldP.row === pos.row && oldP.col === pos.col) ||
+                  (newP && newP.row === pos.row && newP.col === pos.col)
                     ? "old"
                     : "")
                 }
