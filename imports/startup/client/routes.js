@@ -1,4 +1,4 @@
-import React from "react";
+/*import React from "react";
 import {
   Route,
   Switch,
@@ -31,3 +31,58 @@ const renderRoutes = () => (
 );
 
 export { renderRoutes };
+*/
+import React from "react";
+import { FlowRouter } from "meteor/kadira:flow-router";
+import { mount } from "react-mounter";
+
+import ChessAppContainer from "../../src/App.js";
+import HomeContainer from "../../src/Home.js";
+import Login from "../../src/components/Login";
+
+const Router = props => {
+  return <div>{props.content}</div>;
+};
+function checkLoggedIn(ctx, redirect) {
+  if (!Meteor.userId()) {
+    redirect("/login");
+  }
+}
+
+function redirectIfLoggedIn(ctx, redirect) {
+  if (Meteor.userId()) {
+    redirect("/");
+  }
+}
+
+var privateRoutes = FlowRouter.group({
+  name: "private",
+  triggersEnter: [checkLoggedIn]
+});
+
+privateRoutes.route("/", {
+  name: "Home",
+  action(params, queryParams) {
+    mount(Router, {
+      content: <HomeContainer />
+    });
+  }
+});
+FlowRouter.route("/login", {
+  name: "Login",
+  action() {
+    mount(Router, {
+      content: <Login />
+    });
+  }
+});
+privateRoutes.route("/games/", {
+  name: "Games",
+  action(params, queryParams) {
+    mount(Router, {
+      content: <ChessAppContainer />
+    });
+  }
+});
+
+export default Router;
