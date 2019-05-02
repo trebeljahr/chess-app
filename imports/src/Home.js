@@ -32,8 +32,11 @@ class Home extends React.Component {
       });
     }
     if (game.users.filter(u => u.userId === Meteor.userId()).length > 0) {
-      return (window.location.href = "/games/?name=" + game.name);
+      FlowRouter.go("Games");
+      FlowRouter.setQueryParams({ name: game.name });
+      return;
     }
+
     let color =
       game.users.length >= 2
         ? "none"
@@ -50,7 +53,8 @@ class Home extends React.Component {
         if (err) {
           alert(err);
         } else {
-          window.location.href = "/games/?name=" + game.name;
+          FlowRouter.go("Games");
+          FlowRouter.setQueryParams({ name: game.name });
         }
       }
     );
@@ -97,7 +101,8 @@ class Home extends React.Component {
                 if (err) {
                   alert(err);
                 } else {
-                  window.location.href = "/games/?name=" + res.name;
+                  FlowRouter.go("Games");
+                  FlowRouter.setQueryParams({ name: res.name });
                 }
               }
             );
