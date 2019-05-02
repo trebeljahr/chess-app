@@ -94,6 +94,7 @@ class ChessApp extends React.Component {
               }
               turn={game.turn}
               color={color}
+              lastMove={game.moveHistory[game.moveHistory.length - 1]}
             />
             <XAxis turnAround={color === "black" ? true : false} />
             <YAxis turnAround={color === "black" ? true : false} />

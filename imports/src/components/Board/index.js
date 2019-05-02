@@ -1,4 +1,5 @@
 import React from "react";
+import { convertPos } from "../../helpers/convertPos.js";
 
 const Board = props => {
   return (
@@ -9,36 +10,46 @@ const Board = props => {
       }
     >
       {props.board.map(row =>
-        row.map(col => {
+        row.map(tile => {
+          let pos = convertPos(tile.field);
+          let oldP = props.lastMove.oldPos;
+          let newP = props.lastMove.newPos;
           return (
             <div
-              onClick={() => props.handleClick(col.field)}
-              key={col.field}
+              onClick={() => props.handleClick(tile.field)}
+              key={tile.field}
               className={
-                col.color +
+                tile.color +
                 " " +
-                (col.figure.type === "king" && col.check === "check"
-                  ? col.check
+                (tile.figure.type === "king" && tile.check === "check"
+                  ? tile.check
                   : "") +
                 " " +
-                (col.selected && props.color === props.turn ? col.selected : "")
+                (tile.selected && props.color === props.turn
+                  ? tile.selected
+                  : "") +
+                " " +
+                ((oldP.row === pos.row && oldP.col === pos.col) ||
+                (newP.row === pos.row && newP.col === pos.col)
+                  ? "old"
+                  : "")
               }
             >
               <div
                 className={
                   props.color === props.turn
-                    ? col.valid + " " + col.rochade
+                    ? tile.valid + " " + tile.rochade
                     : ""
                 }
               >
                 <span
                   className={
-                    col.figure.type
+                    tile.figure.type
                       ? "fas " +
                         "fa-chess-" +
-                        col.figure.type +
+                        tile.figure.type +
                         " " +
-                        col.figure.color +
+                        tile.figure.color +
                         (props.turnAround
                           ? " turnToBlackPlayer"
                           : " turnToWhitePlayer")
@@ -58,6 +69,9 @@ const Board = props => {
           height: 80vmin;
           grid-template-rows: repeat(8, 10vmin);
           grid-template-columns: repeat(8, 10vmin);
+        }
+        .old {
+          background: lightblue !important;
         }
         .board div {
           font-size: 3vmin;
