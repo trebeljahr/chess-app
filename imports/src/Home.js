@@ -107,10 +107,13 @@ class Home extends React.Component {
               }
             );
           } else {
-            Alert.error("You shall not create more than 20 games!", {
-              position: "top",
-              effect: "genie"
-            });
+            Alert.error(
+              "You can not create more than 200 games! Please delete some...",
+              {
+                position: "top",
+                effect: "genie"
+              }
+            );
           }
         }
       });
