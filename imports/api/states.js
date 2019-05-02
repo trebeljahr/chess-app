@@ -11,7 +11,6 @@ import { checkForRemis } from "../src/gameFunctions/endGame.js";
 import { checkForCheckMate } from "../src/gameFunctions/endGame.js";
 import { createTilesUnderThreat } from "../src/tileMarkers/createTilesUnderThreat.js";
 import { RevertLastMoveInstructions } from "../src/helpers/RevertLastMoveInstructions.js";
-
 export const States = new Mongo.Collection("states");
 if (Meteor.isServer) {
   Meteor.publish("states", function statesPublication() {
@@ -41,7 +40,8 @@ Meteor.methods({
           {
             color,
             userId: Meteor.userId(),
-            name: Meteor.user().username
+            name: Meteor.user().username,
+            timeStamp: Date.now()
           }
         ]
       }
@@ -58,9 +58,15 @@ Meteor.methods({
       });
     }
   },
+  "states.updateUserTimeStamp"({ _id }) {
+    let { users } = States.findOne(_id);
+    users.find(user => Meteor.userId() === user.userId).timeStamp = Date.now();
+    States.update({ _id }, { $set: { users } });
+    return States.findOne(_id).users;
+  },
   "states.createNew"({ name }) {
     let user = Meteor.users.findOne({ _id: Meteor.userId() });
-    if (user.games > 20 || !Meteor.userId()) {
+    if (user.games >= 200 || !Meteor.userId()) {
       return false;
     } else {
       Meteor.users.update(
