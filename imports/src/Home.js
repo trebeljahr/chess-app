@@ -5,6 +5,7 @@ import Alert from "react-s-alert";
 import NewGameForm from "./components/NewGameForm";
 import GameListings from "./components/GameListings";
 import Navbar from "./components/Navbar";
+import Filters from "./components/Filters";
 
 import "react-s-alert/dist/s-alert-default.css";
 import "react-s-alert/dist/s-alert-css-effects/genie.css";
@@ -13,7 +14,9 @@ class Home extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      extend: false
+      extend: false,
+      filters: ["all", "own", "other"],
+      filter: "all"
     };
   }
   handleExtend = () => {
@@ -124,10 +127,19 @@ class Home extends React.Component {
   handleDelete = _id => {
     Meteor.call("states.deleteEmptyGame", { _id });
   };
+  handleDisplayfilter = filter => {
+    this.setState({ filter });
+  };
   render() {
     return (
       <div className="flex">
         <Navbar />
+        <Filters
+          handleDisplayfilter={this.handleDisplayfilter}
+          filters={this.state.filters}
+          filter={this.state.filter}
+        />
+
         {this.props.states ? (
           <div>
             <NewGameForm
@@ -136,7 +148,17 @@ class Home extends React.Component {
               createNewGame={this.createNewGame}
             />
             <GameListings
-              games={this.props.states}
+              games={this.props.states
+                .filter(game => {
+                  if (this.state.filter === "own") {
+                    return game.users[0].userId === Meteor.userId();
+                  }
+                  if (this.state.filter === "other") {
+                    return game.users[0].userId !== Meteor.userId();
+                  }
+                  return true;
+                })
+                .reverse()}
               handleJoin={this.handleJoin}
               handleDelete={this.handleDelete}
             />
@@ -147,11 +169,8 @@ class Home extends React.Component {
         <Alert stack={{ limit: 1 }} timeout={3000} />
         <style jsx>{`
           .flex {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
             background: white;
             display: flex;
             flex-direction: column;
