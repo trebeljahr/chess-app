@@ -56,6 +56,7 @@ const NewGameForm = ({ extend, handleExtend, createNewGame }) =>
           display: flex;
           align-items: center;
           justify-content: center;
+          overflow: hidden;
         }
         .opaque {
           background: linear-gradient(
@@ -166,10 +167,10 @@ const NewGameForm = ({ extend, handleExtend, createNewGame }) =>
           color: #090c9b;
         }
         div {
-          position: absolute;
-          bottom: 3vh;
-          right: 3vh;
-          z-index: 1;
+          width: 100%;
+          margin: 20px 0 5px 0;
+          display: flex;
+          justify-content: center;
         }
       `}</style>
     </div>
