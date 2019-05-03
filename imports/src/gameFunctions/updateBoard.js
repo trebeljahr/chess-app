@@ -41,7 +41,9 @@ function removePiece(board, pos) {
 function generatePiece(board, pos, figure, virtual) {
   let { row, col } = pos;
   board[row][col].figure = figure;
-  virtual
+  board = removeMarkers(board, ["check"]);
+
+  board = virtual
     ? createTilesUnderThreat(
         board,
         figure.color === "white" ? "black" : "white"
