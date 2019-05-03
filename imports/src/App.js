@@ -39,7 +39,7 @@ class ChessApp extends React.Component {
     }
   };
   proposeUndo = () => {
-    if (this.props.game && this.props.game.moveHistory.length > 0) {
+    if (this.props.game && this.props.game.moveHistory.length > 1) {
       Meteor.call("states.proposeUndo", {
         _id: this.props.game._id,
         userId: Meteor.userId()
@@ -63,19 +63,9 @@ class ChessApp extends React.Component {
       });
     }
   };
-  /*componentWillUnmount(){
-    Meteor.call(
-      "states.handleClientDisconnect",
-      {
-        _id: this.props.game._id
-      },
-      err => {
-        if (err) {
-          console.error(err);
-        }
-      }
-    );
-  };*/
+  multiReverse = index => {
+    Meteor.call("states.goBackInTime", { _id: this.props.game._id, index });
+  };
   render() {
     if (this.props.game) {
       let game = this.props.game;
@@ -95,6 +85,7 @@ class ChessApp extends React.Component {
               turn={game.turn}
               color={color}
               lastMove={game.moveHistory[game.moveHistory.length - 1]}
+              archived={game.archived}
             />
             <XAxis turnAround={color === "black" ? true : false} />
             <YAxis turnAround={color === "black" ? true : false} />
@@ -120,6 +111,8 @@ class ChessApp extends React.Component {
             revertUndoProposal={this.revertUndoProposal}
             proposeUndo={this.proposeUndo}
             handleUndo={this.handleUndo}
+            archived={game.archived}
+            multiReverse={this.multiReverse}
           />
           <style jsx>{`
             .main {
