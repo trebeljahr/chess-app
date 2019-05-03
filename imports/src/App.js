@@ -63,12 +63,9 @@ class ChessApp extends React.Component {
       });
     }
   };
-<<<<<<< HEAD
   multiReverse = index => {
     Meteor.call("states.goBackInTime", { _id: this.props.game._id, index });
   };
-=======
->>>>>>> 63a2dafa7780b3207ff398648494db317d20c4ac
   render() {
     if (this.props.game) {
       let game = this.props.game;
