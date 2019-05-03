@@ -25,6 +25,8 @@ const Board = props => {
               className={
                 tile.color +
                 " " +
+                tile.check +
+                " " +
                 (tile.figure.type === "king" && tile.check === "check"
                   ? tile.check
                   : "") +
