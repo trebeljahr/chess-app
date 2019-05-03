@@ -3,7 +3,7 @@ import { checkForCheck } from "../gameFunctions/checkForCheck.js";
 import { invertColor } from "../helpers/invertColor.js";
 
 export function enPassenMove(board, row, col, moveHistory, color) {
-  if (moveHistory.length > 0) {
+  if (moveHistory.length > 1) {
     let move = moveHistory[moveHistory.length - 1];
 
     if (

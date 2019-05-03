@@ -14,13 +14,15 @@ const Board = props => {
           let pos = convertPos(tile.field);
           let oldP;
           let newP;
-          if (props.lastMove) {
+          if (props.lastMove && !props.archived) {
             oldP = props.lastMove.oldPos;
             newP = props.lastMove.newPos;
           }
           return (
             <div
-              onClick={() => props.handleClick(tile.field)}
+              onClick={
+                props.archived ? null : () => props.handleClick(tile.field)
+              }
               key={tile.field}
               className={
                 tile.color +
