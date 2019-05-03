@@ -1,14 +1,16 @@
 import React from "react";
 import JoinButton from "./JoinButton.js";
 import GameCreationTime from "./GameCreationTime.js";
-const GameListings = ({ games, handleJoin, handleDelete, parameter }) => {
+const GameListings = ({ games, handleJoin, handleDelete, archive }) => {
   return (
     <div className="gpc">
       {games.map(state => {
         return (
           <div
             key={state._id}
-            className={"game-posting " + (state.deleteGame ? "hidden" : "")}
+            className={
+              "game-posting " + (!archive && state.archived ? "hidden" : "")
+            }
           >
             <h3 className="game-posting-title">{state.name}</h3>
             <GameCreationTime

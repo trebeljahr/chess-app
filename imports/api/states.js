@@ -124,7 +124,8 @@ Meteor.methods({
       moveHistory,
       figure,
       oldPos,
-      baseLinePawn
+      baseLinePawn,
+      oldBoards
     } = States.findOne(_id);
     let { row, col } = convertPos(field);
     let user = users.find(user => user.userId === userId);
@@ -184,6 +185,7 @@ Meteor.methods({
           States.update(_id, {
             $set: {
               board: updateBoard(board, move),
+              oldBoards: [...oldBoards, board],
               turn: invertColor(turn),
               check: checkForCheck(board, turn),
               offerTakeback: false,
@@ -193,7 +195,9 @@ Meteor.methods({
                 !checkForCheckMate(board, turn) && checkForRemis(board, turn)
                   ? true
                   : false,
-              moveHistory: [...moveHistory, move]
+              moveHistory: [...moveHistory, move],
+              archived:
+                checkForCheckMate(board, turn) || checkForRemis(board, turn)
             }
           });
         } else {
@@ -223,13 +227,14 @@ Meteor.methods({
     if (!this.userId) {
       return;
     }
-    let { board, baseLinePawn, turn } = States.findOne(_id);
+    let { board, baseLinePawn, turn, oldBoards } = States.findOne(_id);
     let { row, col } = baseLinePawn;
     board[row][col].figure.type = figure;
     board = createTilesUnderThreat(board, turn);
     States.update(_id, {
       $set: {
         board: board,
+        oldBoards: [...oldBoards, board],
         turn: invertColor(turn),
         check: checkForCheck(board, turn),
         offerTakeback: false,
@@ -239,7 +244,8 @@ Meteor.methods({
           !checkForCheckMate(board, turn) && checkForRemis(board, turn)
             ? true
             : false,
-        baseLinePawn: false
+        baseLinePawn: false,
+        archived: checkForCheckMate(board, turn) || checkForRemis(board, turn)
       }
     });
   },
@@ -267,6 +273,18 @@ Meteor.methods({
       }
     });
   },
+  "states.goBackInTime"({ _id, index }) {
+    let { oldBoards, archived } = States.findOne({ _id });
+    if (!Meteor.userId() || !archived) {
+      return;
+    }
+    let board = oldBoards[index];
+    States.update(_id, {
+      $set: {
+        board: oldBoards[index]
+      }
+    });
+  },
   "states.handleUndo"({ _id }) {
     if (!Meteor.userId()) {
       return;
@@ -277,7 +295,8 @@ Meteor.methods({
       turn,
       offerTakeback,
       moveHistory,
-      users
+      users,
+      oldBoards
     } = States.findOne({ _id });
     let color = users.find(user => user.userId === Meteor.userId()).color;
     if (offerTakeback === invertColor(color)) {
@@ -295,6 +314,7 @@ Meteor.methods({
           board,
           movePart: 0,
           moveHistory: moveHistory.slice(0),
+          oldBoards: oldBoards.slice(0),
           check: checkForCheck(board, turn),
           turn: invertColor(turn),
           checkmate: false,
@@ -304,7 +324,8 @@ Meteor.methods({
         }
       });
     }
-  },
+  }
+  /*,
   "states.firstStepDeleteGame"({ _id }) {
     if (!this.userId) {
       return;
@@ -326,5 +347,5 @@ Meteor.methods({
     if (deleteGame === invertColor(color)) {
       States.remove({ _id });
     }
-  }
+  }*/
 });
