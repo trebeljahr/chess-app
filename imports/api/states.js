@@ -227,13 +227,14 @@ Meteor.methods({
     if (!this.userId) {
       return;
     }
-    let { board, baseLinePawn, turn } = States.findOne(_id);
+    let { board, baseLinePawn, turn, oldBoards } = States.findOne(_id);
     let { row, col } = baseLinePawn;
     board[row][col].figure.type = figure;
     board = createTilesUnderThreat(board, turn);
     States.update(_id, {
       $set: {
         board: board,
+        oldBoards: [...oldBoards, board],
         turn: invertColor(turn),
         check: checkForCheck(board, turn),
         offerTakeback: false,
@@ -243,7 +244,8 @@ Meteor.methods({
           !checkForCheckMate(board, turn) && checkForRemis(board, turn)
             ? true
             : false,
-        baseLinePawn: false
+        baseLinePawn: false,
+        archived: checkForCheckMate(board, turn) || checkForRemis(board, turn)
       }
     });
   },
