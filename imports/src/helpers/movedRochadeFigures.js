@@ -1,5 +1,8 @@
 export const checkForMovedKing = (moveHistory, color) => {
   return moveHistory.filter(move => {
+    if (move === "Start") {
+      return false;
+    }
     if (move.figure.color === color && move.figure.type === "king") {
       return true;
     }
@@ -10,6 +13,9 @@ export const checkForMovedKing = (moveHistory, color) => {
 
 export const checkForMovedLeftRook = (moveHistory, color) => {
   return moveHistory.filter(move => {
+    if (move === "Start") {
+      return false;
+    }
     if (
       move.figure.color === color &&
       move.figure.type === "rook" &&
@@ -24,6 +30,9 @@ export const checkForMovedLeftRook = (moveHistory, color) => {
 
 export const checkForMovedRightRook = (moveHistory, color) => {
   return moveHistory.filter(move => {
+    if (move === "Start") {
+      return false;
+    }
     if (
       move.figure.color === color &&
       move.figure.type === "rook" &&

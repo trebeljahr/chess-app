@@ -22,7 +22,7 @@ class WhoPlays extends React.Component {
         <i
           className={
             "fas fa-circle " +
-            (Date.now() - user.timeStamp < 1000 ? "online" : "offline")
+            (Date.now() - user.timeStamp < 2000 ? "online" : "offline")
           }
         >
           <style jsx>{`
