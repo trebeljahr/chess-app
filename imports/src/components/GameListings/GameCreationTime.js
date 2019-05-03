@@ -39,13 +39,14 @@ class GameCreationTime extends React.Component {
         ? "hour"
         : mins
         ? "minute"
-        : "") + (out > 1 ? "s" : "");
+        : "just now") + (out > 1 ? "s" : "");
     return this.props.user ? (
       <p>
         {this.props.user.userId === Meteor.userId()
           ? "You "
           : this.props.user.name + " "}
-        created this game {out + " " + outText} ago
+        created this game{" "}
+        {outText === "just now" ? outText : out + " " + outText + " ago"}
       </p>
     ) : (
       <div />
