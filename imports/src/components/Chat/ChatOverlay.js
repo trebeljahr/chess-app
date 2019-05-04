@@ -2,6 +2,7 @@ import React from "react";
 class ChatOverlay extends React.Component {
   constructor(props) {
     super(props);
+    this.state = { messages: [] };
   }
   newMessage = e => {
     e.preventDefault();
@@ -30,9 +31,11 @@ class ChatOverlay extends React.Component {
   componentDidMount = () => {
     this.scrollToBottom();
   };
-
   componentDidUpdate = () => {
-    this.scrollToBottom();
+    if (this.props.messages.length !== this.state.messages.length) {
+      this.scrollToBottom();
+      this.setState({ messages: this.props.messages });
+    }
   };
   render() {
     return (
@@ -77,7 +80,7 @@ class ChatOverlay extends React.Component {
         </div>
         <style>{`
           .header {
-            height: 8vh;
+            height: auto;
             padding: 10px;
             width: 100%;
             display: flex;
@@ -103,7 +106,7 @@ class ChatOverlay extends React.Component {
           }
           ul {
             list-style-type: none;
-            height: 82vh;
+            height: 80vh;
             max-height: 100%;
             margin: 0;
             padding: 0;
@@ -124,7 +127,7 @@ class ChatOverlay extends React.Component {
           }
           .toolbar {
             display: flex;
-            height: 10vh;
+            height: auto;
             flex-direction: row;
             align-items: center;
             justify-content: space-around;
