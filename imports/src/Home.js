@@ -125,7 +125,7 @@ class Home extends React.Component {
     }
   };
   handleDelete = _id => {
-    Meteor.call("states.deleteEmptyGame", { _id });
+    Meteor.call("states.deleteGame", { _id });
   };
   handleDisplayfilter = filter => {
     this.setState({ filter });

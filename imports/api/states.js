@@ -47,17 +47,6 @@ Meteor.methods({
       }
     });
   },
-  "states.deleteEmptyGame"({ _id }) {
-    let users = States.findOne({ _id }).users;
-    if (users.length === 1 && Meteor.userId() === users[0].userId) {
-      States.remove({ _id });
-      Meteor.users.update(Meteor.userId(), {
-        $set: {
-          games: Meteor.user().games - 1
-        }
-      });
-    }
-  },
   "states.updateUserTimeStamp"({ _id }) {
     let { users } = States.findOne(_id);
     users.find(user => Meteor.userId() === user.userId).timeStamp = Date.now();
@@ -66,19 +55,41 @@ Meteor.methods({
   },
   "states.createNew"({ name }) {
     let user = Meteor.users.findOne({ _id: Meteor.userId() });
-    if (user.games >= 200 || !Meteor.userId()) {
+    let activeGames = user.games
+      ? user.games.filter(game => !States.findOne({ _id: game._id }).archived)
+      : [];
+    if (activeGames.length >= 200 || !Meteor.userId()) {
       return false;
     } else {
+      States.insert({ name, ...getDefaultState() });
+      let game = States.findOne({ name });
       Meteor.users.update(
         { _id: Meteor.userId() },
         {
           $set: {
-            games: user.games ? user.games + 1 : 1
+            games: user.games
+              ? [...user.games, { _id: game._id, name: game.name }]
+              : [{ _id: game._id, name: game.name }]
           }
         }
       );
-      States.insert({ name, ...getDefaultState() });
       return States.findOne({ name });
+    }
+  },
+  "states.deleteGame"({ _id }) {
+    let game = States.findOne({ _id });
+    let user = Meteor.users.findOne({ _id: Meteor.userId() });
+    let newGamesArray = user.games.filter(g => g._id !== game._id);
+    if (Meteor.userId() === game.users[0].userId && game.users.length === 1) {
+      States.remove({ _id });
+      Meteor.users.update(
+        { _id: Meteor.userId() },
+        {
+          $set: {
+            games: newGamesArray
+          }
+        }
+      );
     }
   },
   "states.addNewMessage"({ _id, message }) {
@@ -325,27 +336,4 @@ Meteor.methods({
       });
     }
   }
-  /*,
-  "states.firstStepDeleteGame"({ _id }) {
-    if (!this.userId) {
-      return;
-    }
-    let { users } = States.findOne(_id);
-    let color = users.find(user => user.userId === Meteor.userId()).color;
-    States.update(_id, {
-      $set: {
-        deleteGame: color
-      }
-    });
-  },
-  "states.secondStepDeleteGame"({ _id }) {
-    if (!Meteor.userId()) {
-      return;
-    }
-    let { deleteGame, users } = States.findOne(_id);
-    let color = users.find(user => user.userId === Meteor.userId()).color;
-    if (deleteGame === invertColor(color)) {
-      States.remove({ _id });
-    }
-  }*/
 });
