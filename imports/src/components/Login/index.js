@@ -71,7 +71,8 @@ export default class Login extends React.Component {
             }
             .login {
               width: 100%;
-              height: auto;
+              height: 70vh;
+              padding: 0;
             }
           }
         `}</style>
