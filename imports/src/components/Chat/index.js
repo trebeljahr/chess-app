@@ -48,6 +48,7 @@ class Chat extends React.Component {
           }
           button {
             background: #258ea6;
+            border: none;
           }
           .align {
             position: absolute;
