@@ -10,10 +10,10 @@ const GameListings = ({ games, handleJoin, handleDelete, archive }) => {
             key={state._id}
             className={
               "game-posting " +
-              (!archive ||
-              !state.archived ||
-              state.users.filter(user => user.userId === Meteor.userId())
-                .length === 0
+              (!state.archived &&
+              !archive &&
+              !state.users.filter(user => user.userId === Meteor.userId())
+                .length === 1
                 ? "hidden"
                 : "")
             }
@@ -45,6 +45,8 @@ const GameListings = ({ games, handleJoin, handleDelete, archive }) => {
           grid-template-columns: 1fr 1fr 1fr;
           grid-auto-columns: min-content min-content min-content;
           grid-auto-rows: max-content;
+          text-align: center;
+          justify-items: center;
         }
         .game-posting {
           display: flex;
@@ -53,22 +55,16 @@ const GameListings = ({ games, handleJoin, handleDelete, archive }) => {
           text-align: center;
           justify-content: center;
           align-items: center;
-          background: #ccd0d4;
         }
         .game-posting-title {
           max-width: 25vw;
-          margin-left: 2%;
           text-align: center;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
           font-weight: bold;
         }
-        @media only screen and (min-width: 801px) {
-          .gpc div:nth-child(odd) {
-            background: white;
-          }
-        }
+
         @media only screen and (max-width: 800px) {
           .game-posting-title {
             max-width: 40vw;
@@ -76,12 +72,6 @@ const GameListings = ({ games, handleJoin, handleDelete, archive }) => {
           .gpc {
             grid-template-columns: 1fr 1fr;
             grid-auto-columns: min-content min-content;
-          }
-          .gpc div:nth-child(4n-1) {
-            background: white;
-          }
-          .gpc div:nth-child(4n-2) {
-            background: white;
           }
         }
         @media only screen and (max-width: 600px) {
@@ -94,12 +84,6 @@ const GameListings = ({ games, handleJoin, handleDelete, archive }) => {
             align-items: center;
             margin: 0;
             padding: 0;
-          }
-          .gpc div:nth-child(odd) {
-            background: white;
-          }
-          .gpc div:nth-child(4n-2) {
-            background: #ccd0d4;
           }
         }
       `}</style>

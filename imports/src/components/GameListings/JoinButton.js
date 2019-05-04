@@ -38,7 +38,7 @@ const JoinButton = ({ state, handleJoin, handleDelete, archive }) => (
         align-self: center;
         display: flex;
         flex-direction: row;
-        justify-content: space-between;
+        justify-content: center;
       }
       div {
         display: flex;
