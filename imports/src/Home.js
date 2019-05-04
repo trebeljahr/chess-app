@@ -15,8 +15,8 @@ class Home extends React.Component {
     super(props);
     this.state = {
       extend: false,
-      filters: ["all", "own", "other", "archived"],
-      filter: "all"
+      filters: ["new", "active", "archived"],
+      filter: "active"
     };
   }
   handleExtend = () => {
@@ -150,16 +150,21 @@ class Home extends React.Component {
             <GameListings
               games={this.props.states
                 .filter(game => {
-                  if (this.state.filter === "own") {
-                    return game.users[0].userId === Meteor.userId();
+                  if (this.state.filter === "active") {
+                    return (
+                      game.users.filter(u => u.userId === Meteor.userId())
+                        .length === 1 && !game.archived
+                    );
                   }
-                  if (this.state.filter === "other") {
-                    return game.users[0].userId !== Meteor.userId();
+                  if (this.state.filter === "new") {
+                    return (
+                      game.users.filter(u => u.userId === Meteor.userId())
+                        .length === 0 && !game.archived
+                    );
                   }
                   if (this.state.filter === "archived") {
                     return game.archived;
                   }
-                  return true;
                 })
                 .reverse()}
               handleJoin={this.handleJoin}
