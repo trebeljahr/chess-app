@@ -2,6 +2,7 @@ import React from "react";
 class ChatOverlay extends React.Component {
   constructor(props) {
     super(props);
+    this.state = { messages: [] };
   }
   newMessage = e => {
     e.preventDefault();
@@ -30,9 +31,11 @@ class ChatOverlay extends React.Component {
   componentDidMount = () => {
     this.scrollToBottom();
   };
-
   componentDidUpdate = () => {
-    this.scrollToBottom();
+    if (this.props.messages.length !== this.state.messages.length) {
+      this.scrollToBottom();
+      this.setState({ messages: this.props.messages });
+    }
   };
   render() {
     return (
@@ -77,19 +80,20 @@ class ChatOverlay extends React.Component {
         </div>
         <style>{`
           .header {
-            height: 8vh;
+            height: auto;
             padding: 10px;
             width: 100%;
             display: flex;
             justify-content: center;
-            align-items: center;
             background: #C0D6DF;
           }
           #blue {
             background: #258ea6;
+            border: none;
           }
           #yellow {
             background: #EFA00B;
+            border: none;
           }
           .overlay {
             position: fixed;
@@ -97,14 +101,15 @@ class ChatOverlay extends React.Component {
             left: 0;
             width: 100%;
             height: 100vh;
+            display: flex;
+            flex-direction: column;
             background: white;
             z-index: 2;
             overflow: hidden;
           }
           ul {
             list-style-type: none;
-            height: 82vh;
-            max-height: 100%;
+            height: auto;
             margin: 0;
             padding: 0;
             padding-left: 20px;
@@ -124,7 +129,7 @@ class ChatOverlay extends React.Component {
           }
           .toolbar {
             display: flex;
-            height: 10vh;
+            height: auto;
             flex-direction: row;
             align-items: center;
             justify-content: space-around;
@@ -143,6 +148,10 @@ class ChatOverlay extends React.Component {
           }
           .send {
             margin-left: 10px;
+          }
+          h3 {
+            padding: 0;
+            margin: 0;
           }
           `}</style>
       </div>

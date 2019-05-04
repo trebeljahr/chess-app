@@ -9,9 +9,7 @@ import WhoPlays from "../WhoPlays";
 
 const Dashboard = game => {
   return (
-    <div
-      className={"Dashboard " + (game.checkmate || game.remis ? "leave" : "")}
-    >
+    <div className={"Dashboard " + (game.archived ? "leave" : "")}>
       <WhoPlays users={game.users} _id={game._id} />
       <MoveHistory
         moveHistory={game.moveHistory}
@@ -75,6 +73,13 @@ const Dashboard = game => {
               "g g g"
               "b b b"
               "c d e"
+              "a a a";
+          }
+          .leave {
+            grid-template-areas:
+              "g g g"
+              "b b b"
+              "d d e"
               "a a a";
           }
         }

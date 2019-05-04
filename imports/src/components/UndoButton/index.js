@@ -39,6 +39,7 @@ const UndoButton = props => (
     <style jsx>{`
       #undo {
         background: #d9dcd6;
+        border: none;
       }
       #undo:hover {
         background: #c6c8c3;
