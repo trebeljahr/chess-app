@@ -1,6 +1,6 @@
 import React from "react";
 
-const JoinButton = ({ state, handleJoin, handleDelete }) => (
+const JoinButton = ({ state, handleJoin, handleDelete, archive }) => (
   <div className="game-posting-controls">
     {state.users.length < 2 ||
     state.users.filter(u => u.userId === Meteor.userId()).length > 0 ? (
@@ -10,7 +10,12 @@ const JoinButton = ({ state, handleJoin, handleDelete }) => (
           onClick={() => handleJoin(state._id)}
         >
           {state.users.filter(u => u.userId === Meteor.userId()).length > 0
-            ? "Join again"
+            ? !archive ||
+              !state.archived ||
+              state.users.filter(user => user.userId === Meteor.userId())
+                .length === 0
+              ? "Join again"
+              : "Analyze"
             : "Join"}
         </button>
         {state.users.length === 1 &&

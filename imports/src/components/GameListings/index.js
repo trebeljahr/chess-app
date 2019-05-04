@@ -9,7 +9,13 @@ const GameListings = ({ games, handleJoin, handleDelete, archive }) => {
           <div
             key={state._id}
             className={
-              "game-posting " + (!archive && state.archived ? "hidden" : "")
+              "game-posting " +
+              (!archive ||
+              !state.archived ||
+              state.users.filter(user => user.userId === Meteor.userId())
+                .length === 0
+                ? "hidden"
+                : "")
             }
           >
             <h3 className="game-posting-title">{state.name}</h3>
@@ -21,6 +27,7 @@ const GameListings = ({ games, handleJoin, handleDelete, archive }) => {
               handleDelete={handleDelete}
               handleJoin={handleJoin}
               state={state}
+              archive={archive}
             />
           </div>
         );
