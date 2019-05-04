@@ -85,14 +85,15 @@ class ChatOverlay extends React.Component {
             width: 100%;
             display: flex;
             justify-content: center;
-            align-items: center;
             background: #C0D6DF;
           }
           #blue {
             background: #258ea6;
+            border: none;
           }
           #yellow {
             background: #EFA00B;
+            border: none;
           }
           .overlay {
             position: fixed;
@@ -100,14 +101,15 @@ class ChatOverlay extends React.Component {
             left: 0;
             width: 100%;
             height: 100vh;
+            display: flex;
+            flex-direction: column;
             background: white;
             z-index: 2;
             overflow: hidden;
           }
           ul {
             list-style-type: none;
-            height: 80vh;
-            max-height: 100%;
+            height: auto;
             margin: 0;
             padding: 0;
             padding-left: 20px;
@@ -146,6 +148,10 @@ class ChatOverlay extends React.Component {
           }
           .send {
             margin-left: 10px;
+          }
+          h3 {
+            padding: 0;
+            margin: 0;
           }
           `}</style>
       </div>

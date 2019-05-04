@@ -8,7 +8,7 @@ class Chat extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      show: false,
+      show: true,
       numberOfMessages: this.props.messages.length
     };
   }
@@ -48,6 +48,7 @@ class Chat extends React.Component {
           }
           button {
             background: #258ea6;
+            border: none;
           }
           .align {
             position: absolute;
