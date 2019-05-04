@@ -15,19 +15,21 @@ export default class Login extends React.Component {
   }
   render() {
     return (
-      <div>
+      <div className="flex">
         <div className="banner">
           <h1>Nrin's Chess</h1>
           <h2>Play chess against your friends!</h2>
         </div>
         <div ref="container" className="login" />
         <style jsx>{`
+          .flex {
+            display: flex;
+          }
           .login {
-            position: fixed;
-            top: 0;
-            right: 0;
+            position: relative;
             z-index: 2;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             width: 40vw;
@@ -35,24 +37,9 @@ export default class Login extends React.Component {
             height: 100vh;
             background: white;
             overflow: scroll;
-            scrollbar-color: #286090 #fff;
-          }
-          .login::-webkit-scrollbar {
-            width: 15px;
-          }
-          .login::-webkit-scrollbar-track-piece {
-            background: white;
-          }
-
-          .login::-webkit-scrollbar-thumb:vertical {
-            background: #286090;
           }
           .banner {
             color: white;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 2;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -69,16 +56,22 @@ export default class Login extends React.Component {
           h1 {
             font-weight: bold;
           }
+          @media only screen and (max-width: 600px) and (max-height: 500px) {
+            h2 {
+              display: none;
+            }
+          }
           @media only screen and (max-width: 600px) {
             .banner {
-              width: 100vw;
+              width: 100%;
               height: 30vh;
             }
+            .flex {
+              flex-direction: column;
+            }
             .login {
-              top: 30vh;
-              left: 0;
-              width: 100vw;
-              height: 70vh;
+              width: 100%;
+              height: auto;
             }
           }
         `}</style>
