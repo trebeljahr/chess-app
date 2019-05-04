@@ -11,7 +11,6 @@ class AbandonGameButton extends React.Component {
     return (
       <div style={{ gridArea: "d" }} onClick={this.handleClick}>
         <i className="fas fa-door-open fa-2x" />
-
         <style jsx>{`
           div {
             color: black;
