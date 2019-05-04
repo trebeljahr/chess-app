@@ -24,6 +24,9 @@ export default class Login extends React.Component {
         <style jsx>{`
           .flex {
             display: flex;
+            min-height: 100vh;
+            max-height: 100%;
+            width: 100%;
           }
           .login {
             position: relative;
@@ -32,11 +35,10 @@ export default class Login extends React.Component {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 40vw;
-            padding: 5vmin;
-            height: 100vh;
             background: white;
-            overflow: scroll;
+            width: 100%;
+            min-height: 100vh;
+            max-height: 100%;
           }
           .banner {
             color: white;
@@ -45,8 +47,7 @@ export default class Login extends React.Component {
             align-items: center;
             justify-content: center;
             text-align: center;
-            width: 60vw;
-            height: 100vh;
+            width: 100%;
             background: linear-gradient(
               111.45349766483548deg,
               rgba(2, 27, 62, 1) 5.73779698099772%,
@@ -63,15 +64,13 @@ export default class Login extends React.Component {
           }
           @media only screen and (max-width: 600px) {
             .banner {
-              width: 100%;
               height: 30vh;
             }
             .flex {
               flex-direction: column;
             }
             .login {
-              width: 100%;
-              height: 70vh;
+              min-height: auto;
               padding: 0;
             }
           }
