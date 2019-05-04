@@ -109,13 +109,20 @@ class ChatOverlay extends React.Component {
           }
           ul {
             list-style-type: none;
-            height: auto;
+            height: 100vh;
+            max-height: 100vh;
+            width: 100%;
             margin: 0;
-            padding: 0;
-            padding-left: 20px;
+            padding: 10px 20px 0px 20px;
             overflow-y: scroll;
             text-align: left;
             scrollbar-color: #286090 #FFF;
+          }
+          li {
+            word-break: break-all;
+          }
+          label {
+            margin: 0;
           }
           ul::-webkit-scrollbar {
               width: 15px;
