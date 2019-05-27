@@ -12,6 +12,9 @@ class Chat extends React.Component {
       numberOfMessages: this.props.messages.length
     };
   }
+  componentDidMount = () => {
+    window.scrollTo(0, document.body.scrollHeight);
+  };
   handleClick = () => {
     this.setState(state => {
       return {
