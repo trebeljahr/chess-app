@@ -22,7 +22,7 @@ interface ChessBoardProps {
   userId: string;
   archived: boolean;
   lastMove: MoveHistoryEntry | null;
-  onMove: (field: string) => void;
+  onMove: (from: string, to: string) => void;
 }
 
 interface LocalSelection {
@@ -105,10 +105,7 @@ export function ChessBoard({
       // If a piece is selected and clicked field is a valid move target
       if (selection) {
         if (selection.validFields.has(field)) {
-          // First send the selection click, then the move click
-          onMove(selection.field);
-          // Small delay to let server process first click
-          setTimeout(() => onMove(field), 50);
+          onMove(selection.field, field);
           setSelection(null);
           return;
         }
@@ -168,8 +165,7 @@ export function ChessBoard({
     (field: string, e: React.DragEvent) => {
       e.preventDefault();
       if (selection && selection.validFields.has(field)) {
-        onMove(selection.field);
-        setTimeout(() => onMove(field), 50);
+        onMove(selection.field, field);
       }
       setSelection(null);
       setDragging(null);

@@ -65,6 +65,11 @@ const clickSchema = slugSchema.extend({
     .regex(/^[A-H][1-8]$/)
 });
 
+const moveSchema = slugSchema.extend({
+  from: z.string().regex(/^[A-H][1-8]$/),
+  to: z.string().regex(/^[A-H][1-8]$/)
+});
+
 const promoteSchema = slugSchema.extend({
   pieceType: z.enum(["queen", "rook", "bishop", "knight"] satisfies [
     Exclude<PieceType, "king" | "pawn">,
@@ -344,6 +349,22 @@ export const appRouter = router({
 
       const nextState = handleBoardClick(game.state, ctx.user.id, input.field);
       saveGameState(game.id, game.slug, nextState, "board-clicked");
+
+      return { success: true };
+    }),
+    move: protectedProcedure.input(moveSchema).mutation(({ input, ctx }) => {
+      const game = findGameBySlug(input.slug);
+
+      if (!game) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Game not found."
+        });
+      }
+
+      const afterFirst = handleBoardClick(game.state, ctx.user.id, input.from);
+      const afterSecond = handleBoardClick(afterFirst, ctx.user.id, input.to);
+      saveGameState(game.id, game.slug, afterSecond, "board-clicked");
 
       return { success: true };
     }),

@@ -61,6 +61,7 @@ export function GamePage({ user }: GamePageProps) {
   );
 
   const click = trpc.game.click.useMutation();
+  const move = trpc.game.move.useMutation();
   const promote = trpc.game.promote.useMutation();
   const sendMessage = trpc.game.sendMessage.useMutation({
     onSuccess: () => {
@@ -179,7 +180,7 @@ export function GamePage({ user }: GamePageProps) {
             archived={game.archived}
             gameState={game}
             lastMove={lastMove}
-            onMove={(field) => click.mutate({ slug, field })}
+            onMove={(from, to) => move.mutate({ slug, from, to })}
             userId={user.id}
             viewerColor={viewer.color}
           />
