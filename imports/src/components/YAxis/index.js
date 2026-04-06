@@ -8,13 +8,13 @@ const YAxis = ({ turnAround }) => (
     <style jsx>{`
       .axis {
         position: absolute;
-        left: 0;
+        right: 0;
         top: 0;
         display: flex;
         flex-direction: column-reverse;
         justify-content: space-around;
         margin-top: 5vmin;
-        margin-left: 2vmin;
+        margin-right: 2vmin;
         height: 80vmin;
       }
       .turnToBlackPlayer {

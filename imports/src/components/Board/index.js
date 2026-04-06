@@ -42,20 +42,17 @@ const Board = ({ board, handleClick, turn, color, lastMove, archived }) => (
                   : "")
               }
             >
-              <span
-                className={
-                  tile.figure.type
-                    ? "fas " +
-                      "fa-chess-" +
-                      tile.figure.type +
-                      " " +
-                      tile.figure.color +
-                      (color === "black"
-                        ? " turnToBlackPlayer"
-                        : " turnToWhitePlayer")
-                    : ""
-                }
-              />
+              {tile.figure.type ? (
+                <img
+                  src={`/pieces-basic-svg/${tile.figure.type}-${tile.figure.color === "white" ? "w" : "b"}.svg`}
+                  className={
+                    "piece" +
+                    (color === "black"
+                      ? " turnToBlackPlayer"
+                      : " turnToWhitePlayer")
+                  }
+                />
+              ) : null}
             </div>
           </div>
         );
@@ -76,9 +73,14 @@ const Board = ({ board, handleClick, turn, color, lastMove, archived }) => (
         border-radius: 100%;
         background: darkgray;
       }
-      .board div {
+      .board > div {
         font-size: 3vmin;
         text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .board > div > div {
         display: flex;
         justify-content: center;
         align-items: center;
@@ -101,8 +103,9 @@ const Board = ({ board, handleClick, turn, color, lastMove, archived }) => (
       .rochade {
         background: blue !important;
       }
-      span {
-        font-size: 8vmin;
+      .piece {
+        width: 8vmin;
+        height: 8vmin;
       }
       .black-tile {
         background: #a15e49;
@@ -113,12 +116,6 @@ const Board = ({ board, handleClick, turn, color, lastMove, archived }) => (
         background: #ca895f;
         border: none;
         z-index: 2;
-      }
-      .white {
-        color: white;
-      }
-      .black {
-        color: black;
       }
       .figures {
         width: 80%;
