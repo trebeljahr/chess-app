@@ -373,9 +373,11 @@ export const appRouter = router({
         saveGameState(game.id, game.slug, result.state, "move-made");
         return { success: true, promotion: result.promotion };
       } catch (err) {
+        const msg = err instanceof Error ? err.message : "Invalid move.";
+        console.error(`[move] ${input.from} -> ${input.to} failed:`, msg);
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: err instanceof Error ? err.message : "Invalid move."
+          message: msg
         });
       }
     }),

@@ -13,17 +13,21 @@ if (url && process.env.NODE_ENV !== "test") {
     lazyConnect: true
   });
 
+  let errorLogged = false;
+
   client.on("connect", () => {
+    errorLogged = false;
     console.log("[redis] Connected");
   });
 
   client.on("error", (err: Error) => {
-    console.error("[redis] Error:", err.message || String(err));
+    if (!errorLogged) {
+      errorLogged = true;
+      console.error("[redis] Connection error, retrying in background...");
+    }
   });
 
-  client.connect().catch(() => {
-    // retryStrategy handles reconnection
-  });
+  client.connect().catch(() => {});
 }
 
 export function getRedisClient(): Redis | null {

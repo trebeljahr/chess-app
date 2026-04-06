@@ -203,12 +203,20 @@ export function executeMove(
 ): { state: GameState; promotion: boolean } {
   const user = state.users.find((item) => item.userId === userId);
 
-  if (!user || user.color === "none" || state.archived) {
-    throw new Error("Not allowed to move.");
+  if (!user || user.color === "none") {
+    throw new Error("Not allowed to move: no valid player.");
+  }
+
+  if (state.archived) {
+    throw new Error("Not allowed to move: game is archived.");
+  }
+
+  if (state.baseLinePawn) {
+    throw new Error("Not allowed to move: pawn promotion pending.");
   }
 
   if (state.turn !== user.color) {
-    throw new Error("Not your turn.");
+    throw new Error(`Not your turn (turn: ${state.turn}, you: ${user.color}).`);
   }
 
   const nextState = cloneState(state);
@@ -231,7 +239,9 @@ export function executeMove(
   );
 
   if (!validateMove(nextState.board, toPos.row, toPos.col)) {
-    throw new Error("Illegal move.");
+    throw new Error(
+      `Illegal move: ${from} -> ${to} (piece: ${piece.color} ${piece.type})`
+    );
   }
 
   const move = buildMove(
