@@ -20,6 +20,7 @@ import {
 } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Separator } from "../../components/ui/separator";
+import { cn } from "../../lib/utils";
 import { formatRelativeTime } from "../../lib/time";
 import { trpc } from "../../lib/trpc";
 import { useMoveSound } from "../../lib/use-move-sound";
@@ -51,6 +52,7 @@ export function GamePage({ user }: GamePageProps) {
   const { slug = "" } = useParams();
   const utils = trpc.useUtils();
   const [message, setMessage] = useState("");
+  const [viewIndex, setViewIndex] = useState<number | null>(null);
 
   const gameQuery = trpc.game.bySlug.useQuery(
     { slug },
@@ -101,9 +103,17 @@ export function GamePage({ user }: GamePageProps) {
 
   const history = gameQuery.data?.game.moveHistory ?? [];
   useMoveSound(history.length);
+
+  // Reset scrub position when new moves arrive
+  useEffect(() => {
+    setViewIndex(null);
+  }, [history.length]);
+
+  // When scrubbing, find the last actual move at or before viewIndex
+  const effectiveIndex = viewIndex ?? history.length - 1;
   let lastMove: MoveHistoryEntry | null = null;
 
-  for (let index = history.length - 1; index >= 0; index -= 1) {
+  for (let index = effectiveIndex; index >= 0; index -= 1) {
     const move = history[index];
 
     if (!("kind" in move)) {
@@ -111,6 +121,16 @@ export function GamePage({ user }: GamePageProps) {
       break;
     }
   }
+
+  // Build a view-only game state when scrubbing through history
+  const isScrubbing = viewIndex !== null && viewIndex !== history.length - 1;
+  const displayState =
+    isScrubbing && gameQuery.data
+      ? {
+          ...gameQuery.data.game,
+          board: gameQuery.data.game.oldBoards[viewIndex] ?? gameQuery.data.game.board
+        }
+      : gameQuery.data?.game;
 
   if (gameQuery.isLoading) {
     return <LoadingState />;
@@ -177,8 +197,8 @@ export function GamePage({ user }: GamePageProps) {
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
         <div className="space-y-4">
           <ChessBoard
-            archived={game.archived}
-            gameState={game}
+            archived={game.archived || isScrubbing}
+            gameState={displayState!}
             lastMove={lastMove}
             onMove={(from, to) => move.mutate({ slug, from, to })}
             userId={user.id}
@@ -280,7 +300,7 @@ export function GamePage({ user }: GamePageProps) {
                   }
                 >
                   <RefreshCcw className="size-4" />
-                  Offer undo
+                  Request undo
                 </Button>
                 <Button
                   variant="outline"
@@ -307,9 +327,13 @@ export function GamePage({ user }: GamePageProps) {
                 {game.moveHistory.map((move, index) => (
                   <button
                     key={index}
-                    className="flex w-full items-center justify-between rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-left text-sm transition hover:bg-stone-100"
-                    disabled={!game.archived}
-                    onClick={() => timeTravel.mutate({ slug, index })}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm transition hover:bg-stone-100",
+                      viewIndex === index
+                        ? "border-teal-500 bg-teal-50"
+                        : "border-stone-200 bg-stone-50"
+                    )}
+                    onClick={() => setViewIndex(viewIndex === index ? null : index)}
                     type="button"
                   >
                     <span>{formatMove(move as MoveHistoryEntry)}</span>
