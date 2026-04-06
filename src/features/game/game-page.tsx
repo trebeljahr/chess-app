@@ -177,10 +177,10 @@ export function GamePage({ user }: GamePageProps) {
         <div className="space-y-4">
           <ChessBoard
             archived={game.archived}
-            board={game.board}
+            gameState={game}
             lastMove={lastMove}
-            onTileClick={(field) => click.mutate({ slug, field })}
-            turn={game.turn}
+            onMove={(field) => click.mutate({ slug, field })}
+            userId={user.id}
             viewerColor={viewer.color}
           />
           {promotionPending ? (
