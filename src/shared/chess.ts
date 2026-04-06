@@ -195,6 +195,77 @@ export function addChatMessage(
   return nextState;
 }
 
+export function executeMove(
+  state: GameState,
+  userId: string,
+  from: string,
+  to: string
+): { state: GameState; promotion: boolean } {
+  const user = state.users.find((item) => item.userId === userId);
+
+  if (!user || user.color === "none" || state.archived) {
+    throw new Error("Not allowed to move.");
+  }
+
+  if (state.turn !== user.color) {
+    throw new Error("Not your turn.");
+  }
+
+  const nextState = cloneState(state);
+  const fromPos = convertPos(from);
+  const toPos = convertPos(to);
+  const piece = nextState.board[fromPos.row][fromPos.col].figure;
+
+  if (!isPiece(piece) || piece.color !== user.color) {
+    throw new Error("No valid piece at source square.");
+  }
+
+  // Compute valid moves for the selected piece
+  createFieldMarkers(
+    nextState.board,
+    fromPos.row,
+    fromPos.col,
+    "valid",
+    false,
+    nextState.moveHistory
+  );
+
+  if (!validateMove(nextState.board, toPos.row, toPos.col)) {
+    throw new Error("Illegal move.");
+  }
+
+  const move = buildMove(
+    nextState.board,
+    piece,
+    fromPos,
+    toPos,
+    nextState.moveHistory
+  );
+
+  const boardAfterMove = updateBoard(cloneBoard(nextState.board), move, false);
+  const history = [...nextState.moveHistory, move];
+
+  // Pawn promotion
+  if (
+    move.figure.type === "pawn" &&
+    (move.newPos.row === 0 || move.newPos.row === BOARD_SIZE - 1)
+  ) {
+    nextState.board = boardAfterMove;
+    nextState.moveHistory = history;
+    nextState.baseLinePawn = move.newPos;
+    nextState.movePart = 0;
+    nextState.oldPos = undefined;
+    nextState.figure = undefined;
+    nextState.timestamp = Date.now();
+    return { state: nextState, promotion: true };
+  }
+
+  return {
+    state: finalizeCommittedMove(nextState, boardAfterMove, history),
+    promotion: false
+  };
+}
+
 export function handleBoardClick(
   state: GameState,
   userId: string,

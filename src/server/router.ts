@@ -8,6 +8,7 @@ import {
   createDefaultGameState,
   getJoinColor,
   getViewerColor,
+  executeMove,
   handleBoardClick,
   handlePawnPromotion,
   handleUndo,
@@ -362,11 +363,21 @@ export const appRouter = router({
         });
       }
 
-      const afterFirst = handleBoardClick(game.state, ctx.user.id, input.from);
-      const afterSecond = handleBoardClick(afterFirst, ctx.user.id, input.to);
-      saveGameState(game.id, game.slug, afterSecond, "board-clicked");
-
-      return { success: true };
+      try {
+        const result = executeMove(
+          game.state,
+          ctx.user.id,
+          input.from,
+          input.to
+        );
+        saveGameState(game.id, game.slug, result.state, "move-made");
+        return { success: true, promotion: result.promotion };
+      } catch (err) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: err instanceof Error ? err.message : "Invalid move."
+        });
+      }
     }),
     promote: protectedProcedure.input(promoteSchema).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
