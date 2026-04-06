@@ -1,0 +1,30 @@
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6300:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "6100:6100"
+    environment:
+      PORT: "6100"
+      HOST: "0.0.0.0"
+      REDIS_URL: redis://redis:6379
+      CHESS_DB_FILE: /app/data/chess.db
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - chess-data:/app/data
+
+volumes:
+  chess-data:
