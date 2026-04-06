@@ -22,6 +22,7 @@ import { Input } from "../../components/ui/input";
 import { Separator } from "../../components/ui/separator";
 import { formatRelativeTime } from "../../lib/time";
 import { trpc } from "../../lib/trpc";
+import { useMoveSound } from "../../lib/use-move-sound";
 import {
   formatMove,
   invertColor,
@@ -98,6 +99,7 @@ export function GamePage({ user }: GamePageProps) {
   }, [heartbeat, slug]);
 
   const history = gameQuery.data?.game.moveHistory ?? [];
+  useMoveSound(history.length);
   let lastMove: MoveHistoryEntry | null = null;
 
   for (let index = history.length - 1; index >= 0; index -= 1) {

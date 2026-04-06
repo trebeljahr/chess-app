@@ -492,14 +492,16 @@ function finalizeCommittedMove(
   moveHistory: MoveHistoryEntry[]
 ): GameState {
   const nextTurn = invertColor(state.turn);
-  const cleanBoard = refreshThreats(cloneBoard(board), nextTurn);
+  const cleanBoard = cloneBoard(board);
+  removeMarkers(cleanBoard, ["valid", "selected", "rochade", "enpassen"]);
+  const threatenedBoard = refreshThreats(cleanBoard, nextTurn);
 
-  state.board = cleanBoard;
-  state.oldBoards = [...state.oldBoards, cloneBoard(cleanBoard)];
+  state.board = threatenedBoard;
+  state.oldBoards = [...state.oldBoards, cloneBoard(threatenedBoard)];
   state.turn = nextTurn;
-  state.check = checkForCheck(cleanBoard, nextTurn);
-  state.checkmate = checkForCheckMate(cleanBoard, nextTurn, moveHistory);
-  state.remis = !state.checkmate && checkForRemis(cleanBoard, nextTurn, moveHistory);
+  state.check = checkForCheck(threatenedBoard, nextTurn);
+  state.checkmate = checkForCheckMate(threatenedBoard, nextTurn, moveHistory);
+  state.remis = !state.checkmate && checkForRemis(threatenedBoard, nextTurn, moveHistory);
   state.offerTakeback = false;
   state.movePart = 0;
   state.moveHistory = moveHistory;
