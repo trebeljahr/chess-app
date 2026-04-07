@@ -27,7 +27,7 @@ This starts:
 1. Create a new Docker Compose application in Coolify
 2. Point it at `docker-compose-prod.yaml`
 3. Add a persistent storage mount: `/app/data` (for SQLite)
-4. Set the exposed port to `6100`
+4. Set the exposed port to `3514`
 5. Health check path: `/health`
 6. Domain: `https://chess.your-domain.com`
 
@@ -49,7 +49,7 @@ See `.env.example`. Key variables for production:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `6100` | Server listen port |
+| `PORT` | `3514` | Server listen port |
 | `HOST` | `0.0.0.0` | Bind address |
 | `NODE_ENV` | `production` | Environment |
 | `REDIS_URL` | — | Redis connection URL |
@@ -67,7 +67,7 @@ See `.env.example`. Key variables for production:
 docker-compose up
 ```
 
-Starts Redis on port 6300 and the app on port 6100.
+Starts Redis on port 3515 and the app on port 3514.
 
 For development without Docker, use `npm run dev` which starts Redis via
 `docker-compose up redis` and the server/client with concurrently.

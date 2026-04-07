@@ -12,9 +12,9 @@ services:
     image: ghcr.io/trebeljahr/chess-app:latest
     restart: unless-stopped
     ports:
-      - "6100:6100"
+      - "3514:3514"
     environment:
-      PORT: "6100"
+      PORT: "3514"
       HOST: "0.0.0.0"
       NODE_ENV: production
       REDIS_URL: redis://redis:6379

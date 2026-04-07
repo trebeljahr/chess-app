@@ -3,7 +3,7 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     ports:
-      - "6300:6379"
+      - "3515:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -14,9 +14,9 @@ services:
     build: .
     restart: unless-stopped
     ports:
-      - "${PORT:-6100}:6100"
+      - "${PORT:-3514}:3514"
     environment:
-      PORT: "6100"
+      PORT: "3514"
       HOST: "0.0.0.0"
       NODE_ENV: "${NODE_ENV:-production}"
       REDIS_URL: redis://redis:6379
