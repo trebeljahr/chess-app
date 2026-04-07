@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "concurrently -k -n redis,server,client -c red,green,cyan \"npm run dev:redis\" \"npm run dev:server\" \"npm run dev:client\"",

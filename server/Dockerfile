@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim AS deps
+FROM node:24-bookworm-slim AS deps
 WORKDIR /app
 
 RUN apt-get update \
@@ -18,7 +18,7 @@ COPY tsconfig.json tsconfig.server.json ./
 RUN npm run build:server
 RUN npm prune --omit=dev
 
-FROM node:22-bookworm-slim AS runtime
+FROM node:24-bookworm-slim AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
