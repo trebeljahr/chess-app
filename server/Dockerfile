@@ -31,9 +31,7 @@ COPY --from=build /app/package*.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist/server ./dist/server
 
-RUN mkdir -p /app/data && chown node:node /app/data
-
-USER node
+RUN mkdir -p /app/data
 
 EXPOSE 3514
 
