@@ -54,9 +54,8 @@ export interface ChessMove {
 }
 
 export type MoveHistoryEntry =
-  | {
-      kind: "start";
-    }
+  | { kind: "start" }
+  | { kind: "forfeit"; color: PieceColor }
   | ChessMove;
 
 export interface GameState {
@@ -143,6 +142,9 @@ export function getViewerColor(state: GameState, userId: string): ViewerColor {
 
 export function formatMove(move: MoveHistoryEntry): string {
   if ("kind" in move) {
+    if (move.kind === "forfeit") {
+      return `${move.color} forfeits`;
+    }
     return "Start";
   }
 
@@ -437,6 +439,27 @@ export function handlePawnPromotion(
 
   tile.figure.type = pieceType;
   return finalizeCommittedMove(nextState, nextState.board, nextState.moveHistory);
+}
+
+export function forfeitGame(state: GameState, userId: string): GameState {
+  if (state.archived) {
+    return state;
+  }
+
+  const user = state.users.find((item) => item.userId === userId);
+
+  if (!user || user.color === "none") {
+    return state;
+  }
+
+  const nextState = cloneState(state);
+  nextState.moveHistory = [
+    ...nextState.moveHistory,
+    { kind: "forfeit", color: user.color }
+  ];
+  nextState.archived = true;
+  nextState.timestamp = Date.now();
+  return nextState;
 }
 
 export function proposeUndo(state: GameState, userId: string): GameState {

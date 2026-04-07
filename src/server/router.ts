@@ -9,6 +9,7 @@ import {
   getJoinColor,
   getViewerColor,
   executeMove,
+  forfeitGame,
   handleBoardClick,
   handlePawnPromotion,
   handleUndo,
@@ -468,6 +469,20 @@ export const appRouter = router({
 
       const nextState = goBackInTime(game.state, input.index);
       saveGameState(game.id, game.slug, nextState, "timeline-changed");
+      return { success: true };
+    }),
+    forfeit: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
+      const game = findGameBySlug(input.slug);
+
+      if (!game) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Game not found."
+        });
+      }
+
+      const nextState = forfeitGame(game.state, ctx.user.id);
+      saveGameState(game.id, game.slug, nextState, "game-forfeited");
       return { success: true };
     }),
     heartbeat: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {

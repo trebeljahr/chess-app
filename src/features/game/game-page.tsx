@@ -27,7 +27,9 @@ import { useMoveSound } from "../../lib/use-move-sound";
 import {
   formatMove,
   invertColor,
+  type ChessMove,
   type MoveHistoryEntry,
+  type PieceColor,
   type PieceType
 } from "../../shared/chess";
 import { PieceArt } from "../../components/piece-art";
@@ -53,6 +55,7 @@ export function GamePage({ user }: GamePageProps) {
   const utils = trpc.useUtils();
   const [message, setMessage] = useState("");
   const [viewIndex, setViewIndex] = useState<number | null>(null);
+  const [showForfeitConfirm, setShowForfeitConfirm] = useState(false);
 
   const gameQuery = trpc.game.bySlug.useQuery(
     { slug },
@@ -75,6 +78,9 @@ export function GamePage({ user }: GamePageProps) {
   const revertUndo = trpc.game.revertUndo.useMutation();
   const acceptUndo = trpc.game.acceptUndo.useMutation();
   const timeTravel = trpc.game.goBackInTime.useMutation();
+  const forfeit = trpc.game.forfeit.useMutation({
+    onSuccess: () => setShowForfeitConfirm(false)
+  });
 
   trpc.game.onChanged.useSubscription(
     { slug },
@@ -123,13 +129,14 @@ export function GamePage({ user }: GamePageProps) {
   }
 
   // Build a view-only game state when scrubbing through history
-  const isScrubbing = viewIndex !== null && viewIndex !== history.length - 1;
+  const isAtLatest = viewIndex === null || viewIndex >= history.length - 1;
+  const scrubBoard =
+    !isAtLatest && gameQuery.data
+      ? gameQuery.data.game.oldBoards[viewIndex] ?? null
+      : null;
   const displayState =
-    isScrubbing && gameQuery.data
-      ? {
-          ...gameQuery.data.game,
-          board: gameQuery.data.game.oldBoards[viewIndex] ?? gameQuery.data.game.board
-        }
+    scrubBoard && gameQuery.data
+      ? { ...gameQuery.data.game, board: scrubBoard }
       : gameQuery.data?.game;
 
   if (gameQuery.isLoading) {
@@ -197,7 +204,7 @@ export function GamePage({ user }: GamePageProps) {
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
         <div className="space-y-4">
           <ChessBoard
-            archived={game.archived || isScrubbing}
+            archived={game.archived || scrubBoard !== null}
             gameState={displayState!}
             lastMove={lastMove}
             onMove={(from, to) => move.mutate({ slug, from, to })}
@@ -321,27 +328,77 @@ export function GamePage({ user }: GamePageProps) {
                 >
                   Accept
                 </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowForfeitConfirm(true)}
+                  disabled={game.archived || viewer.color === "none"}
+                >
+                  <Flag className="size-4" />
+                  Forfeit
+                </Button>
               </div>
+              {showForfeitConfirm ? (
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 space-y-3">
+                  <p className="text-sm font-medium text-rose-900">
+                    Do you really want to forfeit? This cannot be undone.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={forfeit.isPending}
+                      onClick={() => forfeit.mutate({ slug })}
+                    >
+                      {forfeit.isPending ? "Forfeiting..." : "Yes, forfeit"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowForfeitConfirm(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
               <Separator />
               <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
-                {game.moveHistory.map((move, index) => (
-                  <button
-                    key={index}
-                    className={cn(
-                      "flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm transition hover:bg-stone-100",
-                      viewIndex === index
-                        ? "border-teal-500 bg-teal-50"
-                        : "border-stone-200 bg-stone-50"
-                    )}
-                    onClick={() => setViewIndex(viewIndex === index ? null : index)}
-                    type="button"
-                  >
-                    <span>{formatMove(move as MoveHistoryEntry)}</span>
-                    {index === game.moveHistory.length - 1 ? (
-                      <Badge variant="outline">latest</Badge>
-                    ) : null}
-                  </button>
-                ))}
+                {game.moveHistory.map((move, index) => {
+                  const entry = move as MoveHistoryEntry;
+                  let moveColor: PieceColor | null = null;
+                  if ("kind" in entry) {
+                    if (entry.kind === "forfeit") moveColor = entry.color;
+                  } else {
+                    moveColor = (entry as ChessMove).figure.color;
+                  }
+
+                  return (
+                    <button
+                      key={index}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition hover:bg-stone-100",
+                        viewIndex === index
+                          ? "border-teal-500 bg-teal-50"
+                          : "border-stone-200 bg-stone-50"
+                      )}
+                      onClick={() => setViewIndex(viewIndex === index ? null : index)}
+                      type="button"
+                    >
+                      {moveColor ? (
+                        <span
+                          className={cn(
+                            "size-3 shrink-0 rounded-full border border-stone-300",
+                            moveColor === "white" ? "bg-white" : "bg-stone-900"
+                          )}
+                        />
+                      ) : null}
+                      <span className="flex-1">{formatMove(entry)}</span>
+                      {index === game.moveHistory.length - 1 ? (
+                        <Badge variant="outline">latest</Badge>
+                      ) : null}
+                    </button>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
