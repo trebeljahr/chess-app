@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Clock3, Plus, Trash2, Users } from "lucide-react";
+import { ArrowRight, Clock3, Eye, Plus, Trash2, Users } from "lucide-react";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import {
@@ -31,6 +31,7 @@ export function HomePage({ user }: HomePageProps) {
   const [name, setName] = useState("");
   const [color, setColor] = useState<"white" | "black" | "random">("random");
   const [error, setError] = useState<string | null>(null);
+  const [gameId, setGameId] = useState("");
 
   const lobbyQuery = trpc.lobby.list.useQuery();
 
@@ -151,6 +152,34 @@ export function HomePage({ user }: HomePageProps) {
                 {createGame.isPending ? "Creating..." : "Create game"}
               </Button>
             </form>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section>
+        <Card>
+          <CardContent className="flex items-end gap-3 pt-6">
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="gameId">Join or spectate by game ID</Label>
+              <Input
+                id="gameId"
+                placeholder="e.g. saturday-rapid-rematch"
+                value={gameId}
+                onChange={(event) => setGameId(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && gameId.trim()) {
+                    navigate(`/games/${gameId.trim()}`);
+                  }
+                }}
+              />
+            </div>
+            <Button
+              disabled={!gameId.trim()}
+              onClick={() => navigate(`/games/${gameId.trim()}`)}
+            >
+              <Eye className="size-4" />
+              Go to game
+            </Button>
           </CardContent>
         </Card>
       </section>

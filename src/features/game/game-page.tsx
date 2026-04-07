@@ -4,10 +4,14 @@ import {
   ArrowLeft,
   Check,
   Clock3,
+  Copy,
+  Eye,
   Flag,
+  Link,
   MessageCircle,
   RefreshCcw,
-  Send
+  Send,
+  UserPlus
 } from "lucide-react";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
@@ -56,6 +60,7 @@ export function GamePage({ user }: GamePageProps) {
   const [message, setMessage] = useState("");
   const [viewIndex, setViewIndex] = useState<number | null>(null);
   const [showForfeitConfirm, setShowForfeitConfirm] = useState(false);
+  const [copied, setCopied] = useState<"link" | "id" | null>(null);
 
   const gameQuery = trpc.game.bySlug.useQuery(
     { slug },
@@ -86,6 +91,11 @@ export function GamePage({ user }: GamePageProps) {
   });
   const joinRematch = trpc.lobby.join.useMutation({
     onSuccess: (data) => navigate(`/games/${data.slug}`)
+  });
+  const joinGame = trpc.lobby.join.useMutation({
+    onSuccess: async () => {
+      await utils.game.bySlug.invalidate({ slug });
+    }
   });
 
   trpc.game.onChanged.useSubscription(
@@ -208,9 +218,58 @@ export function GamePage({ user }: GamePageProps) {
             Updated {formatRelativeTime(updatedAt)}
           </p>
         </div>
-        <Badge variant={game.archived ? "secondary" : "success"}>
-          {game.archived ? "Archived board" : "Live board"}
-        </Badge>
+        <div className="flex items-center gap-2">
+          {viewer.color === "none" && game.users.length < 2 && !game.archived ? (
+            <Button
+              onClick={() => joinGame.mutate({ slug })}
+              disabled={joinGame.isPending}
+            >
+              <UserPlus className="size-4" />
+              {joinGame.isPending ? "Joining..." : "Join game"}
+            </Button>
+          ) : null}
+          {viewer.color === "none" ? (
+            <Badge variant="outline">
+              <Eye className="size-3" />
+              Spectating
+            </Badge>
+          ) : null}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              setCopied("link");
+              setTimeout(() => setCopied(null), 2000);
+            }}
+          >
+            {copied === "link" ? (
+              <Check className="size-4" />
+            ) : (
+              <Link className="size-4" />
+            )}
+            {copied === "link" ? "Copied!" : "Copy link"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              navigator.clipboard.writeText(slug);
+              setCopied("id");
+              setTimeout(() => setCopied(null), 2000);
+            }}
+          >
+            {copied === "id" ? (
+              <Check className="size-4" />
+            ) : (
+              <Copy className="size-4" />
+            )}
+            {copied === "id" ? "Copied!" : slug}
+          </Button>
+          <Badge variant={game.archived ? "secondary" : "success"}>
+            {game.archived ? "Archived" : "Live"}
+          </Badge>
+        </div>
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
