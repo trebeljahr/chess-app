@@ -73,6 +73,7 @@ export interface GameState {
   oldBoards: Board[];
   timestamp: number;
   messages: GameMessage[];
+  rematchSlug?: string;
   oldPos?: Position;
   figure?: Piece;
 }

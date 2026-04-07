@@ -485,6 +485,54 @@ export const appRouter = router({
       saveGameState(game.id, game.slug, nextState, "game-forfeited");
       return { success: true };
     }),
+    rematch: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
+      const game = findGameBySlug(input.slug);
+
+      if (!game) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Game not found."
+        });
+      }
+
+      if (!game.state.archived) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Game is still in progress."
+        });
+      }
+
+      // If a rematch already exists, just return its slug
+      if (game.state.rematchSlug) {
+        return { slug: game.state.rematchSlug };
+      }
+
+      const viewer = getViewerColor(game.state, ctx.user.id);
+      const rematchName = `${game.name} — rematch`;
+      const slug = createUniqueSlug(rematchName);
+      const state = addPlayerToGame(createDefaultGameState(), {
+        userId: ctx.user.id,
+        name: ctx.user.username,
+        color: chooseColor(viewer === "none" ? "random" : viewer)
+      });
+
+      insertGame({
+        id: crypto.randomUUID(),
+        slug,
+        name: rematchName,
+        createdById: ctx.user.id,
+        state,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+
+      // Link rematch to original game so opponent can find it
+      const nextState = { ...game.state, rematchSlug: slug };
+      saveGameState(game.id, game.slug, nextState, "rematch-created");
+      emitLobbyUpdate("game-created", slug);
+
+      return { slug };
+    }),
     heartbeat: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
 

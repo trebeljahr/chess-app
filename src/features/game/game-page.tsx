@@ -81,7 +81,10 @@ export function GamePage({ user }: GamePageProps) {
   const forfeit = trpc.game.forfeit.useMutation({
     onSuccess: () => setShowForfeitConfirm(false)
   });
-  const rematch = trpc.lobby.create.useMutation({
+  const rematch = trpc.game.rematch.useMutation({
+    onSuccess: (data) => navigate(`/games/${data.slug}`)
+  });
+  const joinRematch = trpc.lobby.join.useMutation({
     onSuccess: (data) => navigate(`/games/${data.slug}`)
   });
 
@@ -307,18 +310,25 @@ export function GamePage({ user }: GamePageProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               {game.archived ? (
-                <Button
-                  className="w-full"
-                  onClick={() =>
-                    rematch.mutate({
-                      name: `${name} — rematch`,
-                      color: viewer.color === "none" ? "random" : viewer.color
-                    })
-                  }
-                  disabled={rematch.isPending}
-                >
-                  {rematch.isPending ? "Creating..." : "Rematch"}
-                </Button>
+                game.rematchSlug ? (
+                  <Button
+                    className="w-full"
+                    onClick={() =>
+                      joinRematch.mutate({ slug: game.rematchSlug! })
+                    }
+                    disabled={joinRematch.isPending}
+                  >
+                    {joinRematch.isPending ? "Joining..." : "Join rematch"}
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full"
+                    onClick={() => rematch.mutate({ slug })}
+                    disabled={rematch.isPending}
+                  >
+                    {rematch.isPending ? "Creating..." : "Rematch"}
+                  </Button>
+                )
               ) : (
                 <>
                   <div className="flex flex-wrap gap-2">
