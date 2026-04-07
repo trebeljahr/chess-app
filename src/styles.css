@@ -59,3 +59,12 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+@keyframes slide-piece {
+  from {
+    transform: translate(var(--slide-from-x, 0%), var(--slide-from-y, 0%));
+  }
+  to {
+    transform: translate(0%, 0%);
+  }
+}

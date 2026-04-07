@@ -56,6 +56,7 @@ export interface ChessMove {
 export type MoveHistoryEntry =
   | { kind: "start" }
   | { kind: "forfeit"; color: PieceColor }
+  | { kind: "draw" }
   | ChessMove;
 
 export interface GameState {
@@ -67,6 +68,7 @@ export interface GameState {
   checkmate: boolean;
   remis: boolean;
   offerTakeback: false | PieceColor;
+  offerDraw: false | PieceColor;
   baseLinePawn: false | Position;
   users: GameUser[];
   archived: boolean;
@@ -94,6 +96,7 @@ export function createDefaultGameState(): GameState {
     checkmate: false,
     remis: false,
     offerTakeback: false,
+    offerDraw: false,
     baseLinePawn: false,
     users: [],
     archived: false,
@@ -156,9 +159,8 @@ function fieldName(pos: Position): string {
 
 export function formatMove(move: MoveHistoryEntry): string {
   if ("kind" in move) {
-    if (move.kind === "forfeit") {
-      return `${move.color} forfeits`;
-    }
+    if (move.kind === "forfeit") return `${move.color} forfeits`;
+    if (move.kind === "draw") return "Draw agreed";
     return "Game start";
   }
 
@@ -488,6 +490,43 @@ export function forfeitGame(state: GameState, userId: string): GameState {
   ];
   nextState.oldBoards = [...nextState.oldBoards, cloneBoard(nextState.board)];
   nextState.archived = true;
+  nextState.timestamp = Date.now();
+  return nextState;
+}
+
+export function proposeDraw(state: GameState, userId: string): GameState {
+  if (state.archived) return state;
+  const user = state.users.find((item) => item.userId === userId);
+  if (!user || user.color === "none") return state;
+
+  const nextState = cloneState(state);
+  nextState.offerDraw = user.color;
+  nextState.timestamp = Date.now();
+  return nextState;
+}
+
+export function acceptDraw(state: GameState, userId: string): GameState {
+  if (state.archived || !state.offerDraw) return state;
+  const user = state.users.find((item) => item.userId === userId);
+  if (!user || user.color === "none" || user.color === state.offerDraw) return state;
+
+  const nextState = cloneState(state);
+  nextState.moveHistory = [...nextState.moveHistory, { kind: "draw" }];
+  nextState.oldBoards = [...nextState.oldBoards, cloneBoard(nextState.board)];
+  nextState.remis = true;
+  nextState.archived = true;
+  nextState.offerDraw = false;
+  nextState.timestamp = Date.now();
+  return nextState;
+}
+
+export function rejectDraw(state: GameState, userId: string): GameState {
+  if (!state.offerDraw) return state;
+  const user = state.users.find((item) => item.userId === userId);
+  if (!user || user.color === "none") return state;
+
+  const nextState = cloneState(state);
+  nextState.offerDraw = false;
   nextState.timestamp = Date.now();
   return nextState;
 }

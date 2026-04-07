@@ -69,6 +69,7 @@ export function GamePage({ user }: GamePageProps) {
   const [showForfeitConfirm, setShowForfeitConfirm] = useState(false);
   const [copied, setCopied] = useState<"link" | "id" | null>(null);
   const [flipped, setFlipped] = useState(false);
+  const [preMove, setPreMove] = useState<{ from: string; to: string } | null>(null);
 
   const moveHistoryRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
@@ -92,6 +93,9 @@ export function GamePage({ user }: GamePageProps) {
   const proposeUndo = trpc.game.proposeUndo.useMutation();
   const revertUndo = trpc.game.revertUndo.useMutation();
   const acceptUndo = trpc.game.acceptUndo.useMutation();
+  const offerDraw = trpc.game.proposeDraw.useMutation();
+  const respondDraw = trpc.game.acceptDraw.useMutation();
+  const declineDraw = trpc.game.rejectDraw.useMutation();
   const forfeit = trpc.game.forfeit.useMutation({
     onSuccess: () => setShowForfeitConfirm(false)
   });
@@ -131,7 +135,17 @@ export function GamePage({ user }: GamePageProps) {
   }, [heartbeat, slug]);
 
   const history = gameQuery.data?.game.moveHistory ?? [];
+  const currentTurn = gameQuery.data?.game.turn;
+  const viewerColor = gameQuery.data?.viewer.color;
   useMoveSound(history.length);
+
+  // Execute pre-move when it becomes our turn
+  useEffect(() => {
+    if (preMove && currentTurn && viewerColor && currentTurn === viewerColor) {
+      move.mutate({ slug, from: preMove.from, to: preMove.to });
+      setPreMove(null);
+    }
+  }, [currentTurn, viewerColor, preMove, move, slug]);
 
   // Reset scrub position when new moves arrive
   useEffect(() => {
@@ -412,6 +426,8 @@ export function GamePage({ user }: GamePageProps) {
             onMove={(from, to) => move.mutate({ slug, from, to })}
             userId={user.id}
             viewerColor={effectiveColor}
+            preMove={preMove}
+            onPreMove={setPreMove}
           />
           <PlayerBar
             player={bottomPlayer}
@@ -593,6 +609,41 @@ export function GamePage({ user }: GamePageProps) {
                         </Button>
                       </>
                     ) : null}
+                    {!game.offerDraw ? (
+                      <Button
+                        variant="outline"
+                        onClick={() => offerDraw.mutate({ slug })}
+                        disabled={viewer.color === "none" || offerDraw.isPending}
+                      >
+                        Offer draw
+                      </Button>
+                    ) : null}
+                    {game.offerDraw === viewer.color ? (
+                      <Button
+                        variant="outline"
+                        onClick={() => declineDraw.mutate({ slug })}
+                        disabled={declineDraw.isPending}
+                      >
+                        Withdraw draw offer
+                      </Button>
+                    ) : null}
+                    {game.offerDraw && game.offerDraw !== viewer.color ? (
+                      <>
+                        <Button
+                          onClick={() => respondDraw.mutate({ slug })}
+                          disabled={viewer.color === "none" || respondDraw.isPending}
+                        >
+                          Accept draw
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => declineDraw.mutate({ slug })}
+                          disabled={declineDraw.isPending}
+                        >
+                          Decline draw
+                        </Button>
+                      </>
+                    ) : null}
                     <Button
                       variant="destructive"
                       onClick={() => setShowForfeitConfirm(true)}
@@ -602,6 +653,16 @@ export function GamePage({ user }: GamePageProps) {
                       Forfeit
                     </Button>
                   </div>
+                  {preMove ? (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 flex items-center justify-between">
+                      <span className="text-sm font-medium text-amber-900">
+                        Pre-move queued: {preMove.from} → {preMove.to}
+                      </span>
+                      <Button variant="ghost" size="sm" onClick={() => setPreMove(null)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : null}
                   {showForfeitConfirm ? (
                     <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 space-y-3">
                       <p className="text-sm font-medium text-rose-900">

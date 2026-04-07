@@ -22,6 +22,8 @@ interface ChessBoardProps {
   archived: boolean;
   lastMove: MoveHistoryEntry | null;
   onMove: (from: string, to: string) => void;
+  preMove: { from: string; to: string } | null;
+  onPreMove: (preMove: { from: string; to: string } | null) => void;
 }
 
 interface LocalSelection {
@@ -57,13 +59,32 @@ function computeSelection(
   return { field, validFields, rochadeFields, enpassenFields };
 }
 
+interface AnimatingPiece {
+  piece: Piece;
+  fromField: string;
+  toField: string;
+}
+
+function fieldToGridPos(
+  field: string,
+  viewerColor: ViewerColor
+): { row: number; col: number } {
+  const pos = convertPos(field);
+  if (viewerColor === "black") {
+    return { row: 7 - pos.row, col: 7 - pos.col };
+  }
+  return { row: pos.row, col: pos.col };
+}
+
 export function ChessBoard({
   gameState,
   viewerColor,
   userId,
   archived,
   lastMove,
-  onMove
+  onMove,
+  preMove,
+  onPreMove
 }: ChessBoardProps) {
   const board = gameState.board;
   const turn = gameState.turn;
@@ -92,6 +113,27 @@ export function ChessBoard({
   const [dragging, setDragging] = useState<string | null>(null);
   const dragImageRef = useRef<HTMLElement | null>(null);
 
+  // Move animation state
+  const [animating, setAnimating] = useState<AnimatingPiece | null>(null);
+  const prevBoardRef = useRef<string>("");
+
+  useEffect(() => {
+    const boardKey = JSON.stringify(board);
+    if (prevBoardRef.current && prevBoardRef.current !== boardKey && lastMove && !("kind" in lastMove)) {
+      const piece = board[lastMove.newPos.row][lastMove.newPos.col].figure;
+      if (isPiece(piece)) {
+        setAnimating({
+          piece,
+          fromField: positionToField(lastMove.oldPos),
+          toField: positionToField(lastMove.newPos)
+        });
+        const timer = setTimeout(() => setAnimating(null), 300);
+        return () => clearTimeout(timer);
+      }
+    }
+    prevBoardRef.current = boardKey;
+  }, [board, lastMove]);
+
   // Clear selection when turn changes or board updates
   useEffect(() => {
     setSelection(null);
@@ -104,42 +146,44 @@ export function ChessBoard({
       // If a piece is selected and clicked field is a valid move target
       if (selection) {
         if (selection.validFields.has(field)) {
-          onMove(selection.field, field);
+          if (isMyTurn) {
+            onMove(selection.field, field);
+          } else {
+            // Pre-move: queue for when it's our turn
+            onPreMove({ from: selection.field, to: field });
+          }
           setSelection(null);
           return;
         }
 
-        // Clicking the same piece deselects
         if (selection.field === field) {
           setSelection(null);
+          onPreMove(null);
           return;
         }
       }
 
-      // Try to select a piece
-      if (isMyTurn) {
-        const pos = convertPos(field);
-        const tile = board[pos.row][pos.col];
-        if (isPiece(tile.figure) && tile.figure.color === viewerColor) {
-          const sel = computeSelection(gameState, userId, field);
-          setSelection(sel);
-          return;
-        }
+      // Try to select a piece (allow selection even when not your turn for pre-moves)
+      const pos = convertPos(field);
+      const tile = board[pos.row][pos.col];
+      if (isPiece(tile.figure) && tile.figure.color === viewerColor) {
+        const sel = computeSelection(gameState, userId, field);
+        setSelection(sel);
+        return;
       }
 
       setSelection(null);
     },
-    [archived, board, gameState, isMyTurn, onMove, selection, userId, viewerColor]
+    [archived, board, gameState, isMyTurn, onMove, onPreMove, selection, userId, viewerColor]
   );
 
   const handleDragStart = useCallback(
     (field: string, piece: Piece, e: React.DragEvent) => {
-      if (!isMyTurn || piece.color !== viewerColor) {
+      if (piece.color !== viewerColor || archived) {
         e.preventDefault();
         return;
       }
 
-      // Create custom drag image from the piece
       const el = e.currentTarget as HTMLElement;
       const rect = el.getBoundingClientRect();
       const img = el.cloneNode(true) as HTMLElement;
@@ -157,19 +201,23 @@ export function ChessBoard({
       const sel = computeSelection(gameState, userId, field);
       setSelection(sel);
     },
-    [isMyTurn, viewerColor, gameState, userId]
+    [viewerColor, archived, gameState, userId]
   );
 
   const handleDrop = useCallback(
     (field: string, e: React.DragEvent) => {
       e.preventDefault();
       if (selection && selection.validFields.has(field)) {
-        onMove(selection.field, field);
+        if (isMyTurn) {
+          onMove(selection.field, field);
+        } else {
+          onPreMove({ from: selection.field, to: field });
+        }
       }
       setSelection(null);
       setDragging(null);
     },
-    [selection, onMove]
+    [selection, onMove, onPreMove, isMyTurn]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -204,19 +252,40 @@ export function ChessBoard({
               piece?.type === "king" &&
               piece?.color === turn;
             const canDrag =
-              !archived && isMyTurn && piece !== null && piece.color === viewerColor;
+              !archived && piece !== null && piece.color === viewerColor;
+            const isPreMoveFrom = preMove?.from === tile.field;
+            const isPreMoveTo = preMove?.to === tile.field;
+
+            // Animation: hide piece at destination briefly, show animated overlay
+            const isAnimTarget = animating?.toField === tile.field;
+            const isAnimSource = animating?.fromField === tile.field;
+
+            let animStyle: React.CSSProperties | undefined;
+            if (isAnimTarget && animating) {
+              const from = fieldToGridPos(animating.fromField, viewerColor);
+              const to = fieldToGridPos(animating.toField, viewerColor);
+              const dx = (from.col - to.col) * 100;
+              const dy = (from.row - to.row) * 100;
+              animStyle = {
+                transform: `translate(0%, 0%)`,
+                animation: `slide-piece 250ms ease-out`,
+                ["--slide-from-x" as string]: `${dx}%`,
+                ["--slide-from-y" as string]: `${dy}%`
+              };
+            }
 
             return (
               <button
                 key={tile.field}
                 className={cn(
-                  "relative aspect-square border-none p-0 text-left transition hover:brightness-105",
+                  "relative aspect-square border-none p-0 text-left transition-colors hover:brightness-105",
                   tile.color === "white-tile"
                     ? "bg-[var(--board-light)]"
                     : "bg-[var(--board-dark)]",
                   isKingInCheck && "bg-rose-400/85",
                   isSelected && "ring-4 ring-inset ring-teal-500/70",
-                  isDraggingThis && "opacity-40"
+                  isDraggingThis && "opacity-40",
+                  (isPreMoveFrom || isPreMoveTo) && "ring-4 ring-inset ring-amber-400/70"
                 )}
                 disabled={archived}
                 onClick={() => handleTileClick(tile.field)}
@@ -227,12 +296,13 @@ export function ChessBoard({
                 {isLastMove ? (
                   <span className="absolute inset-1 rounded-[18px] border-2 border-slate-950/45" />
                 ) : null}
-                {piece ? (
+                {piece && !isAnimSource ? (
                   <span
                     className={cn(
                       "absolute inset-1.5",
                       canDrag && "cursor-grab active:cursor-grabbing"
                     )}
+                    style={isAnimTarget ? animStyle : undefined}
                     draggable={canDrag}
                     onDragStart={(e) => handleDragStart(tile.field, piece, e)}
                     onDragEnd={handleDragEnd}

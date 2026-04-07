@@ -8,9 +8,12 @@ import {
   createDefaultGameState,
   getJoinColor,
   getViewerColor,
+  acceptDraw,
   executeMove,
   forfeitGame,
   invertColor,
+  proposeDraw,
+  rejectDraw,
   handlePawnPromotion,
   handleUndo,
   isUserInGame,
@@ -417,6 +420,27 @@ export const appRouter = router({
 
       const nextState = handleUndo(game.state, ctx.user.id);
       saveGameState(game.id, game.slug, nextState, "undo-accepted");
+      return { success: true };
+    }),
+    proposeDraw: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
+      const game = findGameBySlug(input.slug);
+      if (!game) throw new TRPCError({ code: "NOT_FOUND", message: "Game not found." });
+      const nextState = proposeDraw(game.state, ctx.user.id);
+      saveGameState(game.id, game.slug, nextState, "draw-proposed");
+      return { success: true };
+    }),
+    acceptDraw: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
+      const game = findGameBySlug(input.slug);
+      if (!game) throw new TRPCError({ code: "NOT_FOUND", message: "Game not found." });
+      const nextState = acceptDraw(game.state, ctx.user.id);
+      saveGameState(game.id, game.slug, nextState, "draw-accepted");
+      return { success: true };
+    }),
+    rejectDraw: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
+      const game = findGameBySlug(input.slug);
+      if (!game) throw new TRPCError({ code: "NOT_FOUND", message: "Game not found." });
+      const nextState = rejectDraw(game.state, ctx.user.id);
+      saveGameState(game.id, game.slug, nextState, "draw-rejected");
       return { success: true };
     }),
     forfeit: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
