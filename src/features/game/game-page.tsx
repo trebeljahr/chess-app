@@ -81,6 +81,9 @@ export function GamePage({ user }: GamePageProps) {
   const forfeit = trpc.game.forfeit.useMutation({
     onSuccess: () => setShowForfeitConfirm(false)
   });
+  const rematch = trpc.lobby.create.useMutation({
+    onSuccess: (data) => navigate(`/games/${data.slug}`)
+  });
 
   trpc.game.onChanged.useSubscription(
     { slug },
@@ -295,78 +298,106 @@ export function GamePage({ user }: GamePageProps) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Undo and replay</CardTitle>
+              <CardTitle>{game.archived ? "Game over" : "Actions"}</CardTitle>
               <CardDescription>
-                Offer a takeback during live play, or scrub through the timeline after the game ends.
+                {game.archived
+                  ? "Scrub through the move history or start a rematch."
+                  : "Request a takeback, forfeit, or review moves."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-2">
+              {game.archived ? (
                 <Button
-                  variant="secondary"
-                  onClick={() => proposeUndo.mutate({ slug })}
-                  disabled={
-                    game.archived ||
-                    viewer.color === "none" ||
-                    game.moveHistory.length <= 1 ||
-                    proposeUndo.isPending
+                  className="w-full"
+                  onClick={() =>
+                    rematch.mutate({
+                      name: `${name} — rematch`,
+                      color: viewer.color === "none" ? "random" : viewer.color
+                    })
                   }
+                  disabled={rematch.isPending}
                 >
-                  <RefreshCcw className="size-4" />
-                  Request undo
+                  {rematch.isPending ? "Creating..." : "Rematch"}
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => revertUndo.mutate({ slug })}
-                  disabled={game.archived || !undoOfferedBy || revertUndo.isPending}
-                >
-                  Withdraw
-                </Button>
-                <Button
-                  onClick={() => acceptUndo.mutate({ slug })}
-                  disabled={
-                    game.archived ||
-                    viewer.color === "none" ||
-                    !undoOfferedBy ||
-                    undoOfferedBy === viewer.color ||
-                    acceptUndo.isPending
-                  }
-                >
-                  Accept
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => setShowForfeitConfirm(true)}
-                  disabled={game.archived || viewer.color === "none"}
-                >
-                  <Flag className="size-4" />
-                  Forfeit
-                </Button>
-              </div>
-              {showForfeitConfirm ? (
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 space-y-3">
-                  <p className="text-sm font-medium text-rose-900">
-                    Do you really want to forfeit? This cannot be undone.
-                  </p>
-                  <div className="flex gap-2">
+              ) : (
+                <>
+                  <div className="flex flex-wrap gap-2">
+                    {!undoOfferedBy ? (
+                      <Button
+                        variant="secondary"
+                        onClick={() => proposeUndo.mutate({ slug })}
+                        disabled={
+                          viewer.color === "none" ||
+                          game.moveHistory.length <= 1 ||
+                          proposeUndo.isPending
+                        }
+                      >
+                        <RefreshCcw className="size-4" />
+                        Request undo
+                      </Button>
+                    ) : null}
+                    {undoOfferedBy === viewer.color ? (
+                      <Button
+                        variant="outline"
+                        onClick={() => revertUndo.mutate({ slug })}
+                        disabled={revertUndo.isPending}
+                      >
+                        Withdraw undo request
+                      </Button>
+                    ) : null}
+                    {undoOfferedBy && undoOfferedBy !== viewer.color ? (
+                      <>
+                        <Button
+                          onClick={() => acceptUndo.mutate({ slug })}
+                          disabled={viewer.color === "none" || acceptUndo.isPending}
+                        >
+                          <Check className="size-4" />
+                          Accept undo
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => revertUndo.mutate({ slug })}
+                          disabled={revertUndo.isPending}
+                        >
+                          Decline
+                        </Button>
+                      </>
+                    ) : null}
                     <Button
                       variant="destructive"
-                      size="sm"
-                      disabled={forfeit.isPending}
-                      onClick={() => forfeit.mutate({ slug })}
+                      onClick={() => setShowForfeitConfirm(true)}
+                      disabled={viewer.color === "none"}
                     >
-                      {forfeit.isPending ? "Forfeiting..." : "Yes, forfeit"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowForfeitConfirm(false)}
-                    >
-                      Cancel
+                      <Flag className="size-4" />
+                      Forfeit
                     </Button>
                   </div>
-                </div>
-              ) : null}
+                  {showForfeitConfirm ? (
+                    <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 space-y-3">
+                      <p className="text-sm font-medium text-rose-900">
+                        Do you really want to forfeit? This cannot be undone.
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          disabled={forfeit.isPending}
+                          onClick={() => forfeit.mutate({ slug })}
+                        >
+                          {forfeit.isPending ? "Forfeiting..." : "Yes, forfeit"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowForfeitConfirm(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              )}
               <Separator />
               <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
                 {game.moveHistory.map((move, index) => {
