@@ -5,6 +5,7 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
 
+ENV NODE_ENV=development
 COPY package*.json ./
 RUN npm ci
 
