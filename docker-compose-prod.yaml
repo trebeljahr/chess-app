@@ -10,6 +10,7 @@ services:
 
   server:
     image: ghcr.io/trebeljahr/chess-app-server:latest
+    pull_policy: always
     restart: unless-stopped
     environment:
       PORT: "3514"
@@ -25,9 +26,8 @@ services:
 
   client:
     image: ghcr.io/trebeljahr/chess-app-client:latest
+    pull_policy: always
     restart: unless-stopped
-    ports:
-      - "80:80"
     environment:
       PORT: "80"
       BACKEND_URL: http://server:3514
