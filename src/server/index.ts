@@ -1,7 +1,4 @@
-import { existsSync } from "node:fs";
 import { createServer } from "node:http";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
@@ -30,16 +27,6 @@ app.use(
     createContext: createExpressContext
   })
 );
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const clientDir = join(__dirname, "../../client");
-
-if (existsSync(clientDir)) {
-  app.use(express.static(clientDir));
-  app.get("*", (_req, res) => {
-    res.sendFile(join(clientDir, "index.html"));
-  });
-}
 
 const server = createServer(app);
 const wss = new WebSocketServer({

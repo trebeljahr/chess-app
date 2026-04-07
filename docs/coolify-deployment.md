@@ -1,16 +1,14 @@
-# Chess App — Coolify Deployment
+# Online Chess — Coolify Deployment
 
 ## Architecture
 
-Single container app with Redis sidecar:
+Split client/server containers with Redis sidecar:
 
-- Vite frontend built into `dist/client`, served by the Node server
-- tRPC HTTP and WebSocket on the same origin at `/trpc`
-- Redis for distributed pub/sub (multi-instance support)
-- SQLite for persistence (mounted volume)
-- Health endpoint at `/health`
+- **Client** (`chess-app-client`) — Vite-built SPA served by a lightweight Node.js server, proxies `/trpc` to the backend. Port 80.
+- **Server** (`chess-app-server`) — Express + tRPC + WebSocket backend with SQLite persistence. Port 3514.
+- **Redis** — Pub/sub for distributed realtime events (multi-instance support).
 
-## Production deploy with docker-compose
+## Production deploy
 
 Use `docker-compose-prod.yaml` which pulls pre-built images from GHCR:
 
@@ -18,48 +16,48 @@ Use `docker-compose-prod.yaml` which pulls pre-built images from GHCR:
 docker-compose -f docker-compose-prod.yaml up -d
 ```
 
-This starts:
-- **redis** — Redis 7 Alpine for pub/sub
-- **app** — Chess app from `ghcr.io/trebeljahr/chess-app:latest`
-
 ## Coolify setup
 
-1. Create a new Docker Compose application in Coolify
+1. Create a Docker Compose application in Coolify
 2. Point it at `docker-compose-prod.yaml`
-3. Add a persistent storage mount: `/app/data` (for SQLite)
-4. Set the exposed port to `3514`
-5. Health check path: `/health`
+3. Add persistent storage: `/app/data` on the server container (SQLite)
+4. Expose port 80 (client container)
+5. Health check: `/healthz` on the client
 6. Domain: `https://chess.your-domain.com`
 
 ## GitHub Actions deploy flow
 
 1. Push to `main`
-2. CI runs typecheck + build verification
-3. Docker image built and pushed to `ghcr.io/trebeljahr/chess-app:latest`
-4. Coolify deployment triggered via webhook
+2. Parallel builds: client and server Docker images pushed to GHCR
+3. After both succeed: Coolify deployment triggered via webhook
 
 ### Required GitHub secrets
 
 - `COOLIFY_API_TOKEN` — Coolify API bearer token
 - `COOLIFY_WEBHOOK_URL` — Coolify deploy webhook endpoint
 
+### GHCR images
+
+- `ghcr.io/trebeljahr/chess-app-client:latest`
+- `ghcr.io/trebeljahr/chess-app-server:latest`
+
 ## Environment variables
 
-See `.env.example`. Key variables for production:
+### Server
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | `3514` | Server listen port |
 | `HOST` | `0.0.0.0` | Bind address |
-| `NODE_ENV` | `production` | Environment |
 | `REDIS_URL` | — | Redis connection URL |
 | `CHESS_DB_FILE` | `/app/data/chess.db` | SQLite database path |
 
-## DNS / proxy notes
+### Client
 
-- Normal HTTPS traffic on the app domain
-- WebSocket upgrade requests on the same domain at `/trpc`
-- No special browser-side WebSocket URL config needed
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `80` | Client listen port |
+| `BACKEND_URL` | `http://server:3514` | Backend URL for proxying |
 
 ## Local development with Docker
 
@@ -67,7 +65,6 @@ See `.env.example`. Key variables for production:
 docker-compose up
 ```
 
-Starts Redis on port 3515 and the app on port 3514.
+Starts Redis, server, and client. Access at `http://localhost:80`.
 
-For development without Docker, use `npm run dev` which starts Redis via
-`docker-compose up redis` and the server/client with concurrently.
+For dev without Docker: `npm run dev` starts Redis via docker-compose, the server with tsx watch, and Vite dev server with proxy.

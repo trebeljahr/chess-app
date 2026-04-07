@@ -6,15 +6,15 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
-
 RUN npm ci
 
 FROM deps AS build
 WORKDIR /app
 
-COPY . .
+COPY src ./src
+COPY tsconfig.json tsconfig.server.json ./
 
-RUN npm run build
+RUN npm run build:server
 RUN npm prune --omit=dev
 
 FROM node:22-bookworm-slim AS runtime
@@ -28,7 +28,7 @@ ENV REDIS_URL=""
 
 COPY --from=build /app/package*.json ./
 COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
+COPY --from=build /app/dist/server ./dist/server
 
 RUN mkdir -p /app/data && chown node:node /app/data
 

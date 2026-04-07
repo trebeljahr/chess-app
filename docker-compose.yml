@@ -10,11 +10,13 @@ services:
       timeout: 3s
       retries: 5
 
-  app:
-    build: .
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
     restart: unless-stopped
     ports:
-      - "${PORT:-3514}:3514"
+      - "${SERVER_PORT:-3514}:3514"
     environment:
       PORT: "3514"
       HOST: "0.0.0.0"
@@ -26,6 +28,19 @@ services:
         condition: service_healthy
     volumes:
       - chess-data:/app/data
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${CLIENT_PORT:-80}:80"
+    environment:
+      PORT: "80"
+      BACKEND_URL: http://server:3514
+    depends_on:
+      - server
 
 volumes:
   chess-data:

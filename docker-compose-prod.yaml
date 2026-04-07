@@ -8,11 +8,9 @@ services:
       timeout: 3s
       retries: 5
 
-  app:
-    image: ghcr.io/trebeljahr/chess-app:latest
+  server:
+    image: ghcr.io/trebeljahr/chess-app-server:latest
     restart: unless-stopped
-    ports:
-      - "3514:3514"
     environment:
       PORT: "3514"
       HOST: "0.0.0.0"
@@ -24,6 +22,17 @@ services:
         condition: service_healthy
     volumes:
       - chess-data:/app/data
+
+  client:
+    image: ghcr.io/trebeljahr/chess-app-client:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      PORT: "80"
+      BACKEND_URL: http://server:3514
+    depends_on:
+      - server
 
 volumes:
   chess-data:
