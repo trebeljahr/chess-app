@@ -18,7 +18,8 @@ export function App() {
 function AppShell() {
   const utils = trpc.useUtils();
   const sessionQuery = trpc.auth.session.useQuery(undefined, {
-    retry: false
+    retry: 3,
+    retryDelay: 1000
   });
 
   const logout = trpc.auth.logout.useMutation({
