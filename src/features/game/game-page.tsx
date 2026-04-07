@@ -129,15 +129,21 @@ export function GamePage({ user }: GamePageProps) {
   }
 
   // Build a view-only game state when scrubbing through history
-  const isAtLatest = viewIndex === null || viewIndex >= history.length - 1;
-  const scrubBoard =
-    !isAtLatest && gameQuery.data
-      ? gameQuery.data.game.oldBoards[viewIndex] ?? null
-      : null;
-  const displayState =
-    scrubBoard && gameQuery.data
-      ? { ...gameQuery.data.game, board: scrubBoard }
-      : gameQuery.data?.game;
+  const gameData = gameQuery.data?.game;
+  const oldBoards = gameData?.oldBoards ?? [];
+  let displayBoard = gameData?.board;
+
+  if (viewIndex !== null && gameData) {
+    // Use the oldBoard at this index if it exists, otherwise use the
+    // current board (handles the last entry and missing entries)
+    displayBoard = oldBoards[viewIndex] ?? gameData.board;
+  }
+
+  const displayState = gameData
+    ? { ...gameData, board: displayBoard ?? gameData.board }
+    : undefined;
+  const isScrubbing =
+    viewIndex !== null && displayBoard !== gameData?.board;
 
   if (gameQuery.isLoading) {
     return <LoadingState />;
@@ -204,7 +210,7 @@ export function GamePage({ user }: GamePageProps) {
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
         <div className="space-y-4">
           <ChessBoard
-            archived={game.archived || scrubBoard !== null}
+            archived={game.archived || isScrubbing}
             gameState={displayState!}
             lastMove={lastMove}
             onMove={(from, to) => move.mutate({ slug, from, to })}

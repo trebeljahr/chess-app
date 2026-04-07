@@ -457,6 +457,7 @@ export function forfeitGame(state: GameState, userId: string): GameState {
     ...nextState.moveHistory,
     { kind: "forfeit", color: user.color }
   ];
+  nextState.oldBoards = [...nextState.oldBoards, cloneBoard(nextState.board)];
   nextState.archived = true;
   nextState.timestamp = Date.now();
   return nextState;
