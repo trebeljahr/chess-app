@@ -32,6 +32,7 @@ export function HomePage({ user }: HomePageProps) {
   const [color, setColor] = useState<"white" | "black" | "random">("random");
   const [error, setError] = useState<string | null>(null);
   const [gameId, setGameId] = useState("");
+  const [timeControl, setTimeControl] = useState("untimed");
 
   const lobbyQuery = trpc.lobby.list.useQuery();
 
@@ -83,7 +84,7 @@ export function HomePage({ user }: HomePageProps) {
   function handleCreate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    createGame.mutate({ name, color });
+    createGame.mutate({ name, color, timeControl: timeControl as "untimed" });
   }
 
   return (
@@ -140,6 +141,25 @@ export function HomePage({ user }: HomePageProps) {
                   <option value="random">Random</option>
                   <option value="white">White</option>
                   <option value="black">Black</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="timeControl">Time control</Label>
+                <select
+                  id="timeControl"
+                  className="flex h-11 w-full rounded-2xl border border-stone-300 bg-white px-4 py-2 text-sm shadow-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                  value={timeControl}
+                  onChange={(event) => setTimeControl(event.target.value)}
+                >
+                  <option value="untimed">No time limit</option>
+                  <option value="1+0">1+0 Bullet</option>
+                  <option value="3+0">3+0 Blitz</option>
+                  <option value="3+2">3+2 Blitz</option>
+                  <option value="5+0">5+0 Blitz</option>
+                  <option value="5+3">5+3 Blitz</option>
+                  <option value="10+0">10+0 Rapid</option>
+                  <option value="15+10">15+10 Rapid</option>
+                  <option value="30+0">30+0 Classical</option>
                 </select>
               </div>
               {error ? (

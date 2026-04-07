@@ -6,6 +6,7 @@ import {
   addPlayerToGame,
   canDeleteGame,
   createDefaultGameState,
+  createTimedGameState,
   getJoinColor,
   getViewerColor,
   acceptDraw,
@@ -33,10 +34,12 @@ import {
   deleteSession,
   findGameBySlug,
   findUserByUsername,
+  getUserProfile,
   insertGame,
   insertSession,
   insertUser,
   listGames,
+  recordGameResult,
   removeGame,
   updateGame
 } from "./data.js";
@@ -55,7 +58,8 @@ const authSchema = z.object({
 
 const createGameSchema = z.object({
   name: z.string().trim().min(3).max(40),
-  color: z.enum(["white", "black", "random"])
+  color: z.enum(["white", "black", "random"]),
+  timeControl: z.enum(["untimed", "1+0", "3+0", "3+2", "5+0", "5+3", "10+0", "15+10", "30+0"]).default("untimed")
 });
 
 const slugSchema = z.object({
@@ -128,13 +132,33 @@ function saveGameState(
   gameId: string,
   slug: string,
   state: NonNullable<ReturnType<typeof findGameBySlug>>["state"],
-  reason: string
+  reason: string,
+  previouslyArchived = false
 ): void {
   updateGame(gameId, {
     state,
     updatedAt: Date.now()
   });
   emitGameUpdate(slug, reason);
+
+  // Record ELO when game ends
+  if (state.archived && !previouslyArchived && state.users.length === 2) {
+    const whiteUser = state.users.find((u) => u.color === "white");
+    const blackUser = state.users.find((u) => u.color === "black");
+    if (!whiteUser || !blackUser) return;
+
+    if (state.checkmate) {
+      const winnerId = invertColor(state.turn) === "white" ? whiteUser.userId : blackUser.userId;
+      const loserId = winnerId === whiteUser.userId ? blackUser.userId : whiteUser.userId;
+      recordGameResult(winnerId, loserId, false);
+    } else if (state.remis) {
+      recordGameResult(whiteUser.userId, blackUser.userId, true);
+    } else if (state.clock?.flagged) {
+      const loserId = state.clock.flagged === "white" ? whiteUser.userId : blackUser.userId;
+      const winnerId = loserId === whiteUser.userId ? blackUser.userId : whiteUser.userId;
+      recordGameResult(winnerId, loserId, false);
+    }
+  }
 }
 
 export const appRouter = router({
@@ -146,9 +170,20 @@ export const appRouter = router({
 
       return {
         id: ctx.user.id,
-        username: ctx.user.username
+        username: ctx.user.username,
+        rating: ctx.user.rating
       };
     }),
+    profile: protectedProcedure
+      .input(z.object({ userId: z.string().optional() }))
+      .query(({ input, ctx }) => {
+        const targetId = input.userId ?? ctx.user.id;
+        const profile = getUserProfile(targetId);
+        if (!profile) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "User not found." });
+        }
+        return profile;
+      }),
     register: publicProcedure.input(authSchema).mutation(({ input, ctx }) => {
       requireResponse(ctx.res);
 
@@ -219,7 +254,15 @@ export const appRouter = router({
       .input(createGameSchema)
       .mutation(({ input, ctx }) => {
         const slug = createUniqueSlug(input.name);
-        const state = addPlayerToGame(createDefaultGameState(), {
+        const timePresets: Record<string, [number, number]> = {
+          "1+0": [60_000, 0], "3+0": [180_000, 0], "3+2": [180_000, 2_000],
+          "5+0": [300_000, 0], "5+3": [300_000, 3_000], "10+0": [600_000, 0],
+          "15+10": [900_000, 10_000], "30+0": [1_800_000, 0]
+        };
+        const baseState = input.timeControl !== "untimed" && timePresets[input.timeControl]
+          ? createTimedGameState(...timePresets[input.timeControl])
+          : createDefaultGameState();
+        const state = addPlayerToGame(baseState, {
           userId: ctx.user.id,
           name: ctx.user.username,
           color: chooseColor(input.color)
@@ -333,7 +376,7 @@ export const appRouter = router({
           input.from,
           input.to
         );
-        saveGameState(game.id, game.slug, result.state, "move-made");
+        saveGameState(game.id, game.slug, result.state, "move-made", game.state.archived);
         return { success: true, promotion: result.promotion };
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Invalid move.";
@@ -358,7 +401,7 @@ export const appRouter = router({
       }
 
       const nextState = handlePawnPromotion(game.state, ctx.user.id, input.pieceType);
-      saveGameState(game.id, game.slug, nextState, "pawn-promoted");
+      saveGameState(game.id, game.slug, nextState, "pawn-promoted", game.state.archived);
 
       return { success: true };
     }),
@@ -433,7 +476,7 @@ export const appRouter = router({
       const game = findGameBySlug(input.slug);
       if (!game) throw new TRPCError({ code: "NOT_FOUND", message: "Game not found." });
       const nextState = acceptDraw(game.state, ctx.user.id);
-      saveGameState(game.id, game.slug, nextState, "draw-accepted");
+      saveGameState(game.id, game.slug, nextState, "draw-accepted", game.state.archived);
       return { success: true };
     }),
     rejectDraw: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
@@ -454,7 +497,7 @@ export const appRouter = router({
       }
 
       const nextState = forfeitGame(game.state, ctx.user.id);
-      saveGameState(game.id, game.slug, nextState, "game-forfeited");
+      saveGameState(game.id, game.slug, nextState, "game-forfeited", game.state.archived);
       return { success: true };
     }),
     rematch: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {

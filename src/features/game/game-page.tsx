@@ -436,6 +436,15 @@ export function GamePage({ user }: GamePageProps) {
                       ? `${winner} wins by checkmate!`
                       : "You lost by checkmate."}
                 </>
+              ) : game.clock?.flagged ? (
+                <>
+                  <Clock3 className="size-4" />
+                  {game.clock.flagged === viewer.color
+                    ? "You lost on time."
+                    : viewer.color === "none"
+                      ? `${game.clock.flagged} lost on time!`
+                      : "Your opponent lost on time!"}
+                </>
               ) : game.remis ? (
                 `Draw — ${formatDrawReason(game.drawReason)}`
               ) : (
@@ -464,8 +473,9 @@ export function GamePage({ user }: GamePageProps) {
           <PlayerBar
             player={topPlayer}
             isActive={!game.archived && topPlayer?.color === game.turn}
-            timestamp={game.timestamp}
+            timestamp={game.clock?.lastMoveAt ?? game.timestamp}
             capturedPieces={topPlayer?.color === "white" ? captured.black : captured.white}
+            clockMs={game.clock && topPlayer?.color ? game.clock[topPlayer.color as "white" | "black"] : null}
           />
           <ChessBoard
             archived={game.archived || isScrubbing}
@@ -481,8 +491,9 @@ export function GamePage({ user }: GamePageProps) {
           <PlayerBar
             player={bottomPlayer}
             isActive={!game.archived && bottomPlayer?.color === game.turn}
-            timestamp={game.timestamp}
+            timestamp={game.clock?.lastMoveAt ?? game.timestamp}
             capturedPieces={bottomPlayer?.color === "white" ? captured.black : captured.white}
+            clockMs={game.clock && bottomPlayer?.color ? game.clock[bottomPlayer.color as "white" | "black"] : null}
           />
           {promotionPending ? (
             <Card>
@@ -888,18 +899,35 @@ interface GameUser {
   timeStamp: number;
 }
 
+function formatClockTime(ms: number): string {
+  const totalSec = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = Math.floor(totalSec / 60);
+  const seconds = totalSec % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
 function PlayerBar({
   player,
   isActive,
   timestamp,
-  capturedPieces
+  capturedPieces,
+  clockMs
 }: {
   player: GameUser | undefined;
   isActive: boolean;
   timestamp: number;
   capturedPieces: Piece[];
+  clockMs: number | null;
 }) {
   const elapsed = useElapsedTime(timestamp, isActive);
+
+  // Live-decrement the clock for the active player
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (!isActive || clockMs === null) return;
+    const id = window.setInterval(() => setNow(Date.now()), 100);
+    return () => window.clearInterval(id);
+  }, [isActive, clockMs]);
 
   if (!player) {
     return (
@@ -936,7 +964,14 @@ function PlayerBar({
           </div>
         ) : null}
       </div>
-      {elapsed ? (
+      {clockMs !== null ? (
+        <span className={cn(
+          "rounded-lg px-2 py-0.5 tabular-nums text-xs font-bold",
+          isActive && clockMs < 30_000 ? "bg-rose-100 text-rose-700" : "bg-stone-200 text-stone-700"
+        )}>
+          {formatClockTime(isActive ? Math.max(0, clockMs - (now - timestamp)) : clockMs)}
+        </span>
+      ) : elapsed ? (
         <span className="tabular-nums text-xs text-slate-500">{elapsed}</span>
       ) : null}
     </div>

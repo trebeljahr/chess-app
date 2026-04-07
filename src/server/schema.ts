@@ -5,6 +5,11 @@ export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   username: text("username").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
+  rating: integer("rating").notNull().default(1200),
+  gamesPlayed: integer("games_played").notNull().default(0),
+  wins: integer("wins").notNull().default(0),
+  losses: integer("losses").notNull().default(0),
+  draws: integer("draws").notNull().default(0),
   createdAt: integer("created_at").notNull()
 });
 

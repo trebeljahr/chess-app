@@ -65,7 +65,10 @@ function AppShell() {
           </div>
           <div className="flex items-center gap-3">
             <SoundToggle />
-            <Badge variant="secondary">{sessionQuery.data.username}</Badge>
+            <Badge variant="secondary">
+              {sessionQuery.data.username}
+              {sessionQuery.data.rating ? ` · ${sessionQuery.data.rating}` : ""}
+            </Badge>
             <Button
               variant="ghost"
               onClick={() => logout.mutate()}

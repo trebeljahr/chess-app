@@ -59,6 +59,17 @@ export type MoveHistoryEntry =
   | { kind: "draw" }
   | ChessMove;
 
+export type TimeControl =
+  | { type: "untimed" }
+  | { type: "timed"; initialMs: number; incrementMs: number };
+
+export interface ClockState {
+  white: number;
+  black: number;
+  lastMoveAt: number;
+  flagged: PieceColor | null;
+}
+
 export type DrawReason =
   | "stalemate"
   | "agreement"
@@ -86,6 +97,8 @@ export interface GameState {
   oldBoards: Board[];
   timestamp: number;
   messages: GameMessage[];
+  timeControl: TimeControl;
+  clock: ClockState | null;
   rematchSlug?: string;
   oldPos?: Position;
   figure?: Piece;
@@ -115,6 +128,8 @@ export function createDefaultGameState(): GameState {
     users: [],
     archived: false,
     oldBoards: [cloneBoard(board)],
+    timeControl: { type: "untimed" },
+    clock: null,
     timestamp: Date.now(),
     messages: [
       {
@@ -126,6 +141,29 @@ export function createDefaultGameState(): GameState {
     ]
   };
 }
+
+export function createTimedGameState(initialMs: number, incrementMs: number): GameState {
+  const state = createDefaultGameState();
+  state.timeControl = { type: "timed", initialMs, incrementMs };
+  state.clock = {
+    white: initialMs,
+    black: initialMs,
+    lastMoveAt: Date.now(),
+    flagged: null
+  };
+  return state;
+}
+
+export const TIME_PRESETS: Array<{ label: string; initialMs: number; incrementMs: number }> = [
+  { label: "1+0 Bullet", initialMs: 60_000, incrementMs: 0 },
+  { label: "3+0 Blitz", initialMs: 180_000, incrementMs: 0 },
+  { label: "3+2 Blitz", initialMs: 180_000, incrementMs: 2_000 },
+  { label: "5+0 Blitz", initialMs: 300_000, incrementMs: 0 },
+  { label: "5+3 Blitz", initialMs: 300_000, incrementMs: 3_000 },
+  { label: "10+0 Rapid", initialMs: 600_000, incrementMs: 0 },
+  { label: "15+10 Rapid", initialMs: 900_000, incrementMs: 10_000 },
+  { label: "30+0 Classical", initialMs: 1_800_000, incrementMs: 0 },
+];
 
 export function cloneBoard(board: Board): Board {
   return structuredClone(board);
@@ -776,6 +814,28 @@ function finalizeCommittedMove(
   state.oldPos = undefined;
   state.figure = undefined;
   state.timestamp = Date.now();
+
+  // Update chess clock
+  if (state.clock && state.timeControl.type === "timed") {
+    const now = Date.now();
+    const elapsed = now - state.clock.lastMoveAt;
+    const movingColor = state.turn === "white" ? "black" : "white"; // color that just moved
+    const remaining = state.clock[movingColor] - elapsed + state.timeControl.incrementMs;
+
+    state.clock = {
+      ...state.clock,
+      [movingColor]: Math.max(0, remaining),
+      lastMoveAt: now
+    };
+
+    if (remaining <= 0) {
+      state.clock.flagged = movingColor;
+      state.archived = true;
+      state.checkmate = false;
+      state.remis = false;
+    }
+  }
+
   return state;
 }
 

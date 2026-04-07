@@ -20,6 +20,11 @@ sqlite.exec(`
     id TEXT PRIMARY KEY NOT NULL,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
+    rating INTEGER NOT NULL DEFAULT 1200,
+    games_played INTEGER NOT NULL DEFAULT 0,
+    wins INTEGER NOT NULL DEFAULT 0,
+    losses INTEGER NOT NULL DEFAULT 0,
+    draws INTEGER NOT NULL DEFAULT 0,
     created_at INTEGER NOT NULL
   );
 
@@ -46,13 +51,13 @@ sqlite.exec(`
   CREATE INDEX IF NOT EXISTS games_updated_at_idx ON games(updated_at);
 `);
 
-// Migration: drop the unique constraint on game name if it exists
-try {
-  sqlite.exec(`DROP INDEX IF EXISTS sqlite_autoindex_games_2`);
-} catch {
-  // Ignore — index may not exist on fresh databases
-}
-
+// Migrations for existing databases
+try { sqlite.exec(`ALTER TABLE users ADD COLUMN rating INTEGER NOT NULL DEFAULT 1200`); } catch { /* already exists */ }
+try { sqlite.exec(`ALTER TABLE users ADD COLUMN games_played INTEGER NOT NULL DEFAULT 0`); } catch { /* already exists */ }
+try { sqlite.exec(`ALTER TABLE users ADD COLUMN wins INTEGER NOT NULL DEFAULT 0`); } catch { /* already exists */ }
+try { sqlite.exec(`ALTER TABLE users ADD COLUMN losses INTEGER NOT NULL DEFAULT 0`); } catch { /* already exists */ }
+try { sqlite.exec(`ALTER TABLE users ADD COLUMN draws INTEGER NOT NULL DEFAULT 0`); } catch { /* already exists */ }
+try { sqlite.exec(`DROP INDEX IF EXISTS sqlite_autoindex_games_2`); } catch { /* ignore */ }
 
 export const db = drizzle(sqlite);
 export { sqlite };
