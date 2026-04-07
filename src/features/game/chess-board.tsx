@@ -41,6 +41,11 @@ function computeSelection(
 ): LocalSelection | null {
   const tempState = cloneState(state);
   tempState.movePart = 0;
+  // Force the turn to match the player's color so pre-moves work
+  const user = tempState.users.find((u) => u.userId === userId);
+  if (user && user.color !== "none") {
+    tempState.turn = user.color;
+  }
   const result = handleFirstClick(tempState, userId, field);
 
   if (result === tempState) return null;
@@ -136,10 +141,10 @@ export function ChessBoard({
     prevBoardRef.current = boardKey;
   }, [board, lastMove]);
 
-  // Clear selection when turn changes or board updates
+  // Clear selection when turn changes (a move was made)
   useEffect(() => {
     setSelection(null);
-  }, [turn, gameState.timestamp]);
+  }, [turn, gameState.moveHistory.length]);
 
   const handleTileClick = useCallback(
     (field: string) => {

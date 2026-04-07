@@ -475,6 +475,56 @@ export function GamePage({ user }: GamePageProps) {
             </div>
           )}
 
+          {/* Incoming offer popups */}
+          {undoOfferedBy && undoOfferedBy !== viewer.color && viewer.color !== "none" ? (
+            <div className="animate-in fade-in slide-in-from-top-2 rounded-2xl border border-amber-300 bg-amber-50 p-3 flex items-center justify-between gap-3">
+              <span className="text-sm font-medium text-amber-900">
+                Your opponent wants to undo their last move.
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => acceptUndo.mutate({ slug })}
+                  disabled={acceptUndo.isPending}
+                >
+                  Accept
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => revertUndo.mutate({ slug })}
+                  disabled={revertUndo.isPending}
+                >
+                  Decline
+                </Button>
+              </div>
+            </div>
+          ) : null}
+          {game.offerDraw && game.offerDraw !== viewer.color && viewer.color !== "none" ? (
+            <div className="animate-in fade-in slide-in-from-top-2 rounded-2xl border border-blue-300 bg-blue-50 p-3 flex items-center justify-between gap-3">
+              <span className="text-sm font-medium text-blue-900">
+                Your opponent is offering a draw.
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => respondDraw.mutate({ slug })}
+                  disabled={respondDraw.isPending}
+                >
+                  Accept draw
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => declineDraw.mutate({ slug })}
+                  disabled={declineDraw.isPending}
+                >
+                  Decline draw
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
           <PlayerBar
             player={topPlayer}
             isActive={!game.archived && topPlayer?.color === game.turn}
@@ -674,7 +724,7 @@ export function GamePage({ user }: GamePageProps) {
                           onClick={() => revertUndo.mutate({ slug })}
                           disabled={revertUndo.isPending}
                         >
-                          Decline
+                          Decline undo
                         </Button>
                       </>
                     ) : null}
