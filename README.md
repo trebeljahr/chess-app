@@ -1,4 +1,4 @@
-# Nrin's Chess
+# Online Chess
 
 This project has been modernized away from Meteor and now runs on:
 

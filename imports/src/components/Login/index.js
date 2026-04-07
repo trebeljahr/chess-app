@@ -17,7 +17,7 @@ export default class Login extends React.Component {
     return (
       <div className="flex">
         <div className="banner">
-          <h1>Nrin's Chess</h1>
+          <h1>Online Chess</h1>
           <h2>Play chess against your friends!</h2>
         </div>
         <div ref="container" className="login" />
