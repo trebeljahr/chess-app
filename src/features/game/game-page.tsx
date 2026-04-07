@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -7,6 +7,7 @@ import {
   Copy,
   Eye,
   Flag,
+  FlipVertical,
   Link,
   MessageCircle,
   RefreshCcw,
@@ -39,7 +40,8 @@ import {
   type MoveHistoryEntry,
   type Piece,
   type PieceColor,
-  type PieceType
+  type PieceType,
+  type ViewerColor
 } from "../../shared/chess";
 import { PieceArt } from "../../components/piece-art";
 import { ChessBoard } from "./chess-board";
@@ -66,6 +68,10 @@ export function GamePage({ user }: GamePageProps) {
   const [viewIndex, setViewIndex] = useState<number | null>(null);
   const [showForfeitConfirm, setShowForfeitConfirm] = useState(false);
   const [copied, setCopied] = useState<"link" | "id" | null>(null);
+  const [flipped, setFlipped] = useState(false);
+
+  const moveHistoryRef = useRef<HTMLDivElement>(null);
+  const chatRef = useRef<HTMLDivElement>(null);
 
   const gameQuery = trpc.game.bySlug.useQuery(
     { slug },
@@ -115,9 +121,7 @@ export function GamePage({ user }: GamePageProps) {
   );
 
   useEffect(() => {
-    if (!slug) {
-      return undefined;
-    }
+    if (!slug) return undefined;
 
     const interval = window.setInterval(() => {
       heartbeat.mutate({ slug });
@@ -134,15 +138,31 @@ export function GamePage({ user }: GamePageProps) {
     setViewIndex(null);
   }, [history.length]);
 
+  // Auto-scroll move history
+  useEffect(() => {
+    moveHistoryRef.current?.scrollTo({
+      top: moveHistoryRef.current.scrollHeight,
+      behavior: "smooth"
+    });
+  }, [history.length]);
+
+  // Auto-scroll chat
+  const messageCount = gameQuery.data?.game.messages.length ?? 0;
+  useEffect(() => {
+    chatRef.current?.scrollTo({
+      top: chatRef.current.scrollHeight,
+      behavior: "smooth"
+    });
+  }, [messageCount]);
+
   // When scrubbing, find the last actual move at or before viewIndex
   const effectiveIndex = viewIndex ?? history.length - 1;
   let lastMove: MoveHistoryEntry | null = null;
 
   for (let index = effectiveIndex; index >= 0; index -= 1) {
-    const move = history[index];
-
-    if (!("kind" in move)) {
-      lastMove = move;
+    const m = history[index];
+    if (!("kind" in m)) {
+      lastMove = m;
       break;
     }
   }
@@ -153,8 +173,6 @@ export function GamePage({ user }: GamePageProps) {
   let displayBoard = gameData?.board;
 
   if (viewIndex !== null && gameData) {
-    // Use the oldBoard at this index if it exists, otherwise use the
-    // current board (handles the last entry and missing entries)
     displayBoard = oldBoards[viewIndex] ?? gameData.board;
   }
 
@@ -163,6 +181,49 @@ export function GamePage({ user }: GamePageProps) {
     : undefined;
   const isScrubbing =
     viewIndex !== null && displayBoard !== gameData?.board;
+
+  // Keyboard navigation for move history
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (!gameData) return;
+      const maxIndex = history.length - 1;
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        setViewIndex((prev) => {
+          const current = prev ?? maxIndex;
+          return Math.max(0, current - 1);
+        });
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        setViewIndex((prev) => {
+          if (prev === null || prev >= maxIndex) return null;
+          return prev + 1;
+        });
+      }
+    },
+    [gameData, history.length]
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
+  // Page title
+  useEffect(() => {
+    if (!gameData) return;
+    const { game } = gameQuery.data!;
+    if (game.archived) {
+      document.title = `${gameQuery.data!.name} — Online Chess`;
+    } else if (game.turn === gameQuery.data!.viewer.color) {
+      document.title = `Your turn — ${gameQuery.data!.name}`;
+    } else {
+      document.title = `Opponent's turn — ${gameQuery.data!.name}`;
+    }
+    return () => {
+      document.title = "Online Chess";
+    };
+  }, [gameData, gameQuery.data]);
 
   if (gameQuery.isLoading) {
     return <LoadingState />;
@@ -200,24 +261,27 @@ export function GamePage({ user }: GamePageProps) {
 
   function handleMessageSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    if (!message.trim()) {
-      return;
-    }
-
-    sendMessage.mutate({
-      slug,
-      text: message
-    });
+    if (!message.trim()) return;
+    sendMessage.mutate({ slug, text: message });
   }
 
   const whitePlayer = game.users.find((u) => u.color === "white");
   const blackPlayer = game.users.find((u) => u.color === "black");
   const captured = getCapturedPieces(game.moveHistory as MoveHistoryEntry[]);
+
+  // Board orientation: flip for spectators, or player-controlled flip
+  const effectiveColor: ViewerColor = flipped
+    ? (viewer.color === "none"
+        ? "black"
+        : invertColor(viewer.color))
+    : viewer.color;
+
   const topPlayer =
-    viewer.color === "black" ? whitePlayer : blackPlayer;
+    effectiveColor === "black" ? whitePlayer : blackPlayer;
   const bottomPlayer =
-    viewer.color === "black" ? blackPlayer : whitePlayer;
+    effectiveColor === "black" ? blackPlayer : whitePlayer;
+
+  const winner = game.checkmate ? invertColor(game.turn) : null;
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-3 py-6 md:px-8 md:py-8">
@@ -252,17 +316,21 @@ export function GamePage({ user }: GamePageProps) {
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setFlipped((f) => !f)}
+            title="Flip board"
+          >
+            <FlipVertical className="size-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => {
               navigator.clipboard.writeText(window.location.href);
               setCopied("link");
               setTimeout(() => setCopied(null), 2000);
             }}
           >
-            {copied === "link" ? (
-              <Check className="size-4" />
-            ) : (
-              <Link className="size-4" />
-            )}
+            {copied === "link" ? <Check className="size-4" /> : <Link className="size-4" />}
             <span className="hidden sm:inline">
               {copied === "link" ? "Copied!" : "Copy link"}
             </span>
@@ -276,11 +344,7 @@ export function GamePage({ user }: GamePageProps) {
               setTimeout(() => setCopied(null), 2000);
             }}
           >
-            {copied === "id" ? (
-              <Check className="size-4" />
-            ) : (
-              <Copy className="size-4" />
-            )}
+            {copied === "id" ? <Check className="size-4" /> : <Copy className="size-4" />}
             <span className="hidden sm:inline">
               {copied === "id" ? "Copied!" : slug}
             </span>
@@ -293,36 +357,68 @@ export function GamePage({ user }: GamePageProps) {
 
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)]">
         <div className="mx-auto w-full max-w-[min(100%,560px)] space-y-3 lg:max-w-none">
-          <div className={cn(
-            "flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium",
-            game.archived
-              ? "bg-stone-100 text-stone-600"
-              : game.turn === viewer.color
+          {/* Game result banner */}
+          {game.archived ? (
+            <div className={cn(
+              "flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold",
+              game.checkmate
+                ? "border border-amber-300 bg-amber-50 text-amber-900"
+                : "bg-stone-100 text-stone-600"
+            )}>
+              {game.checkmate ? (
+                <>
+                  <Flag className="size-4" />
+                  {winner === viewer.color
+                    ? "You win by checkmate!"
+                    : viewer.color === "none"
+                      ? `${winner} wins by checkmate!`
+                      : "You lost by checkmate."}
+                </>
+              ) : game.remis ? (
+                "Game ended in a draw."
+              ) : (
+                getStatusText(viewer.color, game)
+              )}
+            </div>
+          ) : (
+            <div className={cn(
+              "flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium",
+              game.turn === viewer.color
                 ? "border border-teal-200 bg-teal-50 text-teal-800"
                 : "bg-stone-100 text-stone-600"
-          )}>
-            <span className={cn(
-              "size-3 rounded-full border border-stone-300",
-              game.turn === "white" ? "bg-white" : "bg-stone-900"
-            )} />
-            {game.archived
-              ? getStatusText(viewer.color, game)
-              : game.turn === viewer.color
+            )}>
+              <span className={cn(
+                "size-3 rounded-full border border-stone-300",
+                game.turn === "white" ? "bg-white" : "bg-stone-900"
+              )} />
+              {game.turn === viewer.color
                 ? "Your turn"
                 : viewer.color === "none"
                   ? `${game.turn}'s turn`
                   : "Opponent's turn"}
-          </div>
-          <PlayerBar player={topPlayer} isActive={!game.archived && topPlayer?.color === game.turn} timestamp={game.timestamp} capturedPieces={topPlayer?.color === "white" ? captured.black : captured.white} />
+            </div>
+          )}
+
+          <PlayerBar
+            player={topPlayer}
+            isActive={!game.archived && topPlayer?.color === game.turn}
+            timestamp={game.timestamp}
+            capturedPieces={topPlayer?.color === "white" ? captured.black : captured.white}
+          />
           <ChessBoard
             archived={game.archived || isScrubbing}
             gameState={displayState!}
             lastMove={lastMove}
             onMove={(from, to) => move.mutate({ slug, from, to })}
             userId={user.id}
-            viewerColor={viewer.color}
+            viewerColor={effectiveColor}
           />
-          <PlayerBar player={bottomPlayer} isActive={!game.archived && bottomPlayer?.color === game.turn} timestamp={game.timestamp} capturedPieces={bottomPlayer?.color === "white" ? captured.black : captured.white} />
+          <PlayerBar
+            player={bottomPlayer}
+            isActive={!game.archived && bottomPlayer?.color === game.turn}
+            timestamp={game.timestamp}
+            capturedPieces={bottomPlayer?.color === "white" ? captured.black : captured.white}
+          />
           {promotionPending ? (
             <Card>
               <CardHeader>
@@ -439,9 +535,7 @@ export function GamePage({ user }: GamePageProps) {
                 game.rematchSlug ? (
                   <Button
                     className="w-full"
-                    onClick={() =>
-                      joinRematch.mutate({ slug: game.rematchSlug! })
-                    }
+                    onClick={() => joinRematch.mutate({ slug: game.rematchSlug! })}
                     disabled={joinRematch.isPending}
                   >
                     {joinRematch.isPending ? "Joining..." : "Join rematch"}
@@ -535,9 +629,9 @@ export function GamePage({ user }: GamePageProps) {
                 </>
               )}
               <Separator />
-              <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
-                {game.moveHistory.map((move, index) => {
-                  const entry = move as MoveHistoryEntry;
+              <div ref={moveHistoryRef} className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                {game.moveHistory.map((m, index) => {
+                  const entry = m as MoveHistoryEntry;
                   let moveColor: PieceColor | null = null;
                   if ("kind" in entry) {
                     if (entry.kind === "forfeit") moveColor = entry.color;
@@ -584,7 +678,12 @@ export function GamePage({ user }: GamePageProps) {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="max-h-72 space-y-3 overflow-y-auto rounded-[24px] bg-stone-100 p-4">
+              <div ref={chatRef} className="max-h-72 space-y-3 overflow-y-auto rounded-[24px] bg-stone-100 p-4">
+                {game.messages.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-slate-400">
+                    No messages yet. Say hello!
+                  </p>
+                ) : null}
                 {game.messages.map((entry) => (
                   <div key={entry.id} className="rounded-2xl bg-white p-3 shadow-sm">
                     <div className="flex items-center justify-between gap-3">
@@ -616,7 +715,7 @@ export function GamePage({ user }: GamePageProps) {
 }
 
 function getStatusText(
-  viewerColor: "white" | "black" | "none",
+  viewerColor: ViewerColor,
   game: {
     turn: "white" | "black";
     checkmate: boolean;
@@ -624,27 +723,15 @@ function getStatusText(
   }
 ) {
   if (viewerColor === "none") {
-    if (game.checkmate) {
-      return `${invertColor(game.turn)} wins by checkmate.`;
-    }
-
-    if (game.remis) {
-      return "The game ended in a draw.";
-    }
-
+    if (game.checkmate) return `${invertColor(game.turn)} wins by checkmate.`;
+    if (game.remis) return "The game ended in a draw.";
     return `It is ${game.turn}'s turn.`;
   }
 
   if (game.checkmate) {
-    return invertColor(game.turn) === viewerColor
-      ? "You win."
-      : "Your opponent wins.";
+    return invertColor(game.turn) === viewerColor ? "You win." : "Your opponent wins.";
   }
-
-  if (game.remis) {
-    return "This game is drawn.";
-  }
-
+  if (game.remis) return "This game is drawn.";
   return game.turn === viewerColor ? "It is your turn." : "It is your opponent's turn.";
 }
 
@@ -734,12 +821,11 @@ function PlayerBar({
 function LoadingState() {
   return (
     <main className="mx-auto flex min-h-screen max-w-4xl items-center justify-center px-4 py-10">
-      <Card className="w-full">
-        <CardContent className="py-20 text-center">
-          <MessageCircle className="mx-auto size-8 animate-pulse text-slate-400" />
-          <p className="mt-4 text-sm text-slate-500">Loading the board...</p>
-        </CardContent>
-      </Card>
+      <div className="w-full max-w-lg space-y-4">
+        <div className="h-8 w-48 animate-pulse rounded-xl bg-stone-200" />
+        <div className="aspect-square w-full animate-pulse rounded-[32px] bg-stone-200" />
+        <div className="h-10 w-full animate-pulse rounded-2xl bg-stone-200" />
+      </div>
     </main>
   );
 }
