@@ -279,20 +279,6 @@ export function executeMove(
   };
 }
 
-export function handleBoardClick(
-  state: GameState,
-  userId: string,
-  field: string
-): GameState {
-  if (state.archived) {
-    return state;
-  }
-
-  return state.movePart === 0
-    ? handleFirstClick(state, userId, field)
-    : handleSecondClick(state, userId, field);
-}
-
 export function handleFirstClick(
   state: GameState,
   userId: string,
@@ -529,18 +515,6 @@ export function handleUndo(state: GameState, userId: string): GameState {
   nextState.oldPos = undefined;
   nextState.figure = undefined;
   nextState.archived = false;
-  nextState.timestamp = Date.now();
-  return nextState;
-}
-
-export function goBackInTime(state: GameState, moveIndex: number): GameState {
-  if (!state.archived || !state.oldBoards[moveIndex]) {
-    return state;
-  }
-
-  const nextState = cloneState(state);
-  nextState.board = cloneBoard(nextState.oldBoards[moveIndex]);
-  removeMarkers(nextState.board, ["valid", "selected", "rochade", "enpassen"]);
   nextState.timestamp = Date.now();
   return nextState;
 }

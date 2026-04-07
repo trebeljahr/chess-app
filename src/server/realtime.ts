@@ -58,7 +58,9 @@ export async function* subscribeToChannel(
   }
 
   const subscriber = redis.duplicate();
-  subscriber.on("error", () => {});
+  subscriber.on("error", (err: Error) => {
+    console.error("[realtime] subscriber error:", err.message);
+  });
   await subscriber.subscribe(channel);
 
   const pending: RealtimeEvent[] = [];

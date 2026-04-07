@@ -70,7 +70,6 @@ export function GamePage({ user }: GamePageProps) {
     }
   );
 
-  const click = trpc.game.click.useMutation();
   const move = trpc.game.move.useMutation();
   const promote = trpc.game.promote.useMutation();
   const sendMessage = trpc.game.sendMessage.useMutation({
@@ -82,7 +81,6 @@ export function GamePage({ user }: GamePageProps) {
   const proposeUndo = trpc.game.proposeUndo.useMutation();
   const revertUndo = trpc.game.revertUndo.useMutation();
   const acceptUndo = trpc.game.acceptUndo.useMutation();
-  const timeTravel = trpc.game.goBackInTime.useMutation();
   const forfeit = trpc.game.forfeit.useMutation({
     onSuccess: () => setShowForfeitConfirm(false)
   });
@@ -204,21 +202,28 @@ export function GamePage({ user }: GamePageProps) {
     });
   }
 
+  const whitePlayer = game.users.find((u) => u.color === "white");
+  const blackPlayer = game.users.find((u) => u.color === "black");
+  const topPlayer =
+    viewer.color === "black" ? whitePlayer : blackPlayer;
+  const bottomPlayer =
+    viewer.color === "black" ? blackPlayer : whitePlayer;
+
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
+    <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-3 py-6 md:px-8 md:py-8">
       <section className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
           <Button variant="ghost" className="-ml-3" onClick={() => navigate("/")}>
             <ArrowLeft className="size-4" />
             Back to lobby
           </Button>
-          <h1 className="text-4xl">{name}</h1>
+          <h1 className="text-3xl md:text-4xl">{name}</h1>
           <p className="flex items-center gap-2 text-sm text-slate-500">
             <Clock3 className="size-4" />
             Updated {formatRelativeTime(updatedAt)}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {viewer.color === "none" && game.users.length < 2 && !game.archived ? (
             <Button
               onClick={() => joinGame.mutate({ slug })}
@@ -248,7 +253,9 @@ export function GamePage({ user }: GamePageProps) {
             ) : (
               <Link className="size-4" />
             )}
-            {copied === "link" ? "Copied!" : "Copy link"}
+            <span className="hidden sm:inline">
+              {copied === "link" ? "Copied!" : "Copy link"}
+            </span>
           </Button>
           <Button
             variant="outline"
@@ -264,7 +271,9 @@ export function GamePage({ user }: GamePageProps) {
             ) : (
               <Copy className="size-4" />
             )}
-            {copied === "id" ? "Copied!" : slug}
+            <span className="hidden sm:inline">
+              {copied === "id" ? "Copied!" : slug}
+            </span>
           </Button>
           <Badge variant={game.archived ? "secondary" : "success"}>
             {game.archived ? "Archived" : "Live"}
@@ -272,8 +281,29 @@ export function GamePage({ user }: GamePageProps) {
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)]">
-        <div className="space-y-4">
+      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)]">
+        <div className="mx-auto w-full max-w-[min(100%,560px)] space-y-3 lg:max-w-none">
+          <div className={cn(
+            "flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium",
+            game.archived
+              ? "bg-stone-100 text-stone-600"
+              : game.turn === viewer.color
+                ? "border border-teal-200 bg-teal-50 text-teal-800"
+                : "bg-stone-100 text-stone-600"
+          )}>
+            <span className={cn(
+              "size-3 rounded-full border border-stone-300",
+              game.turn === "white" ? "bg-white" : "bg-stone-900"
+            )} />
+            {game.archived
+              ? getStatusText(viewer.color, game)
+              : game.turn === viewer.color
+                ? "Your turn"
+                : viewer.color === "none"
+                  ? `${game.turn}'s turn`
+                  : "Opponent's turn"}
+          </div>
+          <PlayerBar player={topPlayer} isActive={!game.archived && topPlayer?.color === game.turn} timestamp={game.timestamp} />
           <ChessBoard
             archived={game.archived || isScrubbing}
             gameState={displayState!}
@@ -282,6 +312,7 @@ export function GamePage({ user }: GamePageProps) {
             userId={user.id}
             viewerColor={viewer.color}
           />
+          <PlayerBar player={bottomPlayer} isActive={!game.archived && bottomPlayer?.color === game.turn} timestamp={game.timestamp} />
           {promotionPending ? (
             <Card>
               <CardHeader>
@@ -319,26 +350,33 @@ export function GamePage({ user }: GamePageProps) {
               <CardDescription>{getStatusText(viewer.color, game)}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                {game.users.map((player) => {
-                  const isOnline = Date.now() - player.timeStamp < 15_000;
-                  return (
-                    <Badge
-                      key={player.userId}
-                      variant={player.color === "none" ? "outline" : "secondary"}
-                      className="gap-2"
-                    >
-                      <span
-                        className={
-                          isOnline
-                            ? "size-2 rounded-full bg-emerald-500"
-                            : "size-2 rounded-full bg-slate-300"
-                        }
-                      />
-                      {player.name} · {player.color}
-                    </Badge>
-                  );
-                })}
+              <div className="space-y-2">
+                {whitePlayer ? (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="size-3 rounded-full border border-stone-300 bg-white" />
+                    <span className="font-medium">White:</span>
+                    <span>{whitePlayer.name}</span>
+                    <span className={cn(
+                      "size-2 rounded-full",
+                      Date.now() - whitePlayer.timeStamp < 15_000 ? "bg-emerald-500" : "bg-slate-300"
+                    )} />
+                  </div>
+                ) : (
+                  <div className="text-sm text-slate-400">White: waiting for player...</div>
+                )}
+                {blackPlayer ? (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="size-3 rounded-full border border-stone-300 bg-stone-900" />
+                    <span className="font-medium">Black:</span>
+                    <span>{blackPlayer.name}</span>
+                    <span className={cn(
+                      "size-2 rounded-full",
+                      Date.now() - blackPlayer.timeStamp < 15_000 ? "bg-emerald-500" : "bg-slate-300"
+                    )} />
+                  </div>
+                ) : (
+                  <div className="text-sm text-slate-400">Black: waiting for player...</div>
+                )}
               </div>
               <div className="flex flex-wrap gap-2">
                 {game.checkmate ? (
@@ -579,6 +617,78 @@ function getStatusText(
   }
 
   return game.turn === viewerColor ? "It is your turn." : "It is your opponent's turn.";
+}
+
+function useElapsedTime(timestamp: number, active: boolean): string {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (!active) return;
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [active]);
+
+  useEffect(() => {
+    setNow(Date.now());
+  }, [timestamp]);
+
+  if (!active) return "";
+
+  const elapsed = Math.max(0, Math.floor((now - timestamp) / 1000));
+  const minutes = Math.floor(elapsed / 60);
+  const seconds = elapsed % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+interface GameUser {
+  userId: string;
+  name: string;
+  color: "white" | "black" | "none";
+  timeStamp: number;
+}
+
+function PlayerBar({
+  player,
+  isActive,
+  timestamp
+}: {
+  player: GameUser | undefined;
+  isActive: boolean;
+  timestamp: number;
+}) {
+  const elapsed = useElapsedTime(timestamp, isActive);
+
+  if (!player) {
+    return (
+      <div className="flex items-center justify-between rounded-2xl bg-stone-100 px-4 py-2 text-sm text-slate-400">
+        Waiting for opponent...
+      </div>
+    );
+  }
+
+  const isOnline = Date.now() - player.timeStamp < 15_000;
+
+  return (
+    <div className={cn(
+      "flex items-center justify-between rounded-2xl px-4 py-2 text-sm",
+      isActive ? "bg-teal-50 border border-teal-200" : "bg-stone-100"
+    )}>
+      <div className="flex items-center gap-2">
+        <span className={cn(
+          "size-3 rounded-full border border-stone-300",
+          player.color === "white" ? "bg-white" : "bg-stone-900"
+        )} />
+        <span className="font-medium">{player.name}</span>
+        <span className={cn(
+          "size-2 rounded-full",
+          isOnline ? "bg-emerald-500" : "bg-slate-300"
+        )} />
+      </div>
+      {elapsed ? (
+        <span className="tabular-nums text-xs text-slate-500">{elapsed}</span>
+      ) : null}
+    </div>
+  );
 }
 
 function LoadingState() {

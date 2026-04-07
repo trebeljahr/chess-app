@@ -10,10 +10,8 @@ import {
   getViewerColor,
   executeMove,
   forfeitGame,
-  handleBoardClick,
   handlePawnPromotion,
   handleUndo,
-  goBackInTime,
   isUserInGame,
   pieceToGlyph,
   proposeUndo,
@@ -61,12 +59,6 @@ const slugSchema = z.object({
   slug: z.string().trim().min(1)
 });
 
-const clickSchema = slugSchema.extend({
-  field: z
-    .string()
-    .regex(/^[A-H][1-8]$/)
-});
-
 const moveSchema = slugSchema.extend({
   from: z.string().regex(/^[A-H][1-8]$/),
   to: z.string().regex(/^[A-H][1-8]$/)
@@ -81,10 +73,6 @@ const promoteSchema = slugSchema.extend({
 
 const messageSchema = slugSchema.extend({
   text: z.string().trim().min(1).max(300)
-});
-
-const historySchema = slugSchema.extend({
-  index: z.number().int().min(0)
 });
 
 function requireResponse(res: unknown): asserts res is NonNullable<typeof res> {
@@ -114,15 +102,8 @@ function slugify(value: string): string {
 
 function createUniqueSlug(name: string): string {
   const base = slugify(name) || "game";
-  let slug = base;
-  let counter = 2;
-
-  while (findGameBySlug(slug)) {
-    slug = `${base}-${counter}`;
-    counter += 1;
-  }
-
-  return slug;
+  const suffix = crypto.randomUUID().slice(0, 6);
+  return `${base}-${suffix}`;
 }
 
 function toLobbySummary(game: NonNullable<ReturnType<typeof findGameBySlug>>) {
@@ -339,21 +320,6 @@ export const appRouter = router({
         glyphPreview: pieceToGlyph(game.state.board[0][0].figure)
       };
     }),
-    click: protectedProcedure.input(clickSchema).mutation(({ input, ctx }) => {
-      const game = findGameBySlug(input.slug);
-
-      if (!game) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Game not found."
-        });
-      }
-
-      const nextState = handleBoardClick(game.state, ctx.user.id, input.field);
-      saveGameState(game.id, game.slug, nextState, "board-clicked");
-
-      return { success: true };
-    }),
     move: protectedProcedure.input(moveSchema).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
 
@@ -455,20 +421,6 @@ export const appRouter = router({
 
       const nextState = handleUndo(game.state, ctx.user.id);
       saveGameState(game.id, game.slug, nextState, "undo-accepted");
-      return { success: true };
-    }),
-    goBackInTime: protectedProcedure.input(historySchema).mutation(({ input, ctx }) => {
-      const game = findGameBySlug(input.slug);
-
-      if (!game) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Game not found."
-        });
-      }
-
-      const nextState = goBackInTime(game.state, input.index);
-      saveGameState(game.id, game.slug, nextState, "timeline-changed");
       return { success: true };
     }),
     forfeit: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
