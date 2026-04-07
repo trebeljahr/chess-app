@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type PropsWithChildren } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { LogOut } from "lucide-react";
+import { LogOut, Volume2, VolumeOff } from "lucide-react";
+import { useToggleSound } from "./lib/use-move-sound";
 import { Badge } from "./components/ui/badge";
 import { Button } from "./components/ui/button";
 import { AuthScreen } from "./features/auth/auth-screen";
@@ -63,6 +64,7 @@ function AppShell() {
             <h1 className="text-2xl">Online Chess</h1>
           </div>
           <div className="flex items-center gap-3">
+            <SoundToggle />
             <Badge variant="secondary">{sessionQuery.data.username}</Badge>
             <Button
               variant="ghost"
@@ -82,6 +84,15 @@ function AppShell() {
         <Route path="*" element={<Navigate replace to="/" />} />
       </Routes>
     </div>
+  );
+}
+
+function SoundToggle() {
+  const [enabled, toggle] = useToggleSound();
+  return (
+    <Button variant="ghost" size="sm" onClick={toggle} aria-label={enabled ? "Mute sounds" : "Unmute sounds"}>
+      {enabled ? <Volume2 className="size-4" /> : <VolumeOff className="size-4" />}
+    </Button>
   );
 }
 

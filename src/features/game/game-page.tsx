@@ -27,12 +27,17 @@ import { Separator } from "../../components/ui/separator";
 import { cn } from "../../lib/utils";
 import { formatRelativeTime } from "../../lib/time";
 import { trpc } from "../../lib/trpc";
+import { BOARD_THEMES, useBoardTheme } from "../../lib/use-board-theme";
+import { useConfetti } from "../../lib/use-confetti";
+import { useFavicon } from "../../lib/use-favicon";
 import { useMoveSound } from "../../lib/use-move-sound";
 import {
   formatMove,
+  getCapturedPieces,
   invertColor,
   type ChessMove,
   type MoveHistoryEntry,
+  type Piece,
   type PieceColor,
   type PieceType
 } from "../../shared/chess";
@@ -188,6 +193,10 @@ export function GamePage({ user }: GamePageProps) {
   const promotionPending =
     Boolean(game.baseLinePawn) && viewer.color === game.turn && !game.archived;
   const undoOfferedBy = game.offerTakeback;
+  const viewerWon = game.checkmate && invertColor(game.turn) === viewer.color;
+  useConfetti(viewerWon);
+  const [boardTheme, setBoardTheme] = useBoardTheme();
+  useFavicon(game.archived ? null : game.turn);
 
   function handleMessageSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -204,6 +213,7 @@ export function GamePage({ user }: GamePageProps) {
 
   const whitePlayer = game.users.find((u) => u.color === "white");
   const blackPlayer = game.users.find((u) => u.color === "black");
+  const captured = getCapturedPieces(game.moveHistory as MoveHistoryEntry[]);
   const topPlayer =
     viewer.color === "black" ? whitePlayer : blackPlayer;
   const bottomPlayer =
@@ -303,7 +313,7 @@ export function GamePage({ user }: GamePageProps) {
                   ? `${game.turn}'s turn`
                   : "Opponent's turn"}
           </div>
-          <PlayerBar player={topPlayer} isActive={!game.archived && topPlayer?.color === game.turn} timestamp={game.timestamp} />
+          <PlayerBar player={topPlayer} isActive={!game.archived && topPlayer?.color === game.turn} timestamp={game.timestamp} capturedPieces={topPlayer?.color === "white" ? captured.black : captured.white} />
           <ChessBoard
             archived={game.archived || isScrubbing}
             gameState={displayState!}
@@ -312,7 +322,7 @@ export function GamePage({ user }: GamePageProps) {
             userId={user.id}
             viewerColor={viewer.color}
           />
-          <PlayerBar player={bottomPlayer} isActive={!game.archived && bottomPlayer?.color === game.turn} timestamp={game.timestamp} />
+          <PlayerBar player={bottomPlayer} isActive={!game.archived && bottomPlayer?.color === game.turn} timestamp={game.timestamp} capturedPieces={bottomPlayer?.color === "white" ? captured.black : captured.white} />
           {promotionPending ? (
             <Card>
               <CardHeader>
@@ -395,6 +405,25 @@ export function GamePage({ user }: GamePageProps) {
               </div>
             </CardContent>
           </Card>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500">Board:</span>
+            {BOARD_THEMES.map((t) => (
+              <button
+                key={t.name}
+                type="button"
+                title={t.name}
+                className={cn(
+                  "flex size-6 overflow-hidden rounded-full border-2 transition",
+                  boardTheme.name === t.name ? "border-teal-500 scale-110" : "border-transparent hover:scale-105"
+                )}
+                onClick={() => setBoardTheme(t.name)}
+              >
+                <span className="w-1/2" style={{ background: t.light }} />
+                <span className="w-1/2" style={{ background: t.dark }} />
+              </button>
+            ))}
+          </div>
 
           <Card>
             <CardHeader>
@@ -650,11 +679,13 @@ interface GameUser {
 function PlayerBar({
   player,
   isActive,
-  timestamp
+  timestamp,
+  capturedPieces
 }: {
   player: GameUser | undefined;
   isActive: boolean;
   timestamp: number;
+  capturedPieces: Piece[];
 }) {
   const elapsed = useElapsedTime(timestamp, isActive);
 
@@ -683,6 +714,15 @@ function PlayerBar({
           "size-2 rounded-full",
           isOnline ? "bg-emerald-500" : "bg-slate-300"
         )} />
+        {capturedPieces.length > 0 ? (
+          <div className="flex items-center -space-x-0.5">
+            {capturedPieces.map((piece, i) => (
+              <span key={i} className="inline-block size-4">
+                <PieceArt piece={piece} />
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
       {elapsed ? (
         <span className="tabular-nums text-xs text-slate-500">{elapsed}</span>

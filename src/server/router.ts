@@ -10,6 +10,7 @@ import {
   getViewerColor,
   executeMove,
   forfeitGame,
+  invertColor,
   handlePawnPromotion,
   handleUndo,
   isUserInGame,
@@ -460,7 +461,7 @@ export const appRouter = router({
       const state = addPlayerToGame(createDefaultGameState(), {
         userId: ctx.user.id,
         name: ctx.user.username,
-        color: chooseColor(viewer === "none" ? "random" : viewer)
+        color: chooseColor(viewer === "none" ? "random" : invertColor(viewer))
       });
 
       insertGame({

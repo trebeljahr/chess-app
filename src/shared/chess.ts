@@ -141,15 +141,57 @@ export function getViewerColor(state: GameState, userId: string): ViewerColor {
   return state.users.find((user) => user.userId === userId)?.color ?? "none";
 }
 
+const PIECE_SYMBOLS: Record<PieceType, string> = {
+  king: "K",
+  queen: "Q",
+  rook: "R",
+  bishop: "B",
+  knight: "N",
+  pawn: ""
+};
+
+function fieldName(pos: Position): string {
+  return `${String.fromCharCode(pos.col + 97)}${BOARD_SIZE - pos.row}`;
+}
+
 export function formatMove(move: MoveHistoryEntry): string {
   if ("kind" in move) {
     if (move.kind === "forfeit") {
       return `${move.color} forfeits`;
     }
-    return "Start";
+    return "Game start";
   }
 
-  return `${positionToLabel(move.oldPos)} -> ${positionToLabel(move.newPos)}`;
+  // Castling
+  if (move.rochadeRook) {
+    return move.newPos.col === 6 ? "O-O" : "O-O-O";
+  }
+
+  const piece = PIECE_SYMBOLS[move.figure.type];
+  const capture = move.secondFigure !== "noFigure" || move.enPassen ? "x" : "";
+  const from = move.figure.type === "pawn" && capture
+    ? String.fromCharCode(move.oldPos.col + 97)
+    : "";
+  const to = fieldName(move.newPos);
+
+  return `${piece}${from}${capture}${to}`;
+}
+
+export function getCapturedPieces(moveHistory: MoveHistoryEntry[]): { white: Piece[]; black: Piece[] } {
+  const captured: { white: Piece[]; black: Piece[] } = { white: [], black: [] };
+
+  for (const entry of moveHistory) {
+    if ("kind" in entry) continue;
+
+    if (isPiece(entry.secondFigure)) {
+      captured[entry.secondFigure.color].push(entry.secondFigure);
+    }
+    if (entry.enPassen && isPiece(entry.enPassen.figure)) {
+      captured[entry.enPassen.figure.color].push(entry.enPassen.figure);
+    }
+  }
+
+  return captured;
 }
 
 export function touchPlayer(state: GameState, userId: string): GameState {
