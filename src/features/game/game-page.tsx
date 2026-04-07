@@ -5,9 +5,11 @@ import {
   Check,
   Clock3,
   Copy,
+  Download,
   Eye,
   Flag,
   FlipVertical,
+  Grid3X3,
   Link,
   MessageCircle,
   RefreshCcw,
@@ -30,13 +32,16 @@ import { formatRelativeTime } from "../../lib/time";
 import { trpc } from "../../lib/trpc";
 import { BOARD_THEMES, useBoardTheme } from "../../lib/use-board-theme";
 import { useConfetti } from "../../lib/use-confetti";
+import { useConnectionStatus } from "../../lib/use-connection-status";
 import { useFavicon } from "../../lib/use-favicon";
 import { useMoveSound } from "../../lib/use-move-sound";
+import { downloadPgn, generatePgn } from "../../lib/pgn";
 import {
   formatMove,
   getCapturedPieces,
   invertColor,
   type ChessMove,
+  type DrawReason,
   type MoveHistoryEntry,
   type Piece,
   type PieceColor,
@@ -70,6 +75,8 @@ export function GamePage({ user }: GamePageProps) {
   const [copied, setCopied] = useState<"link" | "id" | null>(null);
   const [flipped, setFlipped] = useState(false);
   const [preMove, setPreMove] = useState<{ from: string; to: string } | null>(null);
+  const [showCoords, setShowCoords] = useState(true);
+  const [lastEventAt, setLastEventAt] = useState<number>();
 
   const moveHistoryRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
@@ -116,6 +123,7 @@ export function GamePage({ user }: GamePageProps) {
     {
       enabled: Boolean(slug),
       onData: async () => {
+        setLastEventAt(Date.now());
         await Promise.all([
           utils.game.bySlug.invalidate({ slug }),
           utils.lobby.list.invalidate()
@@ -137,7 +145,10 @@ export function GamePage({ user }: GamePageProps) {
   const history = gameQuery.data?.game.moveHistory ?? [];
   const currentTurn = gameQuery.data?.game.turn;
   const viewerColor = gameQuery.data?.viewer.color;
-  useMoveSound(history.length);
+  useMoveSound(
+    history as MoveHistoryEntry[],
+    gameQuery.data?.game.check ?? false
+  );
 
   // Execute pre-move when it becomes our turn
   useEffect(() => {
@@ -272,6 +283,7 @@ export function GamePage({ user }: GamePageProps) {
   useConfetti(viewerWon);
   const [boardTheme, setBoardTheme] = useBoardTheme();
   useFavicon(game.archived ? null : game.turn);
+  const connectionStatus = useConnectionStatus(lastEventAt);
 
   function handleMessageSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -299,6 +311,19 @@ export function GamePage({ user }: GamePageProps) {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-3 py-6 md:px-8 md:py-8">
+      {connectionStatus !== "connected" ? (
+        <div className={cn(
+          "fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-2xl px-5 py-3 text-sm font-medium shadow-lg",
+          connectionStatus === "reconnecting"
+            ? "bg-amber-100 text-amber-900 border border-amber-300"
+            : "bg-rose-100 text-rose-900 border border-rose-300"
+        )}>
+          {connectionStatus === "reconnecting"
+            ? "Reconnecting..."
+            : "Connection lost. Trying to reconnect..."}
+        </div>
+      ) : null}
+
       <section className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
           <Button variant="ghost" className="-ml-3" onClick={() => navigate("/")}>
@@ -335,6 +360,29 @@ export function GamePage({ user }: GamePageProps) {
           >
             <FlipVertical className="size-4" />
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowCoords((c) => !c)}
+            title={showCoords ? "Hide coordinates" : "Show coordinates"}
+          >
+            <Grid3X3 className="size-4" />
+          </Button>
+          {game.archived ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const wp = game.users.find((u) => u.color === "white");
+                const bp = game.users.find((u) => u.color === "black");
+                const pgn = generatePgn(game, name, wp?.name, bp?.name);
+                downloadPgn(pgn, `${slug}.pgn`);
+              }}
+              title="Download PGN"
+            >
+              <Download className="size-4" />
+            </Button>
+          ) : null}
           <Button
             variant="outline"
             size="sm"
@@ -389,7 +437,7 @@ export function GamePage({ user }: GamePageProps) {
                       : "You lost by checkmate."}
                 </>
               ) : game.remis ? (
-                "Game ended in a draw."
+                `Draw — ${formatDrawReason(game.drawReason)}`
               ) : (
                 getStatusText(viewer.color, game)
               )}
@@ -428,6 +476,7 @@ export function GamePage({ user }: GamePageProps) {
             viewerColor={effectiveColor}
             preMove={preMove}
             onPreMove={setPreMove}
+            showCoords={showCoords}
           />
           <PlayerBar
             player={bottomPlayer}
@@ -507,7 +556,11 @@ export function GamePage({ user }: GamePageProps) {
                     Checkmate
                   </Badge>
                 ) : null}
-                {game.remis ? <Badge variant="outline">Draw</Badge> : null}
+                {game.remis ? (
+                  <Badge variant="outline">
+                    Draw{game.drawReason ? ` — ${formatDrawReason(game.drawReason)}` : ""}
+                  </Badge>
+                ) : null}
                 {game.check && !game.checkmate ? (
                   <Badge variant="warning">
                     <Check className="mr-1 size-3.5" />
@@ -773,6 +826,17 @@ export function GamePage({ user }: GamePageProps) {
       </section>
     </main>
   );
+}
+
+function formatDrawReason(reason: DrawReason): string {
+  switch (reason) {
+    case "stalemate": return "Stalemate";
+    case "agreement": return "By agreement";
+    case "threefold-repetition": return "Threefold repetition";
+    case "fifty-move-rule": return "Fifty-move rule";
+    case "insufficient-material": return "Insufficient material";
+    default: return "Draw";
+  }
 }
 
 function getStatusText(

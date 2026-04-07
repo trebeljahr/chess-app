@@ -24,6 +24,7 @@ interface ChessBoardProps {
   onMove: (from: string, to: string) => void;
   preMove: { from: string; to: string } | null;
   onPreMove: (preMove: { from: string; to: string } | null) => void;
+  showCoords: boolean;
 }
 
 interface LocalSelection {
@@ -84,7 +85,8 @@ export function ChessBoard({
   lastMove,
   onMove,
   preMove,
-  onPreMove
+  onPreMove,
+  showCoords
 }: ChessBoardProps) {
   const board = gameState.board;
   const turn = gameState.turn;
@@ -328,12 +330,12 @@ export function ChessBoard({
                     )}
                   />
                 ) : null}
-                {showFile ? (
+                {showCoords && showFile ? (
                   <span className="absolute bottom-0.5 left-1 z-10 text-[9px] font-bold uppercase text-slate-900/80">
                     {tile.field[0]}
                   </span>
                 ) : null}
-                {showRank ? (
+                {showCoords && showRank ? (
                   <span className="absolute right-1 top-0.5 z-10 text-[9px] font-bold text-slate-900/80">
                     {tile.field[1]}
                   </span>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
+import type { MoveHistoryEntry } from "../shared/chess";
 
 const STORAGE_KEY = "chess:soundEnabled";
 
@@ -34,25 +35,91 @@ export function useToggleSound(): [boolean, () => void] {
   return [enabled, toggle];
 }
 
-let audio: HTMLAudioElement | null = null;
+let moveAudio: HTMLAudioElement | null = null;
+let audioCtx: AudioContext | null = null;
 
-function getAudio(): HTMLAudioElement {
-  if (!audio) {
-    audio = new Audio("/move.mp3");
+function getMoveAudio(): HTMLAudioElement {
+  if (!moveAudio) {
+    moveAudio = new Audio("/move.mp3");
   }
-  return audio;
+  return moveAudio;
 }
 
-export function useMoveSound(moveCount: number): void {
-  const prev = useRef(moveCount);
+function getAudioContext(): AudioContext {
+  if (!audioCtx) {
+    audioCtx = new AudioContext();
+  }
+  return audioCtx;
+}
+
+function playBeep(frequency: number, duration: number, volume = 0.15): void {
+  try {
+    const ctx = getAudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = frequency;
+    gain.gain.value = volume;
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
+  } catch {
+    // Audio context not available
+  }
+}
+
+function playMoveSound(): void {
+  const el = getMoveAudio();
+  el.currentTime = 0;
+  el.play().catch(() => {});
+}
+
+function playCaptureSound(): void {
+  playMoveSound();
+  setTimeout(() => playBeep(220, 0.12, 0.1), 50);
+}
+
+function playCheckSound(): void {
+  playBeep(880, 0.15, 0.2);
+  setTimeout(() => playBeep(660, 0.15, 0.15), 100);
+}
+
+function playCastleSound(): void {
+  playMoveSound();
+  setTimeout(() => playMoveSound(), 120);
+}
+
+export function useMoveSound(
+  moveHistory: MoveHistoryEntry[],
+  isCheck: boolean
+): void {
+  const prevCount = useRef(moveHistory.length);
   const enabled = useSoundEnabled();
 
   useEffect(() => {
-    if (moveCount > prev.current && enabled) {
-      const el = getAudio();
-      el.currentTime = 0;
-      el.play().catch(() => {});
+    if (moveHistory.length <= prevCount.current || !enabled) {
+      prevCount.current = moveHistory.length;
+      return;
     }
-    prev.current = moveCount;
-  }, [moveCount, enabled]);
+    prevCount.current = moveHistory.length;
+
+    const lastEntry = moveHistory[moveHistory.length - 1];
+
+    if ("kind" in lastEntry) {
+      // forfeit, draw, start — no sound
+      return;
+    }
+
+    if (isCheck) {
+      playCheckSound();
+    } else if (lastEntry.rochadeRook) {
+      playCastleSound();
+    } else if (lastEntry.secondFigure !== "noFigure" || lastEntry.enPassen) {
+      playCaptureSound();
+    } else {
+      playMoveSound();
+    }
+  }, [moveHistory.length, enabled, isCheck, moveHistory]);
 }

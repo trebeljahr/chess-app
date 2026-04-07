@@ -59,6 +59,14 @@ export type MoveHistoryEntry =
   | { kind: "draw" }
   | ChessMove;
 
+export type DrawReason =
+  | "stalemate"
+  | "agreement"
+  | "threefold-repetition"
+  | "fifty-move-rule"
+  | "insufficient-material"
+  | null;
+
 export interface GameState {
   board: Board;
   turn: PieceColor;
@@ -67,6 +75,9 @@ export interface GameState {
   check: boolean;
   checkmate: boolean;
   remis: boolean;
+  drawReason: DrawReason;
+  halfMoveClock: number;
+  positionHistory: string[];
   offerTakeback: false | PieceColor;
   offerDraw: false | PieceColor;
   baseLinePawn: false | Position;
@@ -95,6 +106,9 @@ export function createDefaultGameState(): GameState {
     check: false,
     checkmate: false,
     remis: false,
+    drawReason: null,
+    halfMoveClock: 0,
+    positionHistory: [],
     offerTakeback: false,
     offerDraw: false,
     baseLinePawn: false,
@@ -514,6 +528,7 @@ export function acceptDraw(state: GameState, userId: string): GameState {
   nextState.moveHistory = [...nextState.moveHistory, { kind: "draw" }];
   nextState.oldBoards = [...nextState.oldBoards, cloneBoard(nextState.board)];
   nextState.remis = true;
+  nextState.drawReason = "agreement";
   nextState.archived = true;
   nextState.offerDraw = false;
   nextState.timestamp = Date.now();
@@ -647,6 +662,68 @@ export function pieceToGlyph(figure: Figure): string {
   return glyphs[figure.color][figure.type];
 }
 
+function boardPositionHash(board: Board, turn: PieceColor): string {
+  let hash = turn;
+  for (let row = 0; row < BOARD_SIZE; row += 1) {
+    for (let col = 0; col < BOARD_SIZE; col += 1) {
+      const fig = board[row][col].figure;
+      if (isPiece(fig)) {
+        hash += `${row}${col}${fig.color[0]}${fig.type[0]}`;
+      }
+    }
+  }
+  return hash;
+}
+
+function isThreefoldRepetition(positionHistory: string[], currentHash: string): boolean {
+  let count = 0;
+  for (const h of positionHistory) {
+    if (h === currentHash) {
+      count += 1;
+      if (count >= 2) return true; // current position is the 3rd occurrence
+    }
+  }
+  return false;
+}
+
+function hasInsufficientMaterial(board: Board): boolean {
+  const pieces: Array<{ color: PieceColor; type: PieceType; tileColor: string }> = [];
+
+  for (let row = 0; row < BOARD_SIZE; row += 1) {
+    for (let col = 0; col < BOARD_SIZE; col += 1) {
+      const fig = board[row][col].figure;
+      if (isPiece(fig)) {
+        pieces.push({ color: fig.color, type: fig.type, tileColor: board[row][col].color });
+      }
+    }
+  }
+
+  // King vs King
+  if (pieces.length === 2) return true;
+
+  // King + Bishop vs King, King + Knight vs King
+  if (pieces.length === 3) {
+    const nonKing = pieces.find((p) => p.type !== "king");
+    if (nonKing && (nonKing.type === "bishop" || nonKing.type === "knight")) {
+      return true;
+    }
+  }
+
+  // King + Bishop vs King + Bishop (same colored squares)
+  if (pieces.length === 4) {
+    const bishops = pieces.filter((p) => p.type === "bishop");
+    if (
+      bishops.length === 2 &&
+      bishops[0].color !== bishops[1].color &&
+      bishops[0].tileColor === bishops[1].tileColor
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function finalizeCommittedMove(
   state: GameState,
   board: Board,
@@ -657,12 +734,40 @@ function finalizeCommittedMove(
   removeMarkers(cleanBoard, ["valid", "selected", "rochade", "enpassen"]);
   const threatenedBoard = refreshThreats(cleanBoard, nextTurn);
 
+  // Get the last move for half-move clock
+  const lastEntry = moveHistory[moveHistory.length - 1];
+  const wasPawnMove = !("kind" in lastEntry) && lastEntry.figure.type === "pawn";
+  const wasCapture = !("kind" in lastEntry) && lastEntry.secondFigure !== "noFigure";
+  const halfMoveClock = wasPawnMove || wasCapture ? 0 : state.halfMoveClock + 1;
+
+  // Position tracking for threefold repetition
+  const posHash = boardPositionHash(threatenedBoard, nextTurn);
+  const positionHistory = [...state.positionHistory, posHash];
+
   state.board = threatenedBoard;
   state.oldBoards = [...state.oldBoards, cloneBoard(threatenedBoard)];
   state.turn = nextTurn;
   state.check = checkForCheck(threatenedBoard, nextTurn);
   state.checkmate = checkForCheckMate(threatenedBoard, nextTurn, moveHistory);
-  state.remis = !state.checkmate && checkForRemis(threatenedBoard, nextTurn, moveHistory);
+  state.halfMoveClock = halfMoveClock;
+  state.positionHistory = positionHistory;
+
+  const noMoves = !state.checkmate && checkForRemis(threatenedBoard, nextTurn, moveHistory);
+
+  // Determine draw reason
+  let drawReason: DrawReason = null;
+  if (noMoves && !state.check) {
+    drawReason = "stalemate";
+  } else if (isThreefoldRepetition(state.positionHistory, posHash)) {
+    drawReason = "threefold-repetition";
+  } else if (halfMoveClock >= 100) {
+    drawReason = "fifty-move-rule";
+  } else if (hasInsufficientMaterial(threatenedBoard)) {
+    drawReason = "insufficient-material";
+  }
+
+  state.remis = noMoves || drawReason !== null;
+  state.drawReason = state.remis ? drawReason : null;
   state.offerTakeback = false;
   state.movePart = 0;
   state.moveHistory = moveHistory;
