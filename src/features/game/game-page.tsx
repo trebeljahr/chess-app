@@ -234,27 +234,38 @@ export function GamePage({ user }: GamePageProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
+  // All hooks must be called before any early returns
+  const game = gameQuery.data?.game;
+  const viewer = gameQuery.data?.viewer;
+  const gameName = gameQuery.data?.name;
+  const updatedAt = gameQuery.data?.updatedAt;
+
+  const viewerWon = Boolean(game?.checkmate && game && viewer && invertColor(game.turn) === viewer.color);
+  useConfetti(viewerWon);
+  const [boardTheme, setBoardTheme] = useBoardTheme();
+  useFavicon(game && !game.archived ? game.turn : null);
+  const connectionStatus = useConnectionStatus(lastEventAt);
+
   // Page title
   useEffect(() => {
-    if (!gameData) return;
-    const { game } = gameQuery.data!;
+    if (!game || !gameName || !viewer) return;
     if (game.archived) {
-      document.title = `${gameQuery.data!.name} — Online Chess`;
-    } else if (game.turn === gameQuery.data!.viewer.color) {
-      document.title = `Your turn — ${gameQuery.data!.name}`;
+      document.title = `${gameName} — Online Chess`;
+    } else if (game.turn === viewer.color) {
+      document.title = `Your turn — ${gameName}`;
     } else {
-      document.title = `Opponent's turn — ${gameQuery.data!.name}`;
+      document.title = `Opponent's turn — ${gameName}`;
     }
     return () => {
       document.title = "Online Chess";
     };
-  }, [gameData, gameQuery.data]);
+  }, [game, gameName, viewer]);
 
   if (gameQuery.isLoading) {
     return <LoadingState />;
   }
 
-  if (!gameQuery.data) {
+  if (!gameQuery.data || !game || !viewer || !gameName) {
     return (
       <main className="mx-auto flex min-h-screen max-w-3xl items-center px-4 py-10">
         <Card className="w-full">
@@ -275,15 +286,9 @@ export function GamePage({ user }: GamePageProps) {
     );
   }
 
-  const { game, viewer, name, updatedAt } = gameQuery.data;
   const promotionPending =
     Boolean(game.baseLinePawn) && viewer.color === game.turn && !game.archived;
   const undoOfferedBy = game.offerTakeback;
-  const viewerWon = game.checkmate && invertColor(game.turn) === viewer.color;
-  useConfetti(viewerWon);
-  const [boardTheme, setBoardTheme] = useBoardTheme();
-  useFavicon(game.archived ? null : game.turn);
-  const connectionStatus = useConnectionStatus(lastEventAt);
 
   function handleMessageSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -330,10 +335,10 @@ export function GamePage({ user }: GamePageProps) {
             <ArrowLeft className="size-4" />
             Back to lobby
           </Button>
-          <h1 className="text-3xl md:text-4xl">{name}</h1>
+          <h1 className="text-3xl md:text-4xl">{gameName}</h1>
           <p className="flex items-center gap-2 text-sm text-slate-500">
             <Clock3 className="size-4" />
-            Updated {formatRelativeTime(updatedAt)}
+            Updated {formatRelativeTime(updatedAt!)}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -375,7 +380,7 @@ export function GamePage({ user }: GamePageProps) {
               onClick={() => {
                 const wp = game.users.find((u) => u.color === "white");
                 const bp = game.users.find((u) => u.color === "black");
-                const pgn = generatePgn(game, name, wp?.name, bp?.name);
+                const pgn = generatePgn(game, gameName, wp?.name, bp?.name);
                 downloadPgn(pgn, `${slug}.pgn`);
               }}
               title="Download PGN"
