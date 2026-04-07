@@ -9,7 +9,7 @@
     "dev": "concurrently -k -n redis,server,client -c red,green,cyan \"npm run dev:redis\" \"npm run dev:server\" \"npm run dev:client\"",
     "dev:client": "vite",
     "dev:server": "REDIS_URL=redis://localhost:3515 PORT=3514 tsx watch src/server/index.ts",
-    "dev:redis": "docker-compose -f docker-compose.dev.yml up redis",
+    "dev:redis": "docker-compose up redis",
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build",
     "build:server": "tsc -p tsconfig.server.json",
