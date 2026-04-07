@@ -27,7 +27,6 @@ import {
 } from "./session.js";
 import {
   deleteSession,
-  findGameByName,
   findGameBySlug,
   findUserByUsername,
   insertGame,
@@ -215,13 +214,6 @@ export const appRouter = router({
     create: protectedProcedure
       .input(createGameSchema)
       .mutation(({ input, ctx }) => {
-        if (findGameByName(input.name)) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: "A game with this name already exists."
-          });
-        }
-
         const slug = createUniqueSlug(input.name);
         const state = addPlayerToGame(createDefaultGameState(), {
           userId: ctx.user.id,
@@ -341,7 +333,10 @@ export const appRouter = router({
         return { success: true, promotion: result.promotion };
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Invalid move.";
-        console.error(`[move] ${input.from} -> ${input.to} failed:`, msg);
+        // Only log unexpected errors, not user input validation
+        if (!msg.startsWith("Illegal move") && !msg.startsWith("Not your turn")) {
+          console.error(`[move] ${input.from} -> ${input.to} failed:`, msg);
+        }
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: msg

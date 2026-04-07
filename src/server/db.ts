@@ -33,7 +33,7 @@ sqlite.exec(`
   CREATE TABLE IF NOT EXISTS games (
     id TEXT PRIMARY KEY NOT NULL,
     slug TEXT NOT NULL UNIQUE,
-    name TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
     created_by_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     state TEXT NOT NULL,
     created_at INTEGER NOT NULL,
@@ -45,6 +45,14 @@ sqlite.exec(`
   CREATE INDEX IF NOT EXISTS games_slug_idx ON games(slug);
   CREATE INDEX IF NOT EXISTS games_updated_at_idx ON games(updated_at);
 `);
+
+// Migration: drop the unique constraint on game name if it exists
+try {
+  sqlite.exec(`DROP INDEX IF EXISTS sqlite_autoindex_games_2`);
+} catch {
+  // Ignore — index may not exist on fresh databases
+}
+
 
 export const db = drizzle(sqlite);
 export { sqlite };

@@ -317,7 +317,7 @@ export function handleFirstClick(
   return state;
 }
 
-export function handleSecondClick(
+function handleSecondClick(
   state: GameState,
   userId: string,
   field: string

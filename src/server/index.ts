@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import express from "express";
+import express, { type Request } from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import { WebSocketServer } from "ws";
@@ -18,6 +18,57 @@ app.get("/health", (_req, res) => {
     uptime: process.uptime(),
     redis: redis ? redis.status : "disabled"
   });
+});
+
+// Simple in-memory rate limiter for auth endpoints
+const authAttempts = new Map<string, { count: number; resetAt: number }>();
+const AUTH_WINDOW_MS = 60_000;
+const AUTH_MAX_ATTEMPTS = 10;
+
+function getClientIp(req: Request): string {
+  return (
+    (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ??
+    req.socket.remoteAddress ??
+    "unknown"
+  );
+}
+
+app.use("/trpc/auth.login", (req, res, next) => {
+  if (req.method !== "POST") return next();
+  const ip = getClientIp(req);
+  const now = Date.now();
+  const entry = authAttempts.get(ip);
+
+  if (entry && now < entry.resetAt) {
+    if (entry.count >= AUTH_MAX_ATTEMPTS) {
+      res.status(429).json({ error: "Too many attempts. Try again later." });
+      return;
+    }
+    entry.count += 1;
+  } else {
+    authAttempts.set(ip, { count: 1, resetAt: now + AUTH_WINDOW_MS });
+  }
+
+  next();
+});
+
+app.use("/trpc/auth.register", (req, res, next) => {
+  if (req.method !== "POST") return next();
+  const ip = getClientIp(req);
+  const now = Date.now();
+  const entry = authAttempts.get(ip);
+
+  if (entry && now < entry.resetAt) {
+    if (entry.count >= AUTH_MAX_ATTEMPTS) {
+      res.status(429).json({ error: "Too many attempts. Try again later." });
+      return;
+    }
+    entry.count += 1;
+  } else {
+    authAttempts.set(ip, { count: 1, resetAt: now + AUTH_WINDOW_MS });
+  }
+
+  next();
 });
 
 app.use(

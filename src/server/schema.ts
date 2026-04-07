@@ -20,7 +20,7 @@ export const sessions = sqliteTable("sessions", {
 export const games = sqliteTable("games", {
   id: text("id").primaryKey(),
   slug: text("slug").notNull().unique(),
-  name: text("name").notNull().unique(),
+  name: text("name").notNull(),
   createdById: text("created_by_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),

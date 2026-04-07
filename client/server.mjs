@@ -62,6 +62,18 @@ const server = createServer((req, res) => {
     return;
   }
 
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    res.writeHead(204, {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Max-Age": "86400",
+    });
+    res.end();
+    return;
+  }
+
   // Proxy /trpc to backend
   if (pathname.startsWith("/trpc")) {
     proxyRequest(req, res);

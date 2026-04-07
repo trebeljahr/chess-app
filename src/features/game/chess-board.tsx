@@ -4,7 +4,6 @@ import {
   convertPos,
   cloneBoard,
   handleFirstClick,
-  handleSecondClick,
   cloneState,
   isPiece,
   positionToField,
@@ -180,10 +179,10 @@ export function ChessBoard({
 
   const handleDragEnd = useCallback(() => {
     setDragging(null);
-    if (dragImageRef.current) {
-      document.body.removeChild(dragImageRef.current);
-      dragImageRef.current = null;
+    if (dragImageRef.current?.parentNode) {
+      dragImageRef.current.parentNode.removeChild(dragImageRef.current);
     }
+    dragImageRef.current = null;
   }, []);
 
   return (

@@ -1,3 +1,4 @@
+import { Component, type ErrorInfo, type PropsWithChildren } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import { Badge } from "./components/ui/badge";
@@ -9,9 +10,11 @@ import { trpc } from "./lib/trpc";
 
 export function App() {
   return (
-    <BrowserRouter>
-      <AppShell />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AppShell />
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 
@@ -33,6 +36,17 @@ function AppShell() {
     return (
       <main className="flex min-h-screen items-center justify-center px-4">
         <p className="text-sm text-slate-500">Loading session...</p>
+      </main>
+    );
+  }
+
+  if (sessionQuery.isError) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-4">
+        <p className="text-sm text-slate-500">Failed to connect to the server.</p>
+        <Button variant="secondary" onClick={() => sessionQuery.refetch()}>
+          Retry
+        </Button>
       </main>
     );
   }
@@ -69,4 +83,38 @@ function AppShell() {
       </Routes>
     </div>
   );
+}
+
+class ErrorBoundary extends Component<
+  PropsWithChildren,
+  { hasError: boolean }
+> {
+  constructor(props: PropsWithChildren) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo): void {
+    console.error("Uncaught error:", error, info.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-4">
+          <h1 className="text-2xl font-semibold">Something went wrong</h1>
+          <p className="text-sm text-slate-500">
+            An unexpected error occurred. Please refresh the page.
+          </p>
+          <Button onClick={() => window.location.reload()}>Refresh</Button>
+        </main>
+      );
+    }
+
+    return this.props.children;
+  }
 }
