@@ -30,10 +30,13 @@ COPY --from=build /app/package*.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 
-RUN mkdir -p /app/data
+RUN mkdir -p /app/data && chown node:node /app/data
+
+USER node
 
 EXPOSE 6100
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=5 CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT || '3000') + '/health').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=5 \
+  CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT || '6100') + '/health').then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1))"
 
 CMD ["node", "dist/server/server/index.js"]

@@ -1,93 +1,73 @@
-# Chess App On Coolify
+# Chess App — Coolify Deployment
 
-This app is set up to deploy as a single web container:
+## Architecture
 
-- the Vite frontend is built into `dist/client`
-- the Node server serves that built frontend
-- tRPC HTTP and WebSocket traffic stay on the same origin at `/trpc`
-- the container listens on `3000`
-- readiness is exposed at `/health`
+Single container app with Redis sidecar:
 
-That shape matches the Docker/Coolify approach used for the sibling realtime apps.
+- Vite frontend built into `dist/client`, served by the Node server
+- tRPC HTTP and WebSocket on the same origin at `/trpc`
+- Redis for distributed pub/sub (multi-instance support)
+- SQLite for persistence (mounted volume)
+- Health endpoint at `/health`
 
-## Recommended production shape
+## Production deploy with docker-compose
 
-Use one Coolify application built from this repo's [Dockerfile](/Users/rico/projects/chess-app/Dockerfile).
+Use `docker-compose-prod.yaml` which pulls pre-built images from GHCR:
 
-Because this app uses SQLite today, add one persistent storage mount in Coolify:
+```bash
+docker-compose -f docker-compose-prod.yaml up -d
+```
 
-- mount path: `/app/data`
+This starts:
+- **redis** — Redis 7 Alpine for pub/sub
+- **app** — Chess app from `ghcr.io/trebeljahr/chess-app:latest`
 
-That keeps the database file alive across container restarts and redeploys.
+## Coolify setup
 
-## Coolify application settings
+1. Create a new Docker Compose application in Coolify
+2. Point it at `docker-compose-prod.yaml`
+3. Add a persistent storage mount: `/app/data` (for SQLite)
+4. Set the exposed port to `6100`
+5. Health check path: `/health`
+6. Domain: `https://chess.your-domain.com`
 
-Suggested base settings:
+## GitHub Actions deploy flow
 
-- Build Pack: `Dockerfile`
-- Port: `3000`
-- Health Check Path: `/health`
-- Domain: `https://chess.your-domain.com`
+1. Push to `main`
+2. CI runs typecheck + build verification
+3. Docker image built and pushed to `ghcr.io/trebeljahr/chess-app:latest`
+4. Coolify deployment triggered via webhook
 
-If you prefer image-based deploys instead of building on the VPS:
+### Required GitHub secrets
 
-- publish from GitHub Actions to `ghcr.io/<owner>/<repo>:main`
-- point the Coolify app at that image
-- add these GitHub secrets so pushes to `main` trigger a redeploy through the Coolify API:
-  - `COOLIFY_BASE_URL`
-  - `COOLIFY_API_TOKEN`
-  - `COOLIFY_RESOURCE_UUID`
-
-If the repository or package is private:
-
-- add a GHCR registry entry in Coolify
-- use a GitHub personal access token with package read access
-- configure the Coolify app to pull from that private registry
+- `COOLIFY_API_TOKEN` — Coolify API bearer token
+- `COOLIFY_WEBHOOK_URL` — Coolify deploy webhook endpoint
 
 ## Environment variables
 
-Start from [.env.example](/Users/rico/projects/chess-app/.env.example).
+See `.env.example`. Key variables for production:
 
-Core variables:
-
-- `NODE_ENV=production`
-- `PORT=3000`
-- `HOST=0.0.0.0`
-- `CHESS_DB_FILE=/app/data/chess.db`
-
-Notes:
-
-- `CHESS_DB_FILE` should point inside the persistent volume path in production.
-- If you later move to Postgres, this variable will likely disappear and the app's database layer should be updated accordingly.
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `6100` | Server listen port |
+| `HOST` | `0.0.0.0` | Bind address |
+| `NODE_ENV` | `production` | Environment |
+| `REDIS_URL` | — | Redis connection URL |
+| `CHESS_DB_FILE` | `/app/data/chess.db` | SQLite database path |
 
 ## DNS / proxy notes
 
-This app expects:
-
-- normal HTTPS traffic on the app domain
+- Normal HTTPS traffic on the app domain
 - WebSocket upgrade requests on the same domain at `/trpc`
+- No special browser-side WebSocket URL config needed
 
-No special browser-side WebSocket URL configuration is needed when the app is served from the same origin.
+## Local development with Docker
 
-## Deploy flow
+```bash
+docker-compose up
+```
 
-1. Push to `main`
-2. GitHub Actions runs typecheck + build
-3. GitHub Actions builds and publishes the Docker image to GHCR
-4. GitHub Actions calls the Coolify deploy API for the app UUID
-5. Coolify pulls the updated image and replaces the running container
+Starts Redis on port 6300 and the app on port 6100.
 
-## Realtime limitation
-
-This app currently keeps live subscription fanout in a single Node.js process and stores game state in a single SQLite file.
-
-That is acceptable for a single-instance hobby deployment, but it means:
-
-- active clients may briefly reconnect during deploys
-- this is not yet a multi-replica / zero-downtime realtime architecture
-
-To move beyond that later, the next steps would be:
-
-- move persistence from SQLite to Postgres
-- replace the in-process realtime bus with shared pub/sub
-- make the app safe for more than one running container
+For development without Docker, use `npm run dev` which starts Redis via
+`docker-compose up redis` and the server/client with concurrently.

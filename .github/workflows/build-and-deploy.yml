@@ -3,7 +3,7 @@ name: build-and-deploy
 on:
   push:
     branches:
-      - master
+      - main
 
 concurrency:
   group: chess-app-deploy
@@ -72,20 +72,17 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
+      COOLIFY_WEBHOOK_URL: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+    steps:
       - name: Trigger Coolify deployment
-        if: ${{ vars.COOLIFY_BASE_URL != '' }}
-        env:
-          COOLIFY_BASE_URL: ${{ vars.COOLIFY_BASE_URL }}
-          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
-          COOLIFY_RESOURCE_UUID: ${{ vars.COOLIFY_RESOURCE_UUID }}
+        if: ${{ env.COOLIFY_API_TOKEN != '' && env.COOLIFY_WEBHOOK_URL != '' }}
         run: |
           curl -fsS \
             -H "Authorization: Bearer $COOLIFY_API_TOKEN" \
             -X POST \
-            "$COOLIFY_BASE_URL/api/v1/deploy?uuid=$COOLIFY_RESOURCE_UUID"
-
-      - name: Trigger legacy Coolify webhook
-        if: ${{ vars.COOLIFY_BASE_URL == '' && secrets.COOLIFY_DEPLOY_WEBHOOK != '' }}
-        env:
-          COOLIFY_DEPLOY_WEBHOOK: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK }}
-        run: curl -fsS -X POST "$COOLIFY_DEPLOY_WEBHOOK"
+            "$COOLIFY_WEBHOOK_URL"
