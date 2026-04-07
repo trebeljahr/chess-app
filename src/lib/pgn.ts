@@ -33,7 +33,7 @@ export function generatePgn(
   for (const entry of game.moveHistory) {
     if ("kind" in entry) continue;
     const notation = formatMove(entry as MoveHistoryEntry);
-    if ((entry as any).figure.color === "white") {
+    if (entry.figure.color === "white") {
       moves.push(`${moveNumber}. ${notation}`);
     } else {
       moves.push(notation);

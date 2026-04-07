@@ -30,10 +30,6 @@ export function findGameBySlug(slug: string): GameRecord | null {
   return db.select().from(games).where(eq(games.slug, slug)).all()[0] ?? null;
 }
 
-export function findGameByName(name: string): GameRecord | null {
-  return db.select().from(games).where(eq(games.name, name)).all()[0] ?? null;
-}
-
 export function insertGame(game: typeof games.$inferInsert): void {
   db.insert(games).values(game).run();
 }
