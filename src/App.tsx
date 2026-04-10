@@ -6,6 +6,7 @@ import { Badge } from "./components/ui/badge";
 import { Button } from "./components/ui/button";
 import { AuthScreen } from "./features/auth/auth-screen";
 import { GamePage } from "./features/game/game-page";
+import { ImprintPage } from "./features/imprint/imprint-page";
 import { HomePage } from "./features/lobby/home-page";
 import { trpc } from "./lib/trpc";
 
@@ -84,8 +85,15 @@ function AppShell() {
       <Routes>
         <Route path="/" element={<HomePage user={sessionQuery.data} />} />
         <Route path="/games/:slug" element={<GamePage user={sessionQuery.data} />} />
+        <Route path="/imprint" element={<ImprintPage />} />
         <Route path="*" element={<Navigate replace to="/" />} />
       </Routes>
+
+      <footer className="border-t border-white/30 py-3 text-center">
+        <a href="/imprint" className="text-xs text-slate-400 hover:text-slate-600">
+          Legal Notice
+        </a>
+      </footer>
     </div>
   );
 }
