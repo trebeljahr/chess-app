@@ -9,7 +9,7 @@ export function ImprintPage() {
         </Link>
       </p>
 
-      <h2 className="mb-6 text-3xl font-semibold">Legal Notice</h2>
+      <h2 className="mb-6 text-3xl font-semibold">Imprint</h2>
 
       <p className="mb-6 text-sm text-slate-500">
         Information pursuant to § 5 DDG (German Digital Services Act) and

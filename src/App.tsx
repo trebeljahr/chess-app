@@ -91,7 +91,7 @@ function AppShell() {
 
       <footer className="border-t border-white/30 py-3 text-center">
         <a href="/imprint" className="text-xs text-slate-400 hover:text-slate-600">
-          Legal Notice
+          Imprint
         </a>
       </footer>
     </div>
