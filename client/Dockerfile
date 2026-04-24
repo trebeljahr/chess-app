@@ -5,15 +5,17 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
 
+RUN npm install -g pnpm@10.33.2
+
 ENV NODE_ENV=development
-COPY package*.json ./
-RUN npm ci
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY src ./src
 COPY public ./public
 COPY index.html vite.config.ts tsconfig.json ./
 
-RUN npm run build:client
+RUN pnpm run build:client
 
 FROM node:24-bookworm-slim AS runtime
 WORKDIR /app

@@ -5,9 +5,11 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
 
+RUN npm install -g pnpm@10.33.2
+
 ENV NODE_ENV=development
-COPY package*.json ./
-RUN npm ci
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 WORKDIR /app
@@ -15,8 +17,8 @@ WORKDIR /app
 COPY src ./src
 COPY tsconfig.json tsconfig.server.json ./
 
-RUN npm run build:server
-RUN npm prune --omit=dev
+RUN pnpm run build:server
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 FROM node:24-bookworm-slim AS runtime
 WORKDIR /app

@@ -1,6 +1,7 @@
 {
   "name": "chess-app",
   "private": true,
+  "packageManager": "pnpm@10.33.2",
   "type": "module",
   "engines": {
     "node": ">=24"
@@ -63,6 +64,15 @@
     "lint-staged": "^16.4.0"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,jsonc,css}": ["biome check --write --no-errors-on-unmatched"]
+    "*.{js,jsx,ts,tsx,json,jsonc,css}": [
+      "biome check --write --no-errors-on-unmatched"
+    ]
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@biomejs/biome",
+      "better-sqlite3",
+      "esbuild"
+    ]
   }
 }
