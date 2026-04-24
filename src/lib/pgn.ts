@@ -1,14 +1,10 @@
-import {
-  formatMove,
-  type GameState,
-  type MoveHistoryEntry
-} from "../shared/chess";
+import { type GameState, type MoveHistoryEntry, formatMove } from "../shared/chess";
 
 export function generatePgn(
   game: GameState,
   gameName: string,
   whitePlayer?: string,
-  blackPlayer?: string
+  blackPlayer?: string,
 ): string {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, ".");
   let result = "*";
@@ -24,7 +20,7 @@ export function generatePgn(
     `[Date "${date}"]`,
     `[White "${whitePlayer ?? "?"}"]`,
     `[Black "${blackPlayer ?? "?"}"]`,
-    `[Result "${result}"]`
+    `[Result "${result}"]`,
   ];
 
   const moves: string[] = [];

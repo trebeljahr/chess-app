@@ -41,7 +41,7 @@ export function useConfetti(trigger: boolean): void {
         color: COLORS[Math.floor(Math.random() * COLORS.length)],
         size: Math.random() * 8 + 4,
         rotation: Math.random() * Math.PI * 2,
-        rotationSpeed: (Math.random() - 0.5) * 0.3
+        rotationSpeed: (Math.random() - 0.5) * 0.3,
       });
     }
 

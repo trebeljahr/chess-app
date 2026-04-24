@@ -16,7 +16,7 @@ function createEvent(type: string, slug?: string): RealtimeEvent {
     id: crypto.randomUUID(),
     type,
     slug,
-    emittedAt: Date.now()
+    emittedAt: Date.now(),
   };
 }
 
@@ -43,14 +43,12 @@ export function emitGameUpdate(slug: string, type: string): void {
 
 export async function* subscribeToChannel(
   channel: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): AsyncGenerator<RealtimeEvent, void, void> {
   const redis = getRedisClient();
 
   if (!redis) {
-    const iterable = signal
-      ? on(localBus, channel, { signal })
-      : on(localBus, channel);
+    const iterable = signal ? on(localBus, channel, { signal }) : on(localBus, channel);
     for await (const [event] of iterable) {
       yield event as RealtimeEvent;
     }

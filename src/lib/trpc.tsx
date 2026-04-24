@@ -1,13 +1,5 @@
-import {
-  QueryClient,
-  QueryClientProvider
-} from "@tanstack/react-query";
-import {
-  createWSClient,
-  httpBatchLink,
-  splitLink,
-  wsLink
-} from "@trpc/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createWSClient, httpBatchLink, splitLink, wsLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import type { PropsWithChildren } from "react";
 import { useState } from "react";
@@ -40,15 +32,15 @@ export function AppProviders({ children }: PropsWithChildren) {
         defaultOptions: {
           queries: {
             staleTime: 5_000,
-            refetchOnWindowFocus: false
-          }
-        }
-      })
+            refetchOnWindowFocus: false,
+          },
+        },
+      }),
   );
 
   const [trpcClient] = useState(() => {
     const wsClient = createWSClient({
-      url: getWsUrl()
+      url: getWsUrl(),
     });
 
     return trpc.createClient({
@@ -59,7 +51,7 @@ export function AppProviders({ children }: PropsWithChildren) {
           },
           true: wsLink({
             client: wsClient,
-            transformer: superjson
+            transformer: superjson,
           }),
           false: httpBatchLink({
             url: getHttpUrl(),
@@ -67,12 +59,12 @@ export function AppProviders({ children }: PropsWithChildren) {
             fetch(url, options) {
               return fetch(url, {
                 ...options,
-                credentials: "include"
+                credentials: "include",
               });
-            }
-          })
-        })
-      ]
+            },
+          }),
+        }),
+      ],
     });
   });
 

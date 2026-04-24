@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Badge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "../../components/ui/card";
-import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Separator } from "../../components/ui/separator";
@@ -29,7 +29,7 @@ export function AuthScreen() {
     },
     onError: (mutationError) => {
       setError(mutationError.message);
-    }
+    },
   });
 
   const register = trpc.auth.register.useMutation({
@@ -39,7 +39,7 @@ export function AuthScreen() {
     },
     onError: (mutationError) => {
       setError(mutationError.message);
-    }
+    },
   });
 
   const isPending = login.isPending || register.isPending;
@@ -64,12 +64,10 @@ export function AuthScreen() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.22),transparent_32%),linear-gradient(135deg,#0f172a_0%,#1e293b_45%,#312e81_100%)]" />
             <div className="relative space-y-5">
               <div className="space-y-4">
-                <CardTitle className="text-4xl text-stone-50 md:text-6xl">
-                  Online Chess
-                </CardTitle>
+                <CardTitle className="text-4xl text-stone-50 md:text-6xl">Online Chess</CardTitle>
                 <CardDescription className="max-w-xl text-base text-stone-200/80 md:text-lg">
-                  Play chess against other people online. Create a game, invite a
-                  friend, and enjoy a match in real time.
+                  Play chess against other people online. Create a game, invite a friend, and enjoy
+                  a match in real time.
                 </CardDescription>
               </div>
             </div>
@@ -134,9 +132,7 @@ export function AuthScreen() {
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
-                  autoComplete={
-                    mode === "login" ? "current-password" : "new-password"
-                  }
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
                   id="password"
                   placeholder="at least 8 characters"
                   type="password"
@@ -145,16 +141,10 @@ export function AuthScreen() {
                 />
               </div>
               {error ? (
-                <p className="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                  {error}
-                </p>
+                <p className="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>
               ) : null}
               <Button className="w-full" size="lg" disabled={isPending} type="submit">
-                {isPending
-                  ? "Working..."
-                  : mode === "login"
-                    ? "Enter the lobby"
-                    : "Create account"}
+                {isPending ? "Working..." : mode === "login" ? "Enter the lobby" : "Create account"}
               </Button>
             </form>
           </CardContent>
@@ -166,7 +156,7 @@ export function AuthScreen() {
 
 function FeatureCard({
   title,
-  description
+  description,
 }: {
   title: string;
   description: string;

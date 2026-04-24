@@ -1,7 +1,6 @@
+import { LogOut, Volume2, VolumeOff } from "lucide-react";
 import { Component, type ErrorInfo, type PropsWithChildren } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { LogOut, Volume2, VolumeOff } from "lucide-react";
-import { useToggleSound } from "./lib/use-move-sound";
 import { Badge } from "./components/ui/badge";
 import { Button } from "./components/ui/button";
 import { AuthScreen } from "./features/auth/auth-screen";
@@ -9,6 +8,7 @@ import { GamePage } from "./features/game/game-page";
 import { ImprintPage } from "./features/imprint/imprint-page";
 import { HomePage } from "./features/lobby/home-page";
 import { trpc } from "./lib/trpc";
+import { useToggleSound } from "./lib/use-move-sound";
 
 export function App() {
   return (
@@ -24,14 +24,14 @@ function AppShell() {
   const utils = trpc.useUtils();
   const sessionQuery = trpc.auth.session.useQuery(undefined, {
     retry: 3,
-    retryDelay: 1000
+    retryDelay: 1000,
   });
 
   const logout = trpc.auth.logout.useMutation({
     onSuccess: async () => {
       await utils.auth.session.invalidate();
       await utils.lobby.list.reset();
-    }
+    },
   });
 
   if (sessionQuery.isLoading) {
@@ -70,11 +70,7 @@ function AppShell() {
               {sessionQuery.data.username}
               {sessionQuery.data.rating ? ` · ${sessionQuery.data.rating}` : ""}
             </Badge>
-            <Button
-              variant="ghost"
-              onClick={() => logout.mutate()}
-              disabled={logout.isPending}
-            >
+            <Button variant="ghost" onClick={() => logout.mutate()} disabled={logout.isPending}>
               <LogOut className="size-4" />
               Sign out
             </Button>
@@ -101,16 +97,18 @@ function AppShell() {
 function SoundToggle() {
   const [enabled, toggle] = useToggleSound();
   return (
-    <Button variant="ghost" size="sm" onClick={toggle} aria-label={enabled ? "Mute sounds" : "Unmute sounds"}>
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={toggle}
+      aria-label={enabled ? "Mute sounds" : "Unmute sounds"}
+    >
       {enabled ? <Volume2 className="size-4" /> : <VolumeOff className="size-4" />}
     </Button>
   );
 }
 
-class ErrorBoundary extends Component<
-  PropsWithChildren,
-  { hasError: boolean }
-> {
+class ErrorBoundary extends Component<PropsWithChildren, { hasError: boolean }> {
   constructor(props: PropsWithChildren) {
     super(props);
     this.state = { hasError: false };

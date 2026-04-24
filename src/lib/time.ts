@@ -17,6 +17,6 @@ export function formatRelativeTime(timestamp: number): string {
     month: "short",
     day: "numeric",
     hour: "numeric",
-    minute: "2-digit"
+    minute: "2-digit",
   }).format(timestamp);
 }

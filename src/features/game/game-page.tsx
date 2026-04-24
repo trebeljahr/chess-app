@@ -1,5 +1,3 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Check,
@@ -11,11 +9,13 @@ import {
   FlipVertical,
   Grid3X3,
   Link,
-  MessageCircle,
   RefreshCcw,
   Send,
-  UserPlus
+  UserPlus,
 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { PieceArt } from "../../components/piece-art";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import {
@@ -23,11 +23,11 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Separator } from "../../components/ui/separator";
-import { cn } from "../../lib/utils";
+import { downloadPgn, generatePgn } from "../../lib/pgn";
 import { formatRelativeTime } from "../../lib/time";
 import { trpc } from "../../lib/trpc";
 import { BOARD_THEMES, useBoardTheme } from "../../lib/use-board-theme";
@@ -35,20 +35,19 @@ import { useConfetti } from "../../lib/use-confetti";
 import { useConnectionStatus } from "../../lib/use-connection-status";
 import { useFavicon } from "../../lib/use-favicon";
 import { useMoveSound } from "../../lib/use-move-sound";
-import { downloadPgn, generatePgn } from "../../lib/pgn";
+import { cn } from "../../lib/utils";
 import {
-  formatMove,
-  getCapturedPieces,
-  invertColor,
   type ChessMove,
   type DrawReason,
   type MoveHistoryEntry,
   type Piece,
   type PieceColor,
   type PieceType,
-  type ViewerColor
+  type ViewerColor,
+  formatMove,
+  getCapturedPieces,
+  invertColor,
 } from "../../shared/chess";
-import { PieceArt } from "../../components/piece-art";
 import { ChessBoard } from "./chess-board";
 
 interface GamePageProps {
@@ -62,7 +61,7 @@ const PROMOTION_OPTIONS: Array<Exclude<PieceType, "king" | "pawn">> = [
   "queen",
   "rook",
   "bishop",
-  "knight"
+  "knight",
 ];
 
 export function GamePage({ user }: GamePageProps) {
@@ -85,8 +84,8 @@ export function GamePage({ user }: GamePageProps) {
     { slug },
     {
       enabled: Boolean(slug),
-      retry: false
-    }
+      retry: false,
+    },
   );
 
   const move = trpc.game.move.useMutation();
@@ -94,7 +93,7 @@ export function GamePage({ user }: GamePageProps) {
   const sendMessage = trpc.game.sendMessage.useMutation({
     onSuccess: () => {
       setMessage("");
-    }
+    },
   });
   const heartbeat = trpc.game.heartbeat.useMutation();
   const proposeUndo = trpc.game.proposeUndo.useMutation();
@@ -104,18 +103,18 @@ export function GamePage({ user }: GamePageProps) {
   const respondDraw = trpc.game.acceptDraw.useMutation();
   const declineDraw = trpc.game.rejectDraw.useMutation();
   const forfeit = trpc.game.forfeit.useMutation({
-    onSuccess: () => setShowForfeitConfirm(false)
+    onSuccess: () => setShowForfeitConfirm(false),
   });
   const rematch = trpc.game.rematch.useMutation({
-    onSuccess: (data) => navigate(`/games/${data.slug}`)
+    onSuccess: (data) => navigate(`/games/${data.slug}`),
   });
   const joinRematch = trpc.lobby.join.useMutation({
-    onSuccess: (data) => navigate(`/games/${data.slug}`)
+    onSuccess: (data) => navigate(`/games/${data.slug}`),
   });
   const joinGame = trpc.lobby.join.useMutation({
     onSuccess: async () => {
       await utils.game.bySlug.invalidate({ slug });
-    }
+    },
   });
 
   trpc.game.onChanged.useSubscription(
@@ -124,12 +123,9 @@ export function GamePage({ user }: GamePageProps) {
       enabled: Boolean(slug),
       onData: async () => {
         setLastEventAt(Date.now());
-        await Promise.all([
-          utils.game.bySlug.invalidate({ slug }),
-          utils.lobby.list.invalidate()
-        ]);
-      }
-    }
+        await Promise.all([utils.game.bySlug.invalidate({ slug }), utils.lobby.list.invalidate()]);
+      },
+    },
   );
 
   useEffect(() => {
@@ -145,10 +141,7 @@ export function GamePage({ user }: GamePageProps) {
   const history = gameQuery.data?.game.moveHistory ?? [];
   const currentTurn = gameQuery.data?.game.turn;
   const viewerColor = gameQuery.data?.viewer.color;
-  useMoveSound(
-    history as MoveHistoryEntry[],
-    gameQuery.data?.game.check ?? false
-  );
+  useMoveSound(history as MoveHistoryEntry[], gameQuery.data?.game.check ?? false);
 
   // Execute pre-move when it becomes our turn
   useEffect(() => {
@@ -167,7 +160,7 @@ export function GamePage({ user }: GamePageProps) {
   useEffect(() => {
     moveHistoryRef.current?.scrollTo({
       top: moveHistoryRef.current.scrollHeight,
-      behavior: "smooth"
+      behavior: "smooth",
     });
   }, [history.length]);
 
@@ -176,7 +169,7 @@ export function GamePage({ user }: GamePageProps) {
   useEffect(() => {
     chatRef.current?.scrollTo({
       top: chatRef.current.scrollHeight,
-      behavior: "smooth"
+      behavior: "smooth",
     });
   }, [messageCount]);
 
@@ -204,8 +197,7 @@ export function GamePage({ user }: GamePageProps) {
   const displayState = gameData
     ? { ...gameData, board: displayBoard ?? gameData.board }
     : undefined;
-  const isScrubbing =
-    viewIndex !== null && displayBoard !== gameData?.board;
+  const isScrubbing = viewIndex !== null && displayBoard !== gameData?.board;
 
   // Keyboard navigation for move history
   const handleKeyDown = useCallback(
@@ -226,7 +218,7 @@ export function GamePage({ user }: GamePageProps) {
         });
       }
     },
-    [gameData, history.length]
+    [gameData, history.length],
   );
 
   useEffect(() => {
@@ -240,7 +232,9 @@ export function GamePage({ user }: GamePageProps) {
   const gameName = gameQuery.data?.name;
   const updatedAt = gameQuery.data?.updatedAt;
 
-  const viewerWon = Boolean(game?.checkmate && game && viewer && invertColor(game.turn) === viewer.color);
+  const viewerWon = Boolean(
+    game?.checkmate && game && viewer && invertColor(game.turn) === viewer.color,
+  );
   useConfetti(viewerWon);
   const [boardTheme, setBoardTheme] = useBoardTheme();
   useFavicon(game && !game.archived ? game.turn : null);
@@ -302,27 +296,27 @@ export function GamePage({ user }: GamePageProps) {
 
   // Board orientation: flip for spectators, or player-controlled flip
   const effectiveColor: ViewerColor = flipped
-    ? (viewer.color === "none"
-        ? "black"
-        : invertColor(viewer.color))
+    ? viewer.color === "none"
+      ? "black"
+      : invertColor(viewer.color)
     : viewer.color;
 
-  const topPlayer =
-    effectiveColor === "black" ? whitePlayer : blackPlayer;
-  const bottomPlayer =
-    effectiveColor === "black" ? blackPlayer : whitePlayer;
+  const topPlayer = effectiveColor === "black" ? whitePlayer : blackPlayer;
+  const bottomPlayer = effectiveColor === "black" ? blackPlayer : whitePlayer;
 
   const winner = game.checkmate ? invertColor(game.turn) : null;
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-3 py-6 md:px-8 md:py-8">
       {connectionStatus !== "connected" ? (
-        <div className={cn(
-          "fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-2xl px-5 py-3 text-sm font-medium shadow-lg",
-          connectionStatus === "reconnecting"
-            ? "bg-amber-100 text-amber-900 border border-amber-300"
-            : "bg-rose-100 text-rose-900 border border-rose-300"
-        )}>
+        <div
+          className={cn(
+            "fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-2xl px-5 py-3 text-sm font-medium shadow-lg",
+            connectionStatus === "reconnecting"
+              ? "bg-amber-100 text-amber-900 border border-amber-300"
+              : "bg-rose-100 text-rose-900 border border-rose-300",
+          )}
+        >
           {connectionStatus === "reconnecting"
             ? "Reconnecting..."
             : "Connection lost. Trying to reconnect..."}
@@ -343,10 +337,7 @@ export function GamePage({ user }: GamePageProps) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {viewer.color === "none" && game.users.length < 2 && !game.archived ? (
-            <Button
-              onClick={() => joinGame.mutate({ slug })}
-              disabled={joinGame.isPending}
-            >
+            <Button onClick={() => joinGame.mutate({ slug })} disabled={joinGame.isPending}>
               <UserPlus className="size-4" />
               {joinGame.isPending ? "Joining..." : "Join game"}
             </Button>
@@ -398,9 +389,7 @@ export function GamePage({ user }: GamePageProps) {
             }}
           >
             {copied === "link" ? <Check className="size-4" /> : <Link className="size-4" />}
-            <span className="hidden sm:inline">
-              {copied === "link" ? "Copied!" : "Copy link"}
-            </span>
+            <span className="hidden sm:inline">{copied === "link" ? "Copied!" : "Copy link"}</span>
           </Button>
           <Button
             variant="outline"
@@ -412,9 +401,7 @@ export function GamePage({ user }: GamePageProps) {
             }}
           >
             {copied === "id" ? <Check className="size-4" /> : <Copy className="size-4" />}
-            <span className="hidden sm:inline">
-              {copied === "id" ? "Copied!" : slug}
-            </span>
+            <span className="hidden sm:inline">{copied === "id" ? "Copied!" : slug}</span>
           </Button>
           <Badge variant={game.archived ? "secondary" : "success"}>
             {game.archived ? "Archived" : "Live"}
@@ -426,12 +413,14 @@ export function GamePage({ user }: GamePageProps) {
         <div className="mx-auto w-full max-w-[min(100%,560px)] space-y-3 lg:max-w-none">
           {/* Game result banner */}
           {game.archived ? (
-            <div className={cn(
-              "flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold",
-              game.checkmate
-                ? "border border-amber-300 bg-amber-50 text-amber-900"
-                : "bg-stone-100 text-stone-600"
-            )}>
+            <div
+              className={cn(
+                "flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold",
+                game.checkmate
+                  ? "border border-amber-300 bg-amber-50 text-amber-900"
+                  : "bg-stone-100 text-stone-600",
+              )}
+            >
               {game.checkmate ? (
                 <>
                   <Flag className="size-4" />
@@ -457,16 +446,20 @@ export function GamePage({ user }: GamePageProps) {
               )}
             </div>
           ) : (
-            <div className={cn(
-              "flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium",
-              game.turn === viewer.color
-                ? "border border-teal-200 bg-teal-50 text-teal-800"
-                : "bg-stone-100 text-stone-600"
-            )}>
-              <span className={cn(
-                "size-3 rounded-full border border-stone-300",
-                game.turn === "white" ? "bg-white" : "bg-stone-900"
-              )} />
+            <div
+              className={cn(
+                "flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium",
+                game.turn === viewer.color
+                  ? "border border-teal-200 bg-teal-50 text-teal-800"
+                  : "bg-stone-100 text-stone-600",
+              )}
+            >
+              <span
+                className={cn(
+                  "size-3 rounded-full border border-stone-300",
+                  game.turn === "white" ? "bg-white" : "bg-stone-900",
+                )}
+              />
               {game.turn === viewer.color
                 ? "Your turn"
                 : viewer.color === "none"
@@ -530,7 +523,11 @@ export function GamePage({ user }: GamePageProps) {
             isActive={!game.archived && topPlayer?.color === game.turn}
             timestamp={game.clock?.lastMoveAt ?? game.timestamp}
             capturedPieces={topPlayer?.color === "white" ? captured.black : captured.white}
-            clockMs={game.clock && topPlayer?.color ? game.clock[topPlayer.color as "white" | "black"] : null}
+            clockMs={
+              game.clock && topPlayer?.color
+                ? game.clock[topPlayer.color as "white" | "black"]
+                : null
+            }
           />
           <ChessBoard
             archived={game.archived || isScrubbing}
@@ -548,15 +545,17 @@ export function GamePage({ user }: GamePageProps) {
             isActive={!game.archived && bottomPlayer?.color === game.turn}
             timestamp={game.clock?.lastMoveAt ?? game.timestamp}
             capturedPieces={bottomPlayer?.color === "white" ? captured.black : captured.white}
-            clockMs={game.clock && bottomPlayer?.color ? game.clock[bottomPlayer.color as "white" | "black"] : null}
+            clockMs={
+              game.clock && bottomPlayer?.color
+                ? game.clock[bottomPlayer.color as "white" | "black"]
+                : null
+            }
           />
           {promotionPending ? (
             <Card>
               <CardHeader>
                 <CardTitle>Promote your pawn</CardTitle>
-                <CardDescription>
-                  Choose the piece that should replace your pawn.
-                </CardDescription>
+                <CardDescription>Choose the piece that should replace your pawn.</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-2">
                 {PROMOTION_OPTIONS.map((pieceType) => (
@@ -593,10 +592,14 @@ export function GamePage({ user }: GamePageProps) {
                     <span className="size-3 rounded-full border border-stone-300 bg-white" />
                     <span className="font-medium">White:</span>
                     <span>{whitePlayer.name}</span>
-                    <span className={cn(
-                      "size-2 rounded-full",
-                      Date.now() - whitePlayer.timeStamp < 15_000 ? "bg-emerald-500" : "bg-slate-300"
-                    )} />
+                    <span
+                      className={cn(
+                        "size-2 rounded-full",
+                        Date.now() - whitePlayer.timeStamp < 15_000
+                          ? "bg-emerald-500"
+                          : "bg-slate-300",
+                      )}
+                    />
                   </div>
                 ) : (
                   <div className="text-sm text-slate-400">White: waiting for player...</div>
@@ -606,10 +609,14 @@ export function GamePage({ user }: GamePageProps) {
                     <span className="size-3 rounded-full border border-stone-300 bg-stone-900" />
                     <span className="font-medium">Black:</span>
                     <span>{blackPlayer.name}</span>
-                    <span className={cn(
-                      "size-2 rounded-full",
-                      Date.now() - blackPlayer.timeStamp < 15_000 ? "bg-emerald-500" : "bg-slate-300"
-                    )} />
+                    <span
+                      className={cn(
+                        "size-2 rounded-full",
+                        Date.now() - blackPlayer.timeStamp < 15_000
+                          ? "bg-emerald-500"
+                          : "bg-slate-300",
+                      )}
+                    />
                   </div>
                 ) : (
                   <div className="text-sm text-slate-400">Black: waiting for player...</div>
@@ -646,7 +653,9 @@ export function GamePage({ user }: GamePageProps) {
                 title={t.name}
                 className={cn(
                   "flex size-6 overflow-hidden rounded-full border-2 transition",
-                  boardTheme.name === t.name ? "border-teal-500 scale-110" : "border-transparent hover:scale-105"
+                  boardTheme.name === t.name
+                    ? "border-teal-500 scale-110"
+                    : "border-transparent hover:scale-105",
                 )}
                 onClick={() => setBoardTheme(t.name)}
               >
@@ -826,7 +835,7 @@ export function GamePage({ user }: GamePageProps) {
                         "flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition hover:bg-stone-100",
                         viewIndex === index
                           ? "border-teal-500 bg-teal-50"
-                          : "border-stone-200 bg-stone-50"
+                          : "border-stone-200 bg-stone-50",
                       )}
                       onClick={() => setViewIndex(viewIndex === index ? null : index)}
                       type="button"
@@ -835,7 +844,7 @@ export function GamePage({ user }: GamePageProps) {
                         <span
                           className={cn(
                             "size-3 shrink-0 rounded-full border border-stone-300",
-                            moveColor === "white" ? "bg-white" : "bg-stone-900"
+                            moveColor === "white" ? "bg-white" : "bg-stone-900",
                           )}
                         />
                       ) : null}
@@ -858,7 +867,10 @@ export function GamePage({ user }: GamePageProps) {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div ref={chatRef} className="max-h-72 space-y-3 overflow-y-auto rounded-[24px] bg-stone-100 p-4">
+              <div
+                ref={chatRef}
+                className="max-h-72 space-y-3 overflow-y-auto rounded-[24px] bg-stone-100 p-4"
+              >
                 {game.messages.length === 0 ? (
                   <p className="py-6 text-center text-sm text-slate-400">
                     No messages yet. Say hello!
@@ -896,12 +908,18 @@ export function GamePage({ user }: GamePageProps) {
 
 function formatDrawReason(reason: DrawReason): string {
   switch (reason) {
-    case "stalemate": return "Stalemate";
-    case "agreement": return "By agreement";
-    case "threefold-repetition": return "Threefold repetition";
-    case "fifty-move-rule": return "Fifty-move rule";
-    case "insufficient-material": return "Insufficient material";
-    default: return "Draw";
+    case "stalemate":
+      return "Stalemate";
+    case "agreement":
+      return "By agreement";
+    case "threefold-repetition":
+      return "Threefold repetition";
+    case "fifty-move-rule":
+      return "Fifty-move rule";
+    case "insufficient-material":
+      return "Insufficient material";
+    default:
+      return "Draw";
   }
 }
 
@@ -911,7 +929,7 @@ function getStatusText(
     turn: "white" | "black";
     checkmate: boolean;
     remis: boolean;
-  }
+  },
 ) {
   if (viewerColor === "none") {
     if (game.checkmate) return `${invertColor(game.turn)} wins by checkmate.`;
@@ -966,7 +984,7 @@ function PlayerBar({
   isActive,
   timestamp,
   capturedPieces,
-  clockMs
+  clockMs,
 }: {
   player: GameUser | undefined;
   isActive: boolean;
@@ -995,20 +1013,21 @@ function PlayerBar({
   const isOnline = Date.now() - player.timeStamp < 15_000;
 
   return (
-    <div className={cn(
-      "flex items-center justify-between rounded-2xl px-4 py-2 text-sm",
-      isActive ? "bg-teal-50 border border-teal-200" : "bg-stone-100"
-    )}>
+    <div
+      className={cn(
+        "flex items-center justify-between rounded-2xl px-4 py-2 text-sm",
+        isActive ? "bg-teal-50 border border-teal-200" : "bg-stone-100",
+      )}
+    >
       <div className="flex items-center gap-2">
-        <span className={cn(
-          "size-3 rounded-full border border-stone-300",
-          player.color === "white" ? "bg-white" : "bg-stone-900"
-        )} />
+        <span
+          className={cn(
+            "size-3 rounded-full border border-stone-300",
+            player.color === "white" ? "bg-white" : "bg-stone-900",
+          )}
+        />
         <span className="font-medium">{player.name}</span>
-        <span className={cn(
-          "size-2 rounded-full",
-          isOnline ? "bg-emerald-500" : "bg-slate-300"
-        )} />
+        <span className={cn("size-2 rounded-full", isOnline ? "bg-emerald-500" : "bg-slate-300")} />
         {capturedPieces.length > 0 ? (
           <div className="flex items-center -space-x-0.5">
             {capturedPieces.map((piece, i) => (
@@ -1020,10 +1039,14 @@ function PlayerBar({
         ) : null}
       </div>
       {clockMs !== null ? (
-        <span className={cn(
-          "rounded-lg px-2 py-0.5 tabular-nums text-xs font-bold",
-          isActive && clockMs < 30_000 ? "bg-rose-100 text-rose-700" : "bg-stone-200 text-stone-700"
-        )}>
+        <span
+          className={cn(
+            "rounded-lg px-2 py-0.5 tabular-nums text-xs font-bold",
+            isActive && clockMs < 30_000
+              ? "bg-rose-100 text-rose-700"
+              : "bg-stone-200 text-stone-700",
+          )}
+        >
           {formatClockTime(isActive ? Math.max(0, clockMs - (now - timestamp)) : clockMs)}
         </span>
       ) : elapsed ? (

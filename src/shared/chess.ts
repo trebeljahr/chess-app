@@ -136,9 +136,9 @@ export function createDefaultGameState(): GameState {
         id: crypto.randomUUID(),
         text: "Please stay friendly in the chat!",
         user: "Chess-App",
-        createdAt: Date.now()
-      }
-    ]
+        createdAt: Date.now(),
+      },
+    ],
   };
 }
 
@@ -149,7 +149,7 @@ export function createTimedGameState(initialMs: number, incrementMs: number): Ga
     white: initialMs,
     black: initialMs,
     lastMoveAt: Date.now(),
-    flagged: null
+    flagged: null,
   };
   return state;
 }
@@ -176,7 +176,7 @@ export function cloneState(state: GameState): GameState {
 export function convertPos(field: string): Position {
   return {
     row: BOARD_SIZE - Number(field[1]),
-    col: field.charCodeAt(0) - 65
+    col: field.charCodeAt(0) - 65,
   };
 }
 
@@ -202,7 +202,7 @@ const PIECE_SYMBOLS: Record<PieceType, string> = {
   rook: "R",
   bishop: "B",
   knight: "N",
-  pawn: ""
+  pawn: "",
 };
 
 function fieldName(pos: Position): string {
@@ -223,15 +223,17 @@ export function formatMove(move: MoveHistoryEntry): string {
 
   const piece = PIECE_SYMBOLS[move.figure.type];
   const capture = move.secondFigure !== "noFigure" || move.enPassen ? "x" : "";
-  const from = move.figure.type === "pawn" && capture
-    ? String.fromCharCode(move.oldPos.col + 97)
-    : "";
+  const from =
+    move.figure.type === "pawn" && capture ? String.fromCharCode(move.oldPos.col + 97) : "";
   const to = fieldName(move.newPos);
 
   return `${piece}${from}${capture}${to}`;
 }
 
-export function getCapturedPieces(moveHistory: MoveHistoryEntry[]): { white: Piece[]; black: Piece[] } {
+export function getCapturedPieces(moveHistory: MoveHistoryEntry[]): {
+  white: Piece[];
+  black: Piece[];
+} {
   const captured: { white: Piece[]; black: Piece[] } = { white: [], black: [] };
 
   for (const entry of moveHistory) {
@@ -263,7 +265,7 @@ export function touchPlayer(state: GameState, userId: string): GameState {
 
 export function addPlayerToGame(
   state: GameState,
-  user: { userId: string; name: string; color: ViewerColor }
+  user: { userId: string; name: string; color: ViewerColor },
 ): GameState {
   const nextState = cloneState(state);
 
@@ -273,7 +275,7 @@ export function addPlayerToGame(
 
   nextState.users.push({
     ...user,
-    timeStamp: Date.now()
+    timeStamp: Date.now(),
   });
   nextState.timestamp = Date.now();
 
@@ -282,13 +284,13 @@ export function addPlayerToGame(
 
 export function addChatMessage(
   state: GameState,
-  message: Pick<GameMessage, "text" | "user">
+  message: Pick<GameMessage, "text" | "user">,
 ): GameState {
   const nextState = cloneState(state);
   nextState.messages.push({
     id: crypto.randomUUID(),
     createdAt: Date.now(),
-    ...message
+    ...message,
   });
   nextState.timestamp = Date.now();
   return nextState;
@@ -298,7 +300,7 @@ export function executeMove(
   state: GameState,
   userId: string,
   from: string,
-  to: string
+  to: string,
 ): { state: GameState; promotion: boolean } {
   const user = state.users.find((item) => item.userId === userId);
 
@@ -334,22 +336,14 @@ export function executeMove(
     fromPos.col,
     "valid",
     false,
-    nextState.moveHistory
+    nextState.moveHistory,
   );
 
   if (!validateMove(nextState.board, toPos.row, toPos.col)) {
-    throw new Error(
-      `Illegal move: ${from} -> ${to} (piece: ${piece.color} ${piece.type})`
-    );
+    throw new Error(`Illegal move: ${from} -> ${to} (piece: ${piece.color} ${piece.type})`);
   }
 
-  const move = buildMove(
-    nextState.board,
-    piece,
-    fromPos,
-    toPos,
-    nextState.moveHistory
-  );
+  const move = buildMove(nextState.board, piece, fromPos, toPos, nextState.moveHistory);
 
   const boardAfterMove = updateBoard(cloneBoard(nextState.board), move, false);
   const history = [...nextState.moveHistory, move];
@@ -371,15 +365,11 @@ export function executeMove(
 
   return {
     state: finalizeCommittedMove(nextState, boardAfterMove, history),
-    promotion: false
+    promotion: false,
   };
 }
 
-export function handleFirstClick(
-  state: GameState,
-  userId: string,
-  field: string
-): GameState {
+export function handleFirstClick(state: GameState, userId: string, field: string): GameState {
   const user = state.users.find((item) => item.userId === userId);
 
   if (!user || user.color === "none" || state.baseLinePawn) {
@@ -390,18 +380,14 @@ export function handleFirstClick(
   const { row, col } = convertPos(field);
   const tile = nextState.board[row][col];
 
-  if (
-    nextState.turn === user.color &&
-    isPiece(tile.figure) &&
-    tile.figure.color === user.color
-  ) {
+  if (nextState.turn === user.color && isPiece(tile.figure) && tile.figure.color === user.color) {
     nextState.board = createFieldMarkers(
       nextState.board,
       row,
       col,
       "valid",
       false,
-      nextState.moveHistory
+      nextState.moveHistory,
     );
     nextState.movePart = 1;
     nextState.oldPos = { row, col };
@@ -413,11 +399,7 @@ export function handleFirstClick(
   return state;
 }
 
-function handleSecondClick(
-  state: GameState,
-  userId: string,
-  field: string
-): GameState {
+function handleSecondClick(state: GameState, userId: string, field: string): GameState {
   const user = state.users.find((item) => item.userId === userId);
 
   if (!user || user.color === "none" || state.baseLinePawn) {
@@ -442,7 +424,7 @@ function handleSecondClick(
       col,
       "valid",
       false,
-      nextState.moveHistory
+      nextState.moveHistory,
     );
     nextState.movePart = 1;
     nextState.oldPos = { row, col };
@@ -452,12 +434,7 @@ function handleSecondClick(
   }
 
   if (!validateMove(nextState.board, row, col)) {
-    nextState.board = removeMarkers(nextState.board, [
-      "valid",
-      "selected",
-      "rochade",
-      "enpassen"
-    ]);
+    nextState.board = removeMarkers(nextState.board, ["valid", "selected", "rochade", "enpassen"]);
     nextState.movePart = 0;
     nextState.oldPos = undefined;
     nextState.figure = undefined;
@@ -471,9 +448,9 @@ function handleSecondClick(
     selectedPosition,
     {
       row,
-      col
+      col,
     },
-    nextState.moveHistory
+    nextState.moveHistory,
   );
 
   const boardAfterMove = updateBoard(cloneBoard(nextState.board), move, false);
@@ -499,7 +476,7 @@ function handleSecondClick(
 export function handlePawnPromotion(
   state: GameState,
   userId: string,
-  pieceType: Exclude<PieceType, "king" | "pawn">
+  pieceType: Exclude<PieceType, "king" | "pawn">,
 ): GameState {
   if (state.archived) {
     return state;
@@ -536,10 +513,7 @@ export function forfeitGame(state: GameState, userId: string): GameState {
   }
 
   const nextState = cloneState(state);
-  nextState.moveHistory = [
-    ...nextState.moveHistory,
-    { kind: "forfeit", color: user.color }
-  ];
+  nextState.moveHistory = [...nextState.moveHistory, { kind: "forfeit", color: user.color }];
   nextState.oldBoards = [...nextState.oldBoards, cloneBoard(nextState.board)];
   nextState.archived = true;
   nextState.timestamp = Date.now();
@@ -654,11 +628,7 @@ export function handleUndo(state: GameState, userId: string): GameState {
 }
 
 export function canDeleteGame(state: GameState, userId: string): boolean {
-  return Boolean(
-    state.users[0] &&
-      state.users[0].userId === userId &&
-      state.users.length === 1
-  );
+  return Boolean(state.users[0] && state.users[0].userId === userId && state.users.length === 1);
 }
 
 export function isUserInGame(state: GameState, userId: string): boolean {
@@ -685,7 +655,7 @@ export function pieceToGlyph(figure: Figure): string {
       rook: "♖",
       bishop: "♗",
       knight: "♘",
-      pawn: "♙"
+      pawn: "♙",
     },
     black: {
       king: "♚",
@@ -693,8 +663,8 @@ export function pieceToGlyph(figure: Figure): string {
       rook: "♜",
       bishop: "♝",
       knight: "♞",
-      pawn: "♟"
-    }
+      pawn: "♟",
+    },
   };
 
   return glyphs[figure.color][figure.type];
@@ -765,7 +735,7 @@ function hasInsufficientMaterial(board: Board): boolean {
 function finalizeCommittedMove(
   state: GameState,
   board: Board,
-  moveHistory: MoveHistoryEntry[]
+  moveHistory: MoveHistoryEntry[],
 ): GameState {
   const nextTurn = invertColor(state.turn);
   const cleanBoard = cloneBoard(board);
@@ -825,7 +795,7 @@ function finalizeCommittedMove(
     state.clock = {
       ...state.clock,
       [movingColor]: Math.max(0, remaining),
-      lastMoveAt: now
+      lastMoveAt: now,
     };
 
     if (remaining <= 0) {
@@ -844,14 +814,14 @@ function buildMove(
   figure: Piece,
   oldPos: Position,
   newPos: Position,
-  moveHistory: MoveHistoryEntry[]
+  moveHistory: MoveHistoryEntry[],
 ): ChessMove {
   const targetTile = board[newPos.row][newPos.col];
   const move: ChessMove = {
     figure,
     oldPos,
     newPos,
-    secondFigure: targetTile.figure
+    secondFigure: targetTile.figure,
   };
 
   if (targetTile.rochade === "rochade") {
@@ -859,7 +829,7 @@ function buildMove(
       figure: board[newPos.row][newPos.col === 6 ? 7 : 0].figure as Piece,
       oldPos: { row: newPos.row, col: newPos.col === 6 ? 7 : 0 },
       newPos: { row: newPos.row, col: newPos.col === 6 ? 5 : 3 },
-      secondFigure: "noFigure"
+      secondFigure: "noFigure",
     };
   }
 
@@ -869,7 +839,7 @@ function buildMove(
     if (lastMove) {
       move.enPassen = {
         figure: board[lastMove.newPos.row][lastMove.newPos.col].figure as Piece,
-        pos: lastMove.newPos
+        pos: lastMove.newPos,
       };
     }
   }
@@ -896,7 +866,7 @@ function generateBoard(): Board {
         selected: "",
         rochade: "",
         enpassen: "",
-        figure: generateFigure(col, row)
+        figure: generateFigure(col, row),
       });
     }
   }
@@ -971,9 +941,9 @@ function getMoveInstructions(figure: PieceType) {
           [-1, -1],
           [1, 1],
           [-1, 1],
-          [1, -1]
+          [1, -1],
         ],
-        maxDistance: 1
+        maxDistance: 1,
       };
     case "queen":
       return {
@@ -985,9 +955,9 @@ function getMoveInstructions(figure: PieceType) {
           [-1, -1],
           [1, 1],
           [-1, 1],
-          [1, -1]
+          [1, -1],
         ],
-        maxDistance: 8
+        maxDistance: 8,
       };
     case "bishop":
       return {
@@ -995,9 +965,9 @@ function getMoveInstructions(figure: PieceType) {
           [-1, -1],
           [1, 1],
           [-1, 1],
-          [1, -1]
+          [1, -1],
         ],
-        maxDistance: 8
+        maxDistance: 8,
       };
     case "knight":
       return {
@@ -1009,9 +979,9 @@ function getMoveInstructions(figure: PieceType) {
           [1, -2],
           [1, 2],
           [-2, 1],
-          [-2, -1]
+          [-2, -1],
         ],
-        maxDistance: 1
+        maxDistance: 1,
       };
     case "rook":
       return {
@@ -1019,14 +989,14 @@ function getMoveInstructions(figure: PieceType) {
           [-1, 0],
           [1, 0],
           [0, 1],
-          [0, -1]
+          [0, -1],
         ],
-        maxDistance: 8
+        maxDistance: 8,
       };
     default:
       return {
         allowedDirections: [],
-        maxDistance: 0
+        maxDistance: 0,
       };
   }
 }
@@ -1037,7 +1007,7 @@ function createFieldMarkers(
   col: number,
   mark: "valid" | "check",
   virtual: boolean,
-  moveHistory?: MoveHistoryEntry[]
+  moveHistory?: MoveHistoryEntry[],
 ): Board {
   const figure = board[row][col].figure;
 
@@ -1074,7 +1044,7 @@ function createFieldMarkers(
       mark,
       row,
       col,
-      figure
+      figure,
     );
   }
 
@@ -1115,18 +1085,12 @@ function markTiles(
   mark: "valid" | "check",
   oldRow: number,
   oldCol: number,
-  oldFigure: Piece
+  oldFigure: Piece,
 ): Board {
   const newRow = row + rowMovement;
   const newCol = col + colMovement;
 
-  if (
-    newCol > 7 ||
-    newRow > 7 ||
-    newCol < 0 ||
-    newRow < 0 ||
-    iterationCount >= iterationMax
-  ) {
+  if (newCol > 7 || newRow > 7 || newCol < 0 || newRow < 0 || iterationCount >= iterationMax) {
     return board;
   }
 
@@ -1141,7 +1105,7 @@ function markTiles(
           oldPos: { row: oldRow, col: oldCol },
           newPos: { row: newRow, col: newCol },
           figure: oldFigure,
-          secondFigure: targetTile.figure
+          secondFigure: targetTile.figure,
         };
 
         updateBoard(boardCopy, move, true);
@@ -1163,7 +1127,7 @@ function markTiles(
       oldPos: { row: oldRow, col: oldCol },
       newPos: { row: newRow, col: newCol },
       figure: oldFigure,
-      secondFigure: "noFigure"
+      secondFigure: "noFigure",
     };
 
     updateBoard(boardCopy, move, true);
@@ -1187,7 +1151,7 @@ function markTiles(
     mark,
     oldRow,
     oldCol,
-    oldFigure
+    oldFigure,
   );
 }
 
@@ -1197,7 +1161,7 @@ function determinePawnMarkers(
   col: number,
   color: PieceColor,
   mark: "valid" | "check",
-  moveHistory?: MoveHistoryEntry[]
+  moveHistory?: MoveHistoryEntry[],
 ): Board {
   if (mark === "valid") {
     straightPawnSteps(board, row, col, color);
@@ -1212,12 +1176,7 @@ function determinePawnMarkers(
   return board;
 }
 
-function straightPawnSteps(
-  board: Board,
-  row: number,
-  col: number,
-  color: PieceColor
-): Board {
+function straightPawnSteps(board: Board, row: number, col: number, color: PieceColor): Board {
   const oneStep = color === "white" ? -1 : 1;
   const twoStep = color === "white" ? -2 : 2;
   const startRow = color === "white" ? 6 : 1;
@@ -1244,12 +1203,7 @@ function straightPawnSteps(
   return board;
 }
 
-function markPawnAdvance(
-  board: Board,
-  row: number,
-  col: number,
-  targetRow: number
-): void {
+function markPawnAdvance(board: Board, row: number, col: number, targetRow: number): void {
   const boardCopy = cloneBoard(board);
   const figure = board[row][col].figure;
 
@@ -1261,7 +1215,7 @@ function markPawnAdvance(
     oldPos: { row, col },
     newPos: { row: targetRow, col },
     figure,
-    secondFigure: "noFigure"
+    secondFigure: "noFigure",
   };
 
   updateBoard(boardCopy, move, true);
@@ -1276,7 +1230,7 @@ function diagonalPawnCaptures(
   row: number,
   col: number,
   color: PieceColor,
-  mark: "valid" | "check"
+  mark: "valid" | "check",
 ): Board {
   const rowChange = color === "white" ? -1 : 1;
 
@@ -1304,7 +1258,7 @@ function diagonalPawnCaptures(
       oldPos: { row, col },
       newPos: { row: nextRow, col: nextCol },
       figure: board[row][col].figure as Piece,
-      secondFigure: tile.figure
+      secondFigure: tile.figure,
     };
 
     updateBoard(boardCopy, move, true);
@@ -1322,7 +1276,7 @@ function enPassenMove(
   row: number,
   col: number,
   moveHistory: MoveHistoryEntry[],
-  color: PieceColor
+  color: PieceColor,
 ): Board {
   const move = getLastMove(moveHistory);
 
@@ -1353,8 +1307,8 @@ function enPassenMove(
     secondFigure: "noFigure",
     enPassen: {
       figure: move.figure,
-      pos: move.newPos
-    }
+      pos: move.newPos,
+    },
   };
 
   updateBoard(boardCopy, enPassen, true);
@@ -1373,7 +1327,7 @@ function markRochade(
   row: number,
   col: number,
   moveHistory: MoveHistoryEntry[],
-  color: PieceColor
+  color: PieceColor,
 ): void {
   if (isLongRochadePossible(board, row, col, moveHistory, color)) {
     board[row][col - 2].valid = "valid";
@@ -1391,7 +1345,7 @@ function isLongRochadePossible(
   row: number,
   col: number,
   moveHistory: MoveHistoryEntry[],
-  color: PieceColor
+  color: PieceColor,
 ): boolean {
   if (checkForMovedKing(moveHistory, color) || checkForMovedLeftRook(moveHistory, color)) {
     return false;
@@ -1419,7 +1373,7 @@ function isShortRochadePossible(
   row: number,
   col: number,
   moveHistory: MoveHistoryEntry[],
-  color: PieceColor
+  color: PieceColor,
 ): boolean {
   if (checkForMovedKing(moveHistory, color) || checkForMovedRightRook(moveHistory, color)) {
     return false;
@@ -1443,45 +1397,31 @@ function isShortRochadePossible(
 
 function checkForMovedKing(moveHistory: MoveHistoryEntry[], color: PieceColor): boolean {
   return moveHistory.some(
-    (move) =>
-      !("kind" in move) &&
-      move.figure.color === color &&
-      move.figure.type === "king"
+    (move) => !("kind" in move) && move.figure.color === color && move.figure.type === "king",
   );
 }
 
-function checkForMovedLeftRook(
-  moveHistory: MoveHistoryEntry[],
-  color: PieceColor
-): boolean {
+function checkForMovedLeftRook(moveHistory: MoveHistoryEntry[], color: PieceColor): boolean {
   return moveHistory.some(
     (move) =>
       !("kind" in move) &&
       move.figure.color === color &&
       move.figure.type === "rook" &&
-      move.oldPos.col === 0
+      move.oldPos.col === 0,
   );
 }
 
-function checkForMovedRightRook(
-  moveHistory: MoveHistoryEntry[],
-  color: PieceColor
-): boolean {
+function checkForMovedRightRook(moveHistory: MoveHistoryEntry[], color: PieceColor): boolean {
   return moveHistory.some(
     (move) =>
       !("kind" in move) &&
       move.figure.color === color &&
       move.figure.type === "rook" &&
-      move.oldPos.col === 7
+      move.oldPos.col === 7,
   );
 }
 
-function updateBoard(
-  board: Board,
-  move: ChessMove,
-  virtual = false,
-  undo = false
-): Board {
+function updateBoard(board: Board, move: ChessMove, virtual = false, undo = false): Board {
   removeMarkers(board, ["valid", "selected", "check", "rochade", "enpassen"]);
 
   if (!undo) {
@@ -1508,7 +1448,7 @@ function updateBoard(
 
 function removeMarkers(
   board: Board,
-  marks: Array<"valid" | "selected" | "check" | "rochade" | "enpassen">
+  marks: Array<"valid" | "selected" | "check" | "rochade" | "enpassen">,
 ): Board {
   for (let row = 0; row < BOARD_SIZE; row += 1) {
     for (let col = 0; col < BOARD_SIZE; col += 1) {
@@ -1526,12 +1466,7 @@ function removePiece(board: Board, pos: Position): Board {
   return board;
 }
 
-function generatePiece(
-  board: Board,
-  pos: Position,
-  figure: Figure,
-  virtual: boolean
-): Board {
+function generatePiece(board: Board, pos: Position, figure: Figure, virtual: boolean): Board {
   board[pos.row][pos.col].figure = figure;
   removeMarkers(board, ["check"]);
 
@@ -1552,16 +1487,12 @@ function checkForCheck(board: Board, color: PieceColor): boolean {
 function checkForCheckMate(
   board: Board,
   color: PieceColor,
-  moveHistory: MoveHistoryEntry[]
+  moveHistory: MoveHistoryEntry[],
 ): boolean {
   return checkForCheck(board, color) && checkForRemis(board, color, moveHistory);
 }
 
-function checkForRemis(
-  board: Board,
-  color: PieceColor,
-  moveHistory: MoveHistoryEntry[]
-): boolean {
+function checkForRemis(board: Board, color: PieceColor, moveHistory: MoveHistoryEntry[]): boolean {
   const boardCopy = cloneBoard(board);
   const possibleFiguresToMove = findFigures(boardCopy, color);
 

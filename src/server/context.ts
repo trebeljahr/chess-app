@@ -13,19 +13,14 @@ function buildContext(cookieHeader?: string, res?: Response): AppContext {
   const bundle = getSessionBundle(cookieHeader);
   return {
     ...bundle,
-    res
+    res,
   };
 }
 
-export function createExpressContext({
-  req,
-  res
-}: CreateExpressContextOptions): AppContext {
+export function createExpressContext({ req, res }: CreateExpressContextOptions): AppContext {
   return buildContext(req.headers.cookie, res);
 }
 
-export function createWsContext(
-  options: CreateWSSContextFnOptions
-): AppContext {
+export function createWsContext(options: CreateWSSContextFnOptions): AppContext {
   return buildContext(options.req.headers.cookie);
 }

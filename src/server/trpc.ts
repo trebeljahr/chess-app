@@ -3,7 +3,7 @@ import superjson from "superjson";
 import type { AppContext } from "./context.js";
 
 const t = initTRPC.context<AppContext>().create({
-  transformer: superjson
+  transformer: superjson,
 });
 
 export const router = t.router;
@@ -13,14 +13,14 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
-      message: "Please sign in first."
+      message: "Please sign in first.",
     });
   }
 
   return next({
     ctx: {
       ...ctx,
-      user: ctx.user
-    }
+      user: ctx.user,
+    },
   });
 });

@@ -3,10 +3,7 @@ import { dirname, resolve } from "node:path";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 
-const databaseFile = resolve(
-  process.cwd(),
-  process.env.CHESS_DB_FILE ?? "data/chess.db"
-);
+const databaseFile = resolve(process.cwd(), process.env.CHESS_DB_FILE ?? "data/chess.db");
 
 mkdirSync(dirname(databaseFile), { recursive: true });
 
@@ -52,12 +49,36 @@ sqlite.exec(`
 `);
 
 // Migrations for existing databases
-try { sqlite.exec(`ALTER TABLE users ADD COLUMN rating INTEGER NOT NULL DEFAULT 1200`); } catch { /* already exists */ }
-try { sqlite.exec(`ALTER TABLE users ADD COLUMN games_played INTEGER NOT NULL DEFAULT 0`); } catch { /* already exists */ }
-try { sqlite.exec(`ALTER TABLE users ADD COLUMN wins INTEGER NOT NULL DEFAULT 0`); } catch { /* already exists */ }
-try { sqlite.exec(`ALTER TABLE users ADD COLUMN losses INTEGER NOT NULL DEFAULT 0`); } catch { /* already exists */ }
-try { sqlite.exec(`ALTER TABLE users ADD COLUMN draws INTEGER NOT NULL DEFAULT 0`); } catch { /* already exists */ }
-try { sqlite.exec(`DROP INDEX IF EXISTS sqlite_autoindex_games_2`); } catch { /* ignore */ }
+try {
+  sqlite.exec(`ALTER TABLE users ADD COLUMN rating INTEGER NOT NULL DEFAULT 1200`);
+} catch {
+  /* already exists */
+}
+try {
+  sqlite.exec(`ALTER TABLE users ADD COLUMN games_played INTEGER NOT NULL DEFAULT 0`);
+} catch {
+  /* already exists */
+}
+try {
+  sqlite.exec(`ALTER TABLE users ADD COLUMN wins INTEGER NOT NULL DEFAULT 0`);
+} catch {
+  /* already exists */
+}
+try {
+  sqlite.exec(`ALTER TABLE users ADD COLUMN losses INTEGER NOT NULL DEFAULT 0`);
+} catch {
+  /* already exists */
+}
+try {
+  sqlite.exec(`ALTER TABLE users ADD COLUMN draws INTEGER NOT NULL DEFAULT 0`);
+} catch {
+  /* already exists */
+}
+try {
+  sqlite.exec(`DROP INDEX IF EXISTS sqlite_autoindex_games_2`);
+} catch {
+  /* ignore */
+}
 
 export const db = drizzle(sqlite);
 export { sqlite };

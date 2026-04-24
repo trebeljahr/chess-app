@@ -1,6 +1,6 @@
 import { eq, sql } from "drizzle-orm";
 import { db } from "./db.js";
-import { games, sessions, users, type GameRecord, type UserRecord } from "./schema.js";
+import { type GameRecord, type UserRecord, games, sessions, users } from "./schema.js";
 
 export function findUserById(userId: string): UserRecord | null {
   return db.select().from(users).where(eq(users.id, userId)).all()[0] ?? null;
@@ -34,10 +34,7 @@ export function insertGame(game: typeof games.$inferInsert): void {
   db.insert(games).values(game).run();
 }
 
-export function updateGame(
-  gameId: string,
-  changes: Pick<GameRecord, "state" | "updatedAt">
-): void {
+export function updateGame(gameId: string, changes: Pick<GameRecord, "state" | "updatedAt">): void {
   db.update(games).set(changes).where(eq(games.id, gameId)).run();
 }
 
@@ -48,7 +45,7 @@ export function removeGame(gameId: string): void {
 function calculateElo(
   rating: number,
   opponentRating: number,
-  score: number // 1 = win, 0.5 = draw, 0 = loss
+  score: number, // 1 = win, 0.5 = draw, 0 = loss
 ): number {
   const K = 32;
   const expected = 1 / (1 + 10 ** ((opponentRating - rating) / 400));
@@ -58,7 +55,7 @@ function calculateElo(
 export function recordGameResult(
   winnerId: string | null,
   loserId: string | null,
-  isDraw: boolean
+  isDraw: boolean,
 ): void {
   if (isDraw && winnerId && loserId) {
     const p1 = findUserById(winnerId);
@@ -68,17 +65,23 @@ export function recordGameResult(
     const newP1Rating = calculateElo(p1.rating, p2.rating, 0.5);
     const newP2Rating = calculateElo(p2.rating, p1.rating, 0.5);
 
-    db.update(users).set({
-      rating: newP1Rating,
-      gamesPlayed: sql`games_played + 1`,
-      draws: sql`draws + 1`
-    }).where(eq(users.id, winnerId)).run();
+    db.update(users)
+      .set({
+        rating: newP1Rating,
+        gamesPlayed: sql`games_played + 1`,
+        draws: sql`draws + 1`,
+      })
+      .where(eq(users.id, winnerId))
+      .run();
 
-    db.update(users).set({
-      rating: newP2Rating,
-      gamesPlayed: sql`games_played + 1`,
-      draws: sql`draws + 1`
-    }).where(eq(users.id, loserId)).run();
+    db.update(users)
+      .set({
+        rating: newP2Rating,
+        gamesPlayed: sql`games_played + 1`,
+        draws: sql`draws + 1`,
+      })
+      .where(eq(users.id, loserId))
+      .run();
     return;
   }
 
@@ -91,17 +94,23 @@ export function recordGameResult(
   const newWinnerRating = calculateElo(winner.rating, loser.rating, 1);
   const newLoserRating = calculateElo(loser.rating, winner.rating, 0);
 
-  db.update(users).set({
-    rating: newWinnerRating,
-    gamesPlayed: sql`games_played + 1`,
-    wins: sql`wins + 1`
-  }).where(eq(users.id, winnerId)).run();
+  db.update(users)
+    .set({
+      rating: newWinnerRating,
+      gamesPlayed: sql`games_played + 1`,
+      wins: sql`wins + 1`,
+    })
+    .where(eq(users.id, winnerId))
+    .run();
 
-  db.update(users).set({
-    rating: newLoserRating,
-    gamesPlayed: sql`games_played + 1`,
-    losses: sql`losses + 1`
-  }).where(eq(users.id, loserId)).run();
+  db.update(users)
+    .set({
+      rating: newLoserRating,
+      gamesPlayed: sql`games_played + 1`,
+      losses: sql`losses + 1`,
+    })
+    .where(eq(users.id, loserId))
+    .run();
 }
 
 export function getUserProfile(userId: string): {
@@ -120,6 +129,6 @@ export function getUserProfile(userId: string): {
     gamesPlayed: user.gamesPlayed,
     wins: user.wins,
     losses: user.losses,
-    draws: user.draws
+    draws: user.draws,
   };
 }

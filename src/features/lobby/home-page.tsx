@@ -1,6 +1,6 @@
+import { ArrowRight, Clock3, Eye, Plus, Trash2, Users } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Clock3, Eye, Plus, Trash2, Users } from "lucide-react";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import {
@@ -8,7 +8,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
@@ -39,7 +39,7 @@ export function HomePage({ user }: HomePageProps) {
   trpc.lobby.onChanged.useSubscription(undefined, {
     onData: async () => {
       await utils.lobby.list.invalidate();
-    }
+    },
   });
 
   const createGame = trpc.lobby.create.useMutation({
@@ -51,20 +51,20 @@ export function HomePage({ user }: HomePageProps) {
     },
     onError: (mutationError) => {
       setError(mutationError.message);
-    }
+    },
   });
 
   const joinGame = trpc.lobby.join.useMutation({
     onSuccess: async (result) => {
       await utils.lobby.list.invalidate();
       navigate(`/games/${result.slug}`);
-    }
+    },
   });
 
   const deleteGame = trpc.lobby.delete.useMutation({
     onSuccess: async () => {
       await utils.lobby.list.invalidate();
-    }
+    },
   });
 
   const filteredGames = (lobbyQuery.data ?? []).filter((game) => {
@@ -102,8 +102,8 @@ export function HomePage({ user }: HomePageProps) {
                   Build a match, invite a rival, make the board move.
                 </CardTitle>
                 <CardDescription className="max-w-2xl text-base text-stone-200/80">
-                  Games update live through tRPC subscriptions, and the UI keeps
-                  itself in sync through TanStack Query invalidations.
+                  Games update live through tRPC subscriptions, and the UI keeps itself in sync
+                  through TanStack Query invalidations.
                 </CardDescription>
               </div>
             </div>
@@ -113,9 +113,7 @@ export function HomePage({ user }: HomePageProps) {
         <Card>
           <CardHeader>
             <CardTitle>Start a game</CardTitle>
-            <CardDescription>
-              Choose a memorable name and your preferred side.
-            </CardDescription>
+            <CardDescription>Choose a memorable name and your preferred side.</CardDescription>
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={handleCreate}>
@@ -134,9 +132,7 @@ export function HomePage({ user }: HomePageProps) {
                   id="color"
                   className="flex h-11 w-full rounded-2xl border border-stone-300 bg-white px-4 py-2 text-sm shadow-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
                   value={color}
-                  onChange={(event) =>
-                    setColor(event.target.value as "white" | "black" | "random")
-                  }
+                  onChange={(event) => setColor(event.target.value as "white" | "black" | "random")}
                 >
                   <option value="random">Random</option>
                   <option value="white">White</option>
@@ -163,9 +159,7 @@ export function HomePage({ user }: HomePageProps) {
                 </select>
               </div>
               {error ? (
-                <p className="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                  {error}
-                </p>
+                <p className="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>
               ) : null}
               <Button className="w-full" disabled={createGame.isPending} type="submit">
                 <Plus className="size-4" />
@@ -193,10 +187,7 @@ export function HomePage({ user }: HomePageProps) {
                 }}
               />
             </div>
-            <Button
-              disabled={!gameId.trim()}
-              onClick={() => navigate(`/games/${gameId.trim()}`)}
-            >
+            <Button disabled={!gameId.trim()} onClick={() => navigate(`/games/${gameId.trim()}`)}>
               <Eye className="size-4" />
               Go to game
             </Button>
@@ -220,8 +211,7 @@ export function HomePage({ user }: HomePageProps) {
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {filteredGames.map((game) => {
           const isParticipant = game.users.some((member) => member.userId === user.id);
-          const isOwner =
-            game.users[0]?.userId === user.id && game.users.length === 1;
+          const isOwner = game.users[0]?.userId === user.id && game.users.length === 1;
           const actionLabel = isParticipant
             ? game.archived
               ? "Review"
@@ -260,9 +250,7 @@ export function HomePage({ user }: HomePageProps) {
                       {player.name} · {player.color}
                     </Badge>
                   ))}
-                  {game.users.length === 0 ? (
-                    <Badge variant="outline">No players yet</Badge>
-                  ) : null}
+                  {game.users.length === 0 ? <Badge variant="outline">No players yet</Badge> : null}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button

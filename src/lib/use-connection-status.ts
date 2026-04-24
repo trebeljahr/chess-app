@@ -2,9 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 export type ConnectionStatus = "connected" | "reconnecting" | "disconnected";
 
-export function useConnectionStatus(
-  lastEventTimestamp: number | undefined
-): ConnectionStatus {
+export function useConnectionStatus(lastEventTimestamp: number | undefined): ConnectionStatus {
   const [status, setStatus] = useState<ConnectionStatus>("connected");
   const lastSeen = useRef(Date.now());
 

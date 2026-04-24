@@ -1,6 +1,6 @@
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { createServer, request as httpRequest } from "node:http";
-import { readFileSync, existsSync, statSync } from "node:fs";
-import { join, extname } from "node:path";
+import { extname, join } from "node:path";
 import { URL } from "node:url";
 
 const PORT = Number(process.env.PORT ?? 80);
@@ -41,7 +41,7 @@ function proxyRequest(req, res) {
     (proxyRes) => {
       res.writeHead(proxyRes.statusCode, proxyRes.headers);
       proxyRes.pipe(res, { end: true });
-    }
+    },
   );
 
   proxyReq.on("error", () => {

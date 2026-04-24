@@ -91,10 +91,7 @@ function playCastleSound(): void {
   setTimeout(() => playMoveSound(), 120);
 }
 
-export function useMoveSound(
-  moveHistory: MoveHistoryEntry[],
-  isCheck: boolean
-): void {
+export function useMoveSound(moveHistory: MoveHistoryEntry[], isCheck: boolean): void {
   const prevCount = useRef(moveHistory.length);
   const enabled = useSoundEnabled();
 

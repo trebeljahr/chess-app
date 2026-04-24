@@ -11,7 +11,7 @@ if (url && process.env.NODE_ENV !== "test") {
     retryStrategy(times) {
       return Math.min(times * 500, 5000);
     },
-    lazyConnect: true
+    lazyConnect: true,
   });
 
   let errorLogged = false;

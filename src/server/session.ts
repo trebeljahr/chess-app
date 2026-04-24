@@ -1,8 +1,8 @@
-import type { Response } from "express";
-import { eq, lt } from "drizzle-orm";
 import { parse, serialize } from "cookie";
+import { eq, lt } from "drizzle-orm";
+import type { Response } from "express";
 import { db } from "./db.js";
-import { sessions, users, type SessionRecord, type UserRecord } from "./schema.js";
+import { type SessionRecord, type UserRecord, sessions, users } from "./schema.js";
 
 const SESSION_COOKIE_NAME = "chess_app_session";
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 30;
@@ -18,7 +18,7 @@ export function createSessionCookie(sessionId: string, expiresAt: number): strin
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    expires: new Date(expiresAt)
+    expires: new Date(expiresAt),
   });
 }
 
@@ -28,14 +28,14 @@ export function createExpiredSessionCookie(): string {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    expires: new Date(0)
+    expires: new Date(0),
   });
 }
 
 export function attachSessionCookie(
   response: Response,
   sessionId: string,
-  expiresAt: number
+  expiresAt: number,
 ): void {
   response.setHeader("Set-Cookie", createSessionCookie(sessionId, expiresAt));
 }
@@ -49,7 +49,7 @@ export function createSessionRecord(userId: string): SessionRecord {
     id: crypto.randomUUID(),
     userId,
     createdAt: Date.now(),
-    expiresAt: Date.now() + SESSION_DURATION_MS
+    expiresAt: Date.now() + SESSION_DURATION_MS,
   };
 }
 
@@ -74,28 +74,23 @@ export function getSessionBundle(cookieHeader?: string): SessionBundle {
   if (!sessionId) {
     return {
       session: null,
-      user: null
+      user: null,
     };
   }
 
-  const session = db
-    .select()
-    .from(sessions)
-    .where(eq(sessions.id, sessionId))
-    .all()[0] ?? null;
+  const session = db.select().from(sessions).where(eq(sessions.id, sessionId)).all()[0] ?? null;
 
   if (!session) {
     return {
       session: null,
-      user: null
+      user: null,
     };
   }
 
-  const user =
-    db.select().from(users).where(eq(users.id, session.userId)).all()[0] ?? null;
+  const user = db.select().from(users).where(eq(users.id, session.userId)).all()[0] ?? null;
 
   return {
     session,
-    user
+    user,
   };
 }

@@ -1,35 +1,30 @@
-import { compareSync, hashSync } from "bcryptjs";
 import { TRPCError } from "@trpc/server";
+import { compareSync, hashSync } from "bcryptjs";
 import { z } from "zod";
 import {
+  type PieceType,
+  type ViewerColor,
+  acceptDraw,
   addChatMessage,
   addPlayerToGame,
   canDeleteGame,
   createDefaultGameState,
   createTimedGameState,
-  getJoinColor,
-  getViewerColor,
-  acceptDraw,
   executeMove,
   forfeitGame,
-  invertColor,
-  proposeDraw,
-  rejectDraw,
+  getJoinColor,
+  getViewerColor,
   handlePawnPromotion,
   handleUndo,
+  invertColor,
   isUserInGame,
   pieceToGlyph,
+  proposeDraw,
   proposeUndo,
+  rejectDraw,
   revertUndoProposal,
   touchPlayer,
-  type PieceType,
-  type ViewerColor
 } from "../shared/chess.js";
-import {
-  clearSessionCookie,
-  createSessionRecord,
-  attachSessionCookie
-} from "./session.js";
 import {
   deleteSession,
   findGameBySlug,
@@ -41,9 +36,10 @@ import {
   listGames,
   recordGameResult,
   removeGame,
-  updateGame
+  updateGame,
 } from "./data.js";
 import { emitGameUpdate, emitLobbyUpdate, subscribeToChannel } from "./realtime.js";
+import { attachSessionCookie, clearSessionCookie, createSessionRecord } from "./session.js";
 import { protectedProcedure, publicProcedure, router } from "./trpc.js";
 
 const authSchema = z.object({
@@ -53,40 +49,42 @@ const authSchema = z.object({
     .min(3)
     .max(24)
     .regex(/^[a-zA-Z0-9_-]+$/, "Use letters, numbers, dashes, or underscores."),
-  password: z.string().min(8).max(72)
+  password: z.string().min(8).max(72),
 });
 
 const createGameSchema = z.object({
   name: z.string().trim().min(3).max(40),
   color: z.enum(["white", "black", "random"]),
-  timeControl: z.enum(["untimed", "1+0", "3+0", "3+2", "5+0", "5+3", "10+0", "15+10", "30+0"]).default("untimed")
+  timeControl: z
+    .enum(["untimed", "1+0", "3+0", "3+2", "5+0", "5+3", "10+0", "15+10", "30+0"])
+    .default("untimed"),
 });
 
 const slugSchema = z.object({
-  slug: z.string().trim().min(1)
+  slug: z.string().trim().min(1),
 });
 
 const moveSchema = slugSchema.extend({
   from: z.string().regex(/^[A-H][1-8]$/),
-  to: z.string().regex(/^[A-H][1-8]$/)
+  to: z.string().regex(/^[A-H][1-8]$/),
 });
 
 const promoteSchema = slugSchema.extend({
   pieceType: z.enum(["queen", "rook", "bishop", "knight"] satisfies [
     Exclude<PieceType, "king" | "pawn">,
-    ...Array<Exclude<PieceType, "king" | "pawn">>
-  ])
+    ...Array<Exclude<PieceType, "king" | "pawn">>,
+  ]),
 });
 
 const messageSchema = slugSchema.extend({
-  text: z.string().trim().min(1).max(300)
+  text: z.string().trim().min(1).max(300),
 });
 
 function requireResponse(res: unknown): asserts res is NonNullable<typeof res> {
   if (!res) {
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
-      message: "Response object missing from context."
+      message: "Response object missing from context.",
     });
   }
 }
@@ -124,7 +122,7 @@ function toLobbySummary(game: NonNullable<ReturnType<typeof findGameBySlug>>) {
     updatedAt: game.updatedAt,
     archived: state.archived,
     users: state.users,
-    moveCount: state.moveHistory.length - 1
+    moveCount: state.moveHistory.length - 1,
   };
 }
 
@@ -133,11 +131,11 @@ function saveGameState(
   slug: string,
   state: NonNullable<ReturnType<typeof findGameBySlug>>["state"],
   reason: string,
-  previouslyArchived = false
+  previouslyArchived = false,
 ): void {
   updateGame(gameId, {
     state,
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
   });
   emitGameUpdate(slug, reason);
 
@@ -171,7 +169,7 @@ export const appRouter = router({
       return {
         id: ctx.user.id,
         username: ctx.user.username,
-        rating: ctx.user.rating
+        rating: ctx.user.rating,
       };
     }),
     profile: protectedProcedure
@@ -190,7 +188,7 @@ export const appRouter = router({
       if (findUserByUsername(input.username)) {
         throw new TRPCError({
           code: "CONFLICT",
-          message: "That username is already taken."
+          message: "That username is already taken.",
         });
       }
 
@@ -198,7 +196,7 @@ export const appRouter = router({
         id: crypto.randomUUID(),
         username: input.username,
         passwordHash: hashSync(input.password, 12),
-        createdAt: Date.now()
+        createdAt: Date.now(),
       };
 
       insertUser(user);
@@ -209,7 +207,7 @@ export const appRouter = router({
 
       return {
         id: user.id,
-        username: user.username
+        username: user.username,
       };
     }),
     login: publicProcedure.input(authSchema).mutation(({ input, ctx }) => {
@@ -220,7 +218,7 @@ export const appRouter = router({
       if (!user || !compareSync(input.password, user.passwordHash)) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
-          message: "Invalid username or password."
+          message: "Invalid username or password.",
         });
       }
 
@@ -230,7 +228,7 @@ export const appRouter = router({
 
       return {
         id: user.id,
-        username: user.username
+        username: user.username,
       };
     }),
     logout: protectedProcedure.mutation(({ ctx }) => {
@@ -242,7 +240,7 @@ export const appRouter = router({
 
       clearSessionCookie(ctx.res);
       return { success: true };
-    })
+    }),
   }),
   lobby: router({
     list: protectedProcedure.query(() => {
@@ -250,45 +248,49 @@ export const appRouter = router({
         .map(toLobbySummary)
         .sort((left, right) => right.updatedAt - left.updatedAt);
     }),
-    create: protectedProcedure
-      .input(createGameSchema)
-      .mutation(({ input, ctx }) => {
-        const slug = createUniqueSlug(input.name);
-        const timePresets: Record<string, [number, number]> = {
-          "1+0": [60_000, 0], "3+0": [180_000, 0], "3+2": [180_000, 2_000],
-          "5+0": [300_000, 0], "5+3": [300_000, 3_000], "10+0": [600_000, 0],
-          "15+10": [900_000, 10_000], "30+0": [1_800_000, 0]
-        };
-        const baseState = input.timeControl !== "untimed" && timePresets[input.timeControl]
+    create: protectedProcedure.input(createGameSchema).mutation(({ input, ctx }) => {
+      const slug = createUniqueSlug(input.name);
+      const timePresets: Record<string, [number, number]> = {
+        "1+0": [60_000, 0],
+        "3+0": [180_000, 0],
+        "3+2": [180_000, 2_000],
+        "5+0": [300_000, 0],
+        "5+3": [300_000, 3_000],
+        "10+0": [600_000, 0],
+        "15+10": [900_000, 10_000],
+        "30+0": [1_800_000, 0],
+      };
+      const baseState =
+        input.timeControl !== "untimed" && timePresets[input.timeControl]
           ? createTimedGameState(...timePresets[input.timeControl])
           : createDefaultGameState();
-        const state = addPlayerToGame(baseState, {
-          userId: ctx.user.id,
-          name: ctx.user.username,
-          color: chooseColor(input.color)
-        });
+      const state = addPlayerToGame(baseState, {
+        userId: ctx.user.id,
+        name: ctx.user.username,
+        color: chooseColor(input.color),
+      });
 
-        insertGame({
-          id: crypto.randomUUID(),
-          slug,
-          name: input.name,
-          createdById: ctx.user.id,
-          state,
-          createdAt: Date.now(),
-          updatedAt: Date.now()
-        });
+      insertGame({
+        id: crypto.randomUUID(),
+        slug,
+        name: input.name,
+        createdById: ctx.user.id,
+        state,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
 
-        emitLobbyUpdate("game-created", slug);
+      emitLobbyUpdate("game-created", slug);
 
-        return { slug };
-      }),
+      return { slug };
+    }),
     join: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
 
       if (!game) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Game not found."
+          message: "Game not found.",
         });
       }
 
@@ -296,14 +298,14 @@ export const appRouter = router({
         const nextState = addPlayerToGame(game.state, {
           userId: ctx.user.id,
           name: ctx.user.username,
-          color: getJoinColor(game.state)
+          color: getJoinColor(game.state),
         });
 
         saveGameState(game.id, game.slug, nextState, "player-joined");
       }
 
       return {
-        slug: game.slug
+        slug: game.slug,
       };
     }),
     delete: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
@@ -312,14 +314,14 @@ export const appRouter = router({
       if (!game) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Game not found."
+          message: "Game not found.",
         });
       }
 
       if (!canDeleteGame(game.state, ctx.user.id)) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: "Only the creator of an empty game can delete it."
+          message: "Only the creator of an empty game can delete it.",
         });
       }
 
@@ -329,7 +331,7 @@ export const appRouter = router({
     }),
     onChanged: protectedProcedure.subscription(async function* (opts) {
       yield* subscribeToChannel("lobby", opts.signal);
-    })
+    }),
   }),
   game: router({
     bySlug: protectedProcedure.input(slugSchema).query(({ input, ctx }) => {
@@ -338,7 +340,7 @@ export const appRouter = router({
       if (!game) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Game not found."
+          message: "Game not found.",
         });
       }
 
@@ -353,10 +355,10 @@ export const appRouter = router({
         viewer: {
           id: ctx.user.id,
           username: ctx.user.username,
-          color: viewerColor
+          color: viewerColor,
         },
         game: game.state,
-        glyphPreview: pieceToGlyph(game.state.board[0][0].figure)
+        glyphPreview: pieceToGlyph(game.state.board[0][0].figure),
       };
     }),
     move: protectedProcedure.input(moveSchema).mutation(({ input, ctx }) => {
@@ -365,17 +367,12 @@ export const appRouter = router({
       if (!game) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Game not found."
+          message: "Game not found.",
         });
       }
 
       try {
-        const result = executeMove(
-          game.state,
-          ctx.user.id,
-          input.from,
-          input.to
-        );
+        const result = executeMove(game.state, ctx.user.id, input.from, input.to);
         saveGameState(game.id, game.slug, result.state, "move-made", game.state.archived);
         return { success: true, promotion: result.promotion };
       } catch (err) {
@@ -386,7 +383,7 @@ export const appRouter = router({
         }
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: msg
+          message: msg,
         });
       }
     }),
@@ -396,7 +393,7 @@ export const appRouter = router({
       if (!game) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Game not found."
+          message: "Game not found.",
         });
       }
 
@@ -411,13 +408,13 @@ export const appRouter = router({
       if (!game) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Game not found."
+          message: "Game not found.",
         });
       }
 
       const nextState = addChatMessage(game.state, {
         text: input.text,
-        user: ctx.user.username
+        user: ctx.user.username,
       });
 
       saveGameState(game.id, game.slug, nextState, "message-added");
@@ -429,7 +426,7 @@ export const appRouter = router({
       if (!game) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Game not found."
+          message: "Game not found.",
         });
       }
 
@@ -443,7 +440,7 @@ export const appRouter = router({
       if (!game) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Game not found."
+          message: "Game not found.",
         });
       }
 
@@ -457,7 +454,7 @@ export const appRouter = router({
       if (!game) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Game not found."
+          message: "Game not found.",
         });
       }
 
@@ -492,7 +489,7 @@ export const appRouter = router({
       if (!game) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Game not found."
+          message: "Game not found.",
         });
       }
 
@@ -506,14 +503,14 @@ export const appRouter = router({
       if (!game) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Game not found."
+          message: "Game not found.",
         });
       }
 
       if (!game.state.archived) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Game is still in progress."
+          message: "Game is still in progress.",
         });
       }
 
@@ -528,7 +525,7 @@ export const appRouter = router({
       const state = addPlayerToGame(createDefaultGameState(), {
         userId: ctx.user.id,
         name: ctx.user.username,
-        color: chooseColor(viewer === "none" ? "random" : invertColor(viewer))
+        color: chooseColor(viewer === "none" ? "random" : invertColor(viewer)),
       });
 
       insertGame({
@@ -538,7 +535,7 @@ export const appRouter = router({
         createdById: ctx.user.id,
         state,
         createdAt: Date.now(),
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
       });
 
       // Link rematch to original game so opponent can find it
@@ -554,7 +551,7 @@ export const appRouter = router({
       if (!game) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Game not found."
+          message: "Game not found.",
         });
       }
 
@@ -564,8 +561,8 @@ export const appRouter = router({
     }),
     onChanged: protectedProcedure.input(slugSchema).subscription(async function* (opts) {
       yield* subscribeToChannel(`game:${opts.input.slug}`, opts.signal);
-    })
-  })
+    }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

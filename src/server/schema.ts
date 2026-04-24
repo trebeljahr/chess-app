@@ -10,7 +10,7 @@ export const users = sqliteTable("users", {
   wins: integer("wins").notNull().default(0),
   losses: integer("losses").notNull().default(0),
   draws: integer("draws").notNull().default(0),
-  createdAt: integer("created_at").notNull()
+  createdAt: integer("created_at").notNull(),
 });
 
 export const sessions = sqliteTable("sessions", {
@@ -19,7 +19,7 @@ export const sessions = sqliteTable("sessions", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   expiresAt: integer("expires_at").notNull(),
-  createdAt: integer("created_at").notNull()
+  createdAt: integer("created_at").notNull(),
 });
 
 export const games = sqliteTable("games", {
@@ -31,7 +31,7 @@ export const games = sqliteTable("games", {
     .references(() => users.id, { onDelete: "cascade" }),
   state: text("state", { mode: "json" }).$type<GameState>().notNull(),
   createdAt: integer("created_at").notNull(),
-  updatedAt: integer("updated_at").notNull()
+  updatedAt: integer("updated_at").notNull(),
 });
 
 export type UserRecord = typeof users.$inferSelect;

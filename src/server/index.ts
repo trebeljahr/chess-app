@@ -1,11 +1,11 @@
 import { createServer } from "node:http";
-import express, { type Request } from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
+import express, { type Request } from "express";
 import { WebSocketServer } from "ws";
-import { appRouter } from "./router.js";
 import { createExpressContext, createWsContext } from "./context.js";
 import { getRedisClient } from "./redis.js";
+import { appRouter } from "./router.js";
 
 const port = Number(process.env.PORT ?? 3000);
 const host = process.env.HOST ?? "0.0.0.0";
@@ -16,7 +16,7 @@ app.get("/health", (_req, res) => {
   res.json({
     ok: true,
     uptime: process.uptime(),
-    redis: redis ? redis.status : "disabled"
+    redis: redis ? redis.status : "disabled",
   });
 });
 
@@ -75,28 +75,26 @@ app.use(
   "/trpc",
   createExpressMiddleware({
     router: appRouter,
-    createContext: createExpressContext
-  })
+    createContext: createExpressContext,
+  }),
 );
 
 const server = createServer(app);
 const wss = new WebSocketServer({
   server,
-  path: "/trpc"
+  path: "/trpc",
 });
 
 const handler = applyWSSHandler({
   wss,
   router: appRouter,
-  createContext: createWsContext
+  createContext: createWsContext,
 });
 
 server.listen(port, host, () => {
   console.log(`Chess app listening on http://${host}:${port}`);
   console.log(
-    getRedisClient()
-      ? "[redis] Pub/sub enabled"
-      : "[redis] No REDIS_URL, using in-process events"
+    getRedisClient() ? "[redis] Pub/sub enabled" : "[redis] No REDIS_URL, using in-process events",
   );
 });
 

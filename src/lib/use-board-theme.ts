@@ -11,7 +11,7 @@ export const BOARD_THEMES: BoardTheme[] = [
   { name: "Green", light: "#eeeed2", dark: "#769656" },
   { name: "Blue", light: "#dee3e6", dark: "#8ca2ad" },
   { name: "Purple", light: "#e8dff0", dark: "#7b61a0" },
-  { name: "Coral", light: "#f5e6e0", dark: "#b5736c" }
+  { name: "Coral", light: "#f5e6e0", dark: "#b5736c" },
 ];
 
 const STORAGE_KEY = "chess:boardTheme";
