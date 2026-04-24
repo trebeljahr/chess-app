@@ -1,0 +1,97 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dev",
+      "type": "shell",
+      "command": "pnpm dev",
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "dev:client",
+      "type": "shell",
+      "command": "pnpm dev:client",
+      "problemMatcher": []
+    },
+    {
+      "label": "dev:server",
+      "type": "shell",
+      "command": "pnpm dev:server",
+      "problemMatcher": []
+    },
+    {
+      "label": "dev:redis",
+      "type": "shell",
+      "command": "pnpm dev:redis",
+      "problemMatcher": []
+    },
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "pnpm build",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "build:client",
+      "type": "shell",
+      "command": "pnpm build:client",
+      "problemMatcher": []
+    },
+    {
+      "label": "build:server",
+      "type": "shell",
+      "command": "pnpm build:server",
+      "problemMatcher": []
+    },
+    {
+      "label": "start",
+      "type": "shell",
+      "command": "pnpm start",
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "typecheck",
+      "type": "shell",
+      "command": "pnpm typecheck",
+      "problemMatcher": []
+    },
+    {
+      "label": "setup",
+      "type": "shell",
+      "command": "pnpm setup",
+      "problemMatcher": []
+    },
+    {
+      "label": "format",
+      "type": "shell",
+      "command": "pnpm format",
+      "problemMatcher": []
+    },
+    {
+      "label": "lint",
+      "type": "shell",
+      "command": "pnpm lint",
+      "problemMatcher": []
+    },
+    {
+      "label": "check",
+      "type": "shell",
+      "command": "pnpm check",
+      "problemMatcher": []
+    }
+  ]
+}

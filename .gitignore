@@ -28,3 +28,22 @@ yarn-debug.log*
 yarn-error.log*
 .claude/worktrees/
 .claude/settings.local.json
+
+# standard defaults (mirrors ~/.config/git/ignore)
+.DS_Store
+._*
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/settings.json
+.idea/
+.cursor/
+*.swp
+*~
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.log
