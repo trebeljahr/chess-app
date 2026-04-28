@@ -154,13 +154,7 @@ export function AuthScreen() {
   );
 }
 
-function FeatureCard({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
+function FeatureCard({ title, description }: { title: string; description: string }) {
   return (
     <div className="rounded-[24px] border border-white/10 bg-white/5 p-5">
       <h3 className="text-xl text-stone-50">{title}</h3>

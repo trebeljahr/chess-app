@@ -1,6 +1,6 @@
 import { eq, sql } from "drizzle-orm";
 import { db } from "./db.js";
-import { type GameRecord, type UserRecord, games, sessions, users } from "./schema.js";
+import { type GameRecord, games, sessions, type UserRecord, users } from "./schema.js";
 
 export function findUserById(userId: string): UserRecord | null {
   return db.select().from(users).where(eq(users.id, userId)).all()[0] ?? null;

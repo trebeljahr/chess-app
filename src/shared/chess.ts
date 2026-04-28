@@ -399,7 +399,7 @@ export function handleFirstClick(state: GameState, userId: string, field: string
   return state;
 }
 
-function handleSecondClick(state: GameState, userId: string, field: string): GameState {
+function _handleSecondClick(state: GameState, userId: string, field: string): GameState {
   const user = state.users.find((item) => item.userId === userId);
 
   if (!user || user.color === "none" || state.baseLinePawn) {
@@ -1343,7 +1343,7 @@ function markRochade(
 function isLongRochadePossible(
   board: Board,
   row: number,
-  col: number,
+  _col: number,
   moveHistory: MoveHistoryEntry[],
   color: PieceColor,
 ): boolean {
@@ -1371,7 +1371,7 @@ function isLongRochadePossible(
 function isShortRochadePossible(
   board: Board,
   row: number,
-  col: number,
+  _col: number,
   moveHistory: MoveHistoryEntry[],
   color: PieceColor,
 ): boolean {

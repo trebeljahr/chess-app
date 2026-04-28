@@ -1,4 +1,4 @@
-import { type GameState, type MoveHistoryEntry, formatMove } from "../shared/chess";
+import { formatMove, type GameState, type MoveHistoryEntry } from "../shared/chess";
 
 export function generatePgn(
   game: GameState,

@@ -26,7 +26,7 @@ if (url && process.env.NODE_ENV !== "test") {
     connected = false;
   });
 
-  client.on("error", (err: Error) => {
+  client.on("error", (_err: Error) => {
     connected = false;
     if (!errorLogged) {
       errorLogged = true;

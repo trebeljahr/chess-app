@@ -108,7 +108,7 @@ const server = createServer((req, res) => {
 });
 
 // WebSocket upgrade — proxy to backend
-server.on("upgrade", (req, socket, head) => {
+server.on("upgrade", (req, socket, _head) => {
   if (!req.url?.startsWith("/trpc")) {
     socket.destroy();
     return;

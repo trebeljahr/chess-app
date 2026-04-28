@@ -2,7 +2,7 @@ import { parse, serialize } from "cookie";
 import { eq, lt } from "drizzle-orm";
 import type { Response } from "express";
 import { db } from "./db.js";
-import { type SessionRecord, type UserRecord, sessions, users } from "./schema.js";
+import { type SessionRecord, sessions, type UserRecord, users } from "./schema.js";
 
 const SESSION_COOKIE_NAME = "chess_app_session";
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 30;

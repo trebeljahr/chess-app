@@ -2,8 +2,6 @@ import { TRPCError } from "@trpc/server";
 import { compareSync, hashSync } from "bcryptjs";
 import { z } from "zod";
 import {
-  type PieceType,
-  type ViewerColor,
   acceptDraw,
   addChatMessage,
   addPlayerToGame,
@@ -18,12 +16,14 @@ import {
   handleUndo,
   invertColor,
   isUserInGame,
+  type PieceType,
   pieceToGlyph,
   proposeDraw,
   proposeUndo,
   rejectDraw,
   revertUndoProposal,
   touchPlayer,
+  type ViewerColor,
 } from "../shared/chess.js";
 import {
   deleteSession,

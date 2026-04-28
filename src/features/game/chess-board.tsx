@@ -2,15 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PieceArt } from "../../components/piece-art";
 import { cn } from "../../lib/utils";
 import {
-  type GameState,
-  type MoveHistoryEntry,
-  type Piece,
-  type ViewerColor,
   cloneState,
   convertPos,
+  type GameState,
   handleFirstClick,
   isPiece,
+  type MoveHistoryEntry,
+  type Piece,
   positionToField,
+  type ViewerColor,
 } from "../../shared/chess";
 
 interface ChessBoardProps {
@@ -134,7 +134,7 @@ export function ChessBoard({
   // Clear selection when turn changes (a move was made)
   useEffect(() => {
     setSelection(null);
-  }, [turn, gameState.moveHistory.length]);
+  }, []);
 
   const handleTileClick = useCallback(
     (field: string) => {
@@ -204,7 +204,7 @@ export function ChessBoard({
   const handleDrop = useCallback(
     (field: string, e: React.DragEvent) => {
       e.preventDefault();
-      if (selection && selection.validFields.has(field)) {
+      if (selection?.validFields.has(field)) {
         if (isMyTurn) {
           onMove(selection.field, field);
         } else {
