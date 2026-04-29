@@ -10,6 +10,7 @@ interface PieceArtProps {
 export function PieceArt({ piece, className, title }: PieceArtProps) {
   const suffix = piece.color === "white" ? "w" : "b";
   return (
+    // biome-ignore lint/performance/noImgElement: not on Next.js, or Image migration deferred
     <img
       alt={title ?? ""}
       aria-hidden={title ? undefined : true}
