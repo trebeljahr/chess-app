@@ -7,6 +7,7 @@ import { AuthScreen } from "./features/auth/auth-screen";
 import { GamePage } from "./features/game/game-page";
 import { ImprintPage } from "./features/imprint/imprint-page";
 import { HomePage } from "./features/lobby/home-page";
+import { DONATE_URL } from "./lib/donation";
 import { trpc } from "./lib/trpc";
 import { useToggleSound } from "./lib/use-move-sound";
 
@@ -85,9 +86,17 @@ function AppShell() {
         <Route path="*" element={<Navigate replace to="/" />} />
       </Routes>
 
-      <footer className="border-t border-white/30 py-3 text-center">
+      <footer className="flex justify-center gap-4 border-t border-white/30 py-3">
         <a href="/imprint" className="text-xs text-slate-400 hover:text-slate-600">
           Imprint
+        </a>
+        <a
+          href={DONATE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-slate-400 hover:text-slate-600"
+        >
+          Donate
         </a>
       </footer>
     </div>

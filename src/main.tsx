@@ -1,8 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { App } from "./App";
+import { recordDonationReturn } from "./lib/donation";
 import { AppProviders } from "./lib/trpc";
 import "./styles.css";
+
+recordDonationReturn();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
