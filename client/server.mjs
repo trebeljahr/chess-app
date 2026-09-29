@@ -4,8 +4,11 @@ import { extname, join } from "node:path";
 import { URL } from "node:url";
 
 const PORT = Number(process.env.PORT ?? 80);
+const HOST = process.env.HOST ?? "0.0.0.0";
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://127.0.0.1:3514";
-const DIST_DIR = join(import.meta.dirname, "dist");
+const DIST_DIR = process.env.CLIENT_DIST_DIR
+  ? process.env.CLIENT_DIST_DIR
+  : join(import.meta.dirname, "dist");
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -153,7 +156,7 @@ server.on("upgrade", (req, socket, _head) => {
   proxyReq.end();
 });
 
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Client serving on http://0.0.0.0:${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`Client serving on http://${HOST}:${PORT}`);
   console.log(`Proxying /trpc to ${BACKEND_URL}`);
 });

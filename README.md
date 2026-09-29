@@ -82,6 +82,15 @@ The Docker image:
 - exposes a health endpoint at `/health`
 - keeps the app on one origin for both HTTP and realtime traffic
 
+There is also a built-artifact smoke test:
+
+```bash
+pnpm run build
+pnpm run smoke:health
+```
+
+That script boots the compiled server and client locally, probes `/health` and `/healthz`, and exits non-zero if the deployment shape is broken.
+
 For Coolify, you should add a persistent storage mount at `/app/data` so the SQLite database survives redeploys.
 
 ## Runtime Configuration

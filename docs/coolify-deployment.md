@@ -28,13 +28,22 @@ docker-compose -f docker-compose-prod.yaml up -d
 ## GitHub Actions deploy flow
 
 1. Push to `main`
-2. Parallel builds: client and server Docker images pushed to GHCR
-3. After both succeed: Coolify deployment triggered via webhook
+2. CI runs typecheck + build + a built-artifact smoke test against `/health` and `/healthz`
+3. Parallel builds: client and server Docker images pushed to GHCR
+4. After both succeed: Coolify deployment triggered via webhook
 
 ### Required GitHub secrets
 
-- `COOLIFY_API_TOKEN` — Coolify API bearer token
-- `COOLIFY_WEBHOOK_URL` — Coolify deploy webhook endpoint
+- `COOLIFY_BASE_URL` — Coolify instance URL
+- `COOLIFY_RESOURCE_UUID` — the existing Compose application
+- `COOLIFY_DEPLOY_SECRET` — that application’s signed webhook key
+- `COOLIFY_DEPLOY_REPOSITORY` — repository name used by its webhook
+- `COOLIFY_DEPLOY_BRANCH` — branch used by its webhook
+
+The workflow signs the deploy payload after both images finish building. The
+application stays on Compose so its SQLite and Redis volumes remain in place.
+The smoke check uses temporary SQLite storage and free loopback ports; it does
+not connect to production or test Redis, WebSockets, or container health checks.
 
 ### GHCR images
 

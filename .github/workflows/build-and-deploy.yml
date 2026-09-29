@@ -14,8 +14,38 @@ permissions:
   packages: write
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Build repo
+        run: pnpm run build
+
+      - name: Smoke test built health endpoints
+        run: pnpm run smoke:health
+
   build-client:
     runs-on: ubuntu-latest
+    needs: verify
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -51,6 +81,7 @@ jobs:
 
   build-server:
     runs-on: ubuntu-latest
+    needs: verify
     steps:
       - name: Check out source
         uses: actions/checkout@v4
