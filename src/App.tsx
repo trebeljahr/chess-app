@@ -1,6 +1,7 @@
 import { LogOut, Volume2, VolumeOff } from "lucide-react";
 import { Component, type ErrorInfo, type PropsWithChildren } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { ProjectDonateLink } from "./components/ProjectDonateLink";
 import { Badge } from "./components/ui/badge";
 import { Button } from "./components/ui/button";
 import { AuthScreen } from "./features/auth/auth-screen";
@@ -92,14 +93,14 @@ function AppShell() {
         <a href="/imprint" className="text-xs text-slate-400 hover:text-slate-600">
           Imprint
         </a>
-        <a
+        <ProjectDonateLink
           href={DONATE_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="text-xs text-slate-400 hover:text-slate-600"
         >
           Donate
-        </a>
+        </ProjectDonateLink>
       </footer>
     </div>
   );

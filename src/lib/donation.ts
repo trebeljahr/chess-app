@@ -1,4 +1,4 @@
-export const DONATE_URL = "https://ricos.site/donate?from=online-chess";
+export const DONATE_URL = "https://ricos.site/donate/online-chess";
 export const DONATION_SUPPORTED_AT_KEY = "donation-supported-at";
 
 // ricos.site/donate sends donors back with ?supported=1. Remember when, then drop the
