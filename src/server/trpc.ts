@@ -1,5 +1,6 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
+import { createAuthLimiter } from "./auth-limit.js";
 import type { AppContext } from "./context.js";
 
 const t = initTRPC.context<AppContext>().create({
@@ -8,6 +9,11 @@ const t = initTRPC.context<AppContext>().create({
 
 export const router = t.router;
 export const publicProcedure = t.procedure;
+const consumeAuthAttempt = createAuthLimiter();
+export const authProcedure = t.procedure.use(({ ctx, next }) => {
+  consumeAuthAttempt(ctx.clientIp);
+  return next();
+});
 
 export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   if (!ctx.user) {

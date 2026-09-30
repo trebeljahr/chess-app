@@ -40,7 +40,7 @@ import {
 } from "./data.js";
 import { emitGameUpdate, emitLobbyUpdate, subscribeToChannel } from "./realtime.js";
 import { attachSessionCookie, clearSessionCookie, createSessionRecord } from "./session.js";
-import { protectedProcedure, publicProcedure, router } from "./trpc.js";
+import { authProcedure, protectedProcedure, publicProcedure, router } from "./trpc.js";
 
 const authSchema = z.object({
   username: z
@@ -182,7 +182,7 @@ export const appRouter = router({
         }
         return profile;
       }),
-    register: publicProcedure.input(authSchema).mutation(({ input, ctx }) => {
+    register: authProcedure.input(authSchema).mutation(({ input, ctx }) => {
       requireResponse(ctx.res);
 
       if (findUserByUsername(input.username)) {
@@ -210,7 +210,7 @@ export const appRouter = router({
         username: user.username,
       };
     }),
-    login: publicProcedure.input(authSchema).mutation(({ input, ctx }) => {
+    login: authProcedure.input(authSchema).mutation(({ input, ctx }) => {
       requireResponse(ctx.res);
 
       const user = findUserByUsername(input.username);

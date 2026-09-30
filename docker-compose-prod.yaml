@@ -2,6 +2,9 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -12,6 +15,10 @@ services:
     image: ghcr.io/trebeljahr/chess-app-server:latest
     pull_policy: always
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     environment:
       PORT: "3514"
       HOST: "0.0.0.0"
@@ -28,6 +35,10 @@ services:
     image: ghcr.io/trebeljahr/chess-app-client:latest
     pull_policy: always
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     environment:
       PORT: "80"
       BACKEND_URL: http://server:3514

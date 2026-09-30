@@ -7,20 +7,22 @@ export interface AppContext {
   user: ReturnType<typeof getSessionBundle>["user"];
   session: ReturnType<typeof getSessionBundle>["session"];
   res?: Response;
+  clientIp: string;
 }
 
-function buildContext(cookieHeader?: string, res?: Response): AppContext {
+function buildContext(clientIp: string, cookieHeader?: string, res?: Response): AppContext {
   const bundle = getSessionBundle(cookieHeader);
   return {
     ...bundle,
+    clientIp,
     res,
   };
 }
 
 export function createExpressContext({ req, res }: CreateExpressContextOptions): AppContext {
-  return buildContext(req.headers.cookie, res);
+  return buildContext(req.socket.remoteAddress ?? "unknown", req.headers.cookie, res);
 }
 
 export function createWsContext(options: CreateWSSContextFnOptions): AppContext {
-  return buildContext(options.req.headers.cookie);
+  return buildContext(options.req.socket.remoteAddress ?? "unknown", options.req.headers.cookie);
 }
