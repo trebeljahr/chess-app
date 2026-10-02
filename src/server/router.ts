@@ -38,6 +38,7 @@ import {
   removeGame,
   updateGame,
 } from "./data.js";
+import { sqlite } from "./db.js";
 import { emitGameUpdate, emitLobbyUpdate, subscribeToChannel } from "./realtime.js";
 import { attachSessionCookie, clearSessionCookie, createSessionRecord } from "./session.js";
 import { authProcedure, protectedProcedure, publicProcedure, router } from "./trpc.js";
@@ -127,34 +128,38 @@ function toLobbySummary(game: NonNullable<ReturnType<typeof findGameBySlug>>) {
 }
 
 function saveGameState(
-  gameId: string,
-  slug: string,
+  game: NonNullable<ReturnType<typeof findGameBySlug>>,
   state: NonNullable<ReturnType<typeof findGameBySlug>>["state"],
   reason: string,
   previouslyArchived = false,
+  publish = true,
 ): void {
-  updateGame(gameId, {
-    state,
-    updatedAt: Date.now(),
-  });
-  emitGameUpdate(slug, reason);
+  sqlite.transaction(() => {
+    if (!updateGame(game.id, game.version, { state, updatedAt: Date.now() })) {
+      throw new TRPCError({ code: "CONFLICT", message: "Game changed. Refresh and try again." });
+    }
+    recordFinalResult();
+  })();
+  if (publish) emitGameUpdate(game.slug, reason);
 
-  // Record ELO when game ends
-  if (state.archived && !previouslyArchived && state.users.length === 2) {
-    const whiteUser = state.users.find((u) => u.color === "white");
-    const blackUser = state.users.find((u) => u.color === "black");
-    if (!whiteUser || !blackUser) return;
+  function recordFinalResult() {
+    // Record ELO when game ends
+    if (state.archived && !previouslyArchived && state.users.length === 2) {
+      const whiteUser = state.users.find((u) => u.color === "white");
+      const blackUser = state.users.find((u) => u.color === "black");
+      if (!whiteUser || !blackUser) return;
 
-    if (state.checkmate) {
-      const winnerId = invertColor(state.turn) === "white" ? whiteUser.userId : blackUser.userId;
-      const loserId = winnerId === whiteUser.userId ? blackUser.userId : whiteUser.userId;
-      recordGameResult(winnerId, loserId, false);
-    } else if (state.remis) {
-      recordGameResult(whiteUser.userId, blackUser.userId, true);
-    } else if (state.clock?.flagged) {
-      const loserId = state.clock.flagged === "white" ? whiteUser.userId : blackUser.userId;
-      const winnerId = loserId === whiteUser.userId ? blackUser.userId : whiteUser.userId;
-      recordGameResult(winnerId, loserId, false);
+      if (state.checkmate) {
+        const winnerId = invertColor(state.turn) === "white" ? whiteUser.userId : blackUser.userId;
+        const loserId = winnerId === whiteUser.userId ? blackUser.userId : whiteUser.userId;
+        recordGameResult(winnerId, loserId, false);
+      } else if (state.remis) {
+        recordGameResult(whiteUser.userId, blackUser.userId, true);
+      } else if (state.clock?.flagged) {
+        const loserId = state.clock.flagged === "white" ? whiteUser.userId : blackUser.userId;
+        const winnerId = loserId === whiteUser.userId ? blackUser.userId : whiteUser.userId;
+        recordGameResult(winnerId, loserId, false);
+      }
     }
   }
 }
@@ -301,7 +306,7 @@ export const appRouter = router({
           color: getJoinColor(game.state),
         });
 
-        saveGameState(game.id, game.slug, nextState, "player-joined");
+        saveGameState(game, nextState, "player-joined");
       }
 
       return {
@@ -325,7 +330,9 @@ export const appRouter = router({
         });
       }
 
-      removeGame(game.id);
+      if (!removeGame(game.id, game.version)) {
+        throw new TRPCError({ code: "CONFLICT", message: "Game changed. Refresh and try again." });
+      }
       emitLobbyUpdate("game-deleted", game.slug);
       return { success: true };
     }),
@@ -373,7 +380,7 @@ export const appRouter = router({
 
       try {
         const result = executeMove(game.state, ctx.user.id, input.from, input.to);
-        saveGameState(game.id, game.slug, result.state, "move-made", game.state.archived);
+        saveGameState(game, result.state, "move-made", game.state.archived);
         return { success: true, promotion: result.promotion };
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Invalid move.";
@@ -398,7 +405,7 @@ export const appRouter = router({
       }
 
       const nextState = handlePawnPromotion(game.state, ctx.user.id, input.pieceType);
-      saveGameState(game.id, game.slug, nextState, "pawn-promoted", game.state.archived);
+      saveGameState(game, nextState, "pawn-promoted", game.state.archived);
 
       return { success: true };
     }),
@@ -417,7 +424,7 @@ export const appRouter = router({
         user: ctx.user.username,
       });
 
-      saveGameState(game.id, game.slug, nextState, "message-added");
+      saveGameState(game, nextState, "message-added");
       return { success: true };
     }),
     proposeUndo: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
@@ -431,7 +438,7 @@ export const appRouter = router({
       }
 
       const nextState = proposeUndo(game.state, ctx.user.id);
-      saveGameState(game.id, game.slug, nextState, "undo-proposed");
+      saveGameState(game, nextState, "undo-proposed");
       return { success: true };
     }),
     revertUndo: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
@@ -445,7 +452,7 @@ export const appRouter = router({
       }
 
       const nextState = revertUndoProposal(game.state, ctx.user.id);
-      saveGameState(game.id, game.slug, nextState, "undo-reverted");
+      saveGameState(game, nextState, "undo-reverted");
       return { success: true };
     }),
     acceptUndo: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
@@ -459,28 +466,28 @@ export const appRouter = router({
       }
 
       const nextState = handleUndo(game.state, ctx.user.id);
-      saveGameState(game.id, game.slug, nextState, "undo-accepted");
+      saveGameState(game, nextState, "undo-accepted");
       return { success: true };
     }),
     proposeDraw: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
       if (!game) throw new TRPCError({ code: "NOT_FOUND", message: "Game not found." });
       const nextState = proposeDraw(game.state, ctx.user.id);
-      saveGameState(game.id, game.slug, nextState, "draw-proposed");
+      saveGameState(game, nextState, "draw-proposed");
       return { success: true };
     }),
     acceptDraw: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
       if (!game) throw new TRPCError({ code: "NOT_FOUND", message: "Game not found." });
       const nextState = acceptDraw(game.state, ctx.user.id);
-      saveGameState(game.id, game.slug, nextState, "draw-accepted", game.state.archived);
+      saveGameState(game, nextState, "draw-accepted", game.state.archived);
       return { success: true };
     }),
     rejectDraw: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
       if (!game) throw new TRPCError({ code: "NOT_FOUND", message: "Game not found." });
       const nextState = rejectDraw(game.state, ctx.user.id);
-      saveGameState(game.id, game.slug, nextState, "draw-rejected");
+      saveGameState(game, nextState, "draw-rejected");
       return { success: true };
     }),
     forfeit: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
@@ -494,7 +501,7 @@ export const appRouter = router({
       }
 
       const nextState = forfeitGame(game.state, ctx.user.id);
-      saveGameState(game.id, game.slug, nextState, "game-forfeited", game.state.archived);
+      saveGameState(game, nextState, "game-forfeited", game.state.archived);
       return { success: true };
     }),
     rematch: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
@@ -528,19 +535,22 @@ export const appRouter = router({
         color: chooseColor(viewer === "none" ? "random" : invertColor(viewer)),
       });
 
-      insertGame({
-        id: crypto.randomUUID(),
-        slug,
-        name: rematchName,
-        createdById: ctx.user.id,
-        state,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      });
+      sqlite.transaction(() => {
+        insertGame({
+          id: crypto.randomUUID(),
+          slug,
+          name: rematchName,
+          createdById: ctx.user.id,
+          state,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        });
 
-      // Link rematch to original game so opponent can find it
-      const nextState = { ...game.state, rematchSlug: slug };
-      saveGameState(game.id, game.slug, nextState, "rematch-created");
+        // Create and link the rematch as one database operation.
+        const nextState = { ...game.state, rematchSlug: slug };
+        saveGameState(game, nextState, "rematch-created", false, false);
+      })();
+      emitGameUpdate(game.slug, "rematch-created");
       emitLobbyUpdate("game-created", slug);
 
       return { slug };
@@ -556,7 +566,7 @@ export const appRouter = router({
       }
 
       const nextState = touchPlayer(game.state, ctx.user.id);
-      saveGameState(game.id, game.slug, nextState, "presence-updated");
+      saveGameState(game, nextState, "presence-updated");
       return { success: true };
     }),
     onChanged: protectedProcedure.input(slugSchema).subscription(async function* (opts) {

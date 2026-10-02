@@ -15,6 +15,7 @@ services:
     image: ghcr.io/trebeljahr/chess-app-server:latest
     pull_policy: always
     restart: unless-stopped
+    stop_grace_period: 30s
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -35,6 +36,7 @@ services:
     image: ghcr.io/trebeljahr/chess-app-client:latest
     pull_policy: always
     restart: unless-stopped
+    stop_grace_period: 30s
     security_opt:
       - no-new-privileges:true
     cap_drop:

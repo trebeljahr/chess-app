@@ -6,7 +6,36 @@ Split client/server containers with Redis sidecar:
 
 - **Client** (`chess-app-client`) — Vite-built SPA served by a lightweight Node.js server, proxies `/trpc` to the backend. Port 80.
 - **Server** (`chess-app-server`) — Express + tRPC + WebSocket backend with SQLite persistence. Port 3514.
-- **Redis** — Pub/sub for distributed realtime events (multi-instance support).
+- **Redis** — Pub/sub for realtime events. It does not store game state.
+
+## Image rollout gate
+
+The live application is Docker Compose. `CHESS_IMAGE_ROLLOUT_READY` must stay
+unset in GitHub repository variables until an Image cutover is complete. CI may
+build images on a push, but it will not call the old Compose deploy webhook.
+The webhook response must name the exact app UUID with `success`; `skipped`
+does not mean an image deployed.
+
+Do not run two independent server containers against separate copies of
+`chess.db`. The Compose named volume holds users, sessions, and game state.
+Game writes now use a database version check, so a stale replica receives a
+conflict instead of overwriting a newer move. This does not make two copies of
+the database safe to run.
+Redis only carries transient notifications. Before an Image cutover, move this
+database to a shared persistence service with atomic game updates and a tested
+data migration, or prove a single shared local SQLite volume can safely serve
+overlapping instances on the same host. The latter cannot cover host failure.
+Keep the old volume and Compose app for rollback. Extract Redis to a durable
+separate service; the Compose sidecar would stop with the old app.
+
+The client and server mark health `503` on SIGTERM, wait 20 seconds for proxy
+routing to change, then close sockets. Coolify's Image health checks should
+probe client `/healthz` on port 80 and server `/health` on port 3514 at 2-second
+interval, 5-second timeout, 5 retries, and 15-second start period. Use at
+least 30 seconds of stop grace. A WebSocket still disconnects when its server
+is replaced; the subscription refreshes the durable snapshot on reconnect.
+Verify active games and HTTP status during an actual rollout before claiming
+continuous service.
 
 ## Production deploy
 

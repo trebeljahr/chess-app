@@ -26,6 +26,8 @@ const MIME_TYPES = {
 };
 
 const indexHtml = readFileSync(join(DIST_DIR, "index.html"));
+const sockets = new Set();
+let draining = false;
 
 function proxyRequest(req, res) {
   const target = new URL(req.url, BACKEND_URL);
@@ -60,8 +62,8 @@ const server = createServer((req, res) => {
 
   // Health check
   if (pathname === "/healthz") {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ ok: true }));
+    res.writeHead(draining ? 503 : 200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: !draining }));
     return;
   }
 
@@ -112,6 +114,10 @@ const server = createServer((req, res) => {
 
 // WebSocket upgrade — proxy to backend
 server.on("upgrade", (req, socket, _head) => {
+  if (draining) {
+    socket.destroy();
+    return;
+  }
   if (!req.url?.startsWith("/trpc")) {
     socket.destroy();
     return;
@@ -131,6 +137,10 @@ server.on("upgrade", (req, socket, _head) => {
   });
 
   proxyReq.on("upgrade", (proxyRes, proxySocket, proxyHead) => {
+    sockets.add(socket);
+    sockets.add(proxySocket);
+    socket.on("close", () => sockets.delete(socket));
+    proxySocket.on("close", () => sockets.delete(proxySocket));
     const responseHeaders = [
       `HTTP/${proxyRes.httpVersion} ${proxyRes.statusCode} ${proxyRes.statusMessage}`,
     ];
@@ -160,3 +170,16 @@ server.listen(PORT, HOST, () => {
   console.log(`Client serving on http://${HOST}:${PORT}`);
   console.log(`Proxying /trpc to ${BACKEND_URL}`);
 });
+
+function shutdown() {
+  if (draining) return;
+  draining = true;
+  setTimeout(() => {
+    for (const socket of sockets) socket.end();
+    server.close();
+    server.closeIdleConnections();
+  }, 20_000);
+}
+
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);

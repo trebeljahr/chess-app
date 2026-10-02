@@ -10,11 +10,14 @@ import { appRouter } from "./router.js";
 const port = Number(process.env.PORT ?? 0);
 const host = process.env.HOST ?? "127.0.0.1";
 const app = express();
+let draining = false;
+const DRAIN_MS = 20_000;
 
 app.get("/health", (_req, res) => {
   const redis = getRedisClient();
-  res.json({
-    ok: true,
+  const ready = !draining && (!process.env.REDIS_URL || redis !== null);
+  res.status(ready ? 200 : 503).json({
+    ok: ready,
     uptime: process.uptime(),
     redis: redis ? redis.status : "disabled",
   });
@@ -50,9 +53,20 @@ server.listen(port, host, () => {
   );
 });
 
-process.on("SIGTERM", () => {
-  handler.broadcastReconnectNotification();
-  getRedisClient()?.quit();
-  wss.close();
-  server.close();
-});
+function shutdown() {
+  if (draining) return;
+  draining = true;
+  // Traefik must observe failed health before active sockets leave this node.
+  setTimeout(() => {
+    handler.broadcastReconnectNotification();
+    for (const socket of wss.clients) socket.close(1001, "Server restarting");
+    wss.close();
+    server.close();
+    getRedisClient()
+      ?.quit()
+      .catch(() => {});
+  }, DRAIN_MS);
+}
+
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);

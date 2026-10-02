@@ -85,6 +85,7 @@ export function GamePage({ user }: GamePageProps) {
     {
       enabled: Boolean(slug),
       retry: false,
+      refetchInterval: 5_000,
     },
   );
 
@@ -121,6 +122,11 @@ export function GamePage({ user }: GamePageProps) {
     { slug },
     {
       enabled: Boolean(slug),
+      onStarted: async () => {
+        // Pub/sub is not durable: refresh the snapshot after every reconnect.
+        setLastEventAt(Date.now());
+        await Promise.all([utils.game.bySlug.invalidate({ slug }), utils.lobby.list.invalidate()]);
+      },
       onData: async () => {
         setLastEventAt(Date.now());
         await Promise.all([utils.game.bySlug.invalidate({ slug }), utils.lobby.list.invalidate()]);

@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "./db.js";
 import { type GameRecord, games, sessions, type UserRecord, users } from "./schema.js";
 
@@ -34,12 +34,26 @@ export function insertGame(game: typeof games.$inferInsert): void {
   db.insert(games).values(game).run();
 }
 
-export function updateGame(gameId: string, changes: Pick<GameRecord, "state" | "updatedAt">): void {
-  db.update(games).set(changes).where(eq(games.id, gameId)).run();
+export function updateGame(
+  gameId: string,
+  version: number,
+  changes: Pick<GameRecord, "state" | "updatedAt">,
+): boolean {
+  const result = db
+    .update(games)
+    .set({ ...changes, version: sql`version + 1` })
+    .where(and(eq(games.id, gameId), eq(games.version, version)))
+    .run();
+  return result.changes === 1;
 }
 
-export function removeGame(gameId: string): void {
-  db.delete(games).where(eq(games.id, gameId)).run();
+export function removeGame(gameId: string, version: number): boolean {
+  return (
+    db
+      .delete(games)
+      .where(and(eq(games.id, gameId), eq(games.version, version)))
+      .run().changes === 1
+  );
 }
 
 function calculateElo(

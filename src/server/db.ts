@@ -10,6 +10,7 @@ mkdirSync(dirname(databaseFile), { recursive: true });
 const sqlite = new Database(databaseFile);
 
 sqlite.pragma("journal_mode = WAL");
+sqlite.pragma("busy_timeout = 5000");
 sqlite.pragma("foreign_keys = ON");
 
 sqlite.exec(`
@@ -38,6 +39,7 @@ sqlite.exec(`
     name TEXT NOT NULL,
     created_by_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     state TEXT NOT NULL,
+    version INTEGER NOT NULL DEFAULT 0,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
   );
@@ -49,6 +51,11 @@ sqlite.exec(`
 `);
 
 // Migrations for existing databases
+try {
+  sqlite.exec(`ALTER TABLE games ADD COLUMN version INTEGER NOT NULL DEFAULT 0`);
+} catch {
+  /* already exists */
+}
 try {
   sqlite.exec(`ALTER TABLE users ADD COLUMN rating INTEGER NOT NULL DEFAULT 1200`);
 } catch {

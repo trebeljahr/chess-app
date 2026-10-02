@@ -30,6 +30,7 @@ export const games = sqliteTable("games", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   state: text("state", { mode: "json" }).$type<GameState>().notNull(),
+  version: integer("version").notNull().default(0),
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });

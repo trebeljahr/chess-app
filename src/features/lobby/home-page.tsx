@@ -34,9 +34,12 @@ export function HomePage({ user }: HomePageProps) {
   const [gameId, setGameId] = useState("");
   const [timeControl, setTimeControl] = useState("untimed");
 
-  const lobbyQuery = trpc.lobby.list.useQuery();
+  const lobbyQuery = trpc.lobby.list.useQuery(undefined, { refetchInterval: 5_000 });
 
   trpc.lobby.onChanged.useSubscription(undefined, {
+    onStarted: async () => {
+      await utils.lobby.list.invalidate();
+    },
     onData: async () => {
       await utils.lobby.list.invalidate();
     },
