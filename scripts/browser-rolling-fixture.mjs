@@ -200,3 +200,5 @@ try {
 } finally {
   await cleanup();
 }
+// Interactive terminals can retain stdin even after the readline iterator ends.
+process.exit(0);
