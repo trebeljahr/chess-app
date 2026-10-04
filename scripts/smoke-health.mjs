@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { randomInt } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { createServer } from "node:net";
@@ -67,7 +67,7 @@ function request(url) {
   });
 }
 
-async function waitForHealth(url, process) {
+async function waitForHealth(url, process, expectedStatus = 200) {
   const deadline = Date.now() + 20_000;
   while (Date.now() < deadline) {
     controller.signal.throwIfAborted();
@@ -76,7 +76,7 @@ async function waitForHealth(url, process) {
       const response = await request(url);
       const body = await response.json();
       process.assertRunning();
-      if (response.ok && body.ok === true) return;
+      if (response.status === expectedStatus && body.ok === (expectedStatus === 200)) return;
     } catch {
       controller.signal.throwIfAborted();
     }
@@ -99,11 +99,48 @@ async function stopProcess({ child, closed }) {
 async function main() {
   const processes = [];
   const dataDir = mkdtempSync(join(tmpdir(), "chess-smoke-"));
+  const redisName = `chess-smoke-${process.pid}-${crypto.randomUUID().slice(0, 8)}`;
+  let redisCreated = false;
+  const docker = (...args) =>
+    execFileSync("docker", args, {
+      timeout: 30_000,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
   try {
+    const missingPort = await availablePort();
+    const missing = startProcess(resolve(rootDir, "dist/server/server/index.js"), {
+      PORT: String(missingPort),
+      REDIS_URL: "",
+      CHESS_DB_FILE: join(dataDir, "missing.db"),
+    });
+    processes.push(missing);
+    await waitForHealth(`http://127.0.0.1:${missingPort}/health`, missing, 503);
+    const redisPort = await availablePort();
+    docker(
+      "run",
+      "-d",
+      "--name",
+      redisName,
+      "--memory",
+      "64m",
+      "--cpus",
+      "0.25",
+      "-p",
+      `127.0.0.1:${redisPort}:6379`,
+      "redis:7-alpine",
+      "redis-server",
+      "--save",
+      "",
+      "--appendonly",
+      "no",
+      "--maxmemory",
+      "16mb",
+    );
+    redisCreated = true;
     const serverPort = await availablePort();
     const server = startProcess(resolve(rootDir, "dist/server/server/index.js"), {
       PORT: String(serverPort),
-      REDIS_URL: "",
+      REDIS_URL: `redis://127.0.0.1:${redisPort}`,
       CHESS_DB_FILE: join(dataDir, "chess.db"),
     });
     processes.push(server);
@@ -126,7 +163,8 @@ async function main() {
     client.assertRunning();
     console.log("Smoke health check passed.");
   } finally {
-    for (const process of processes.reverse()) await stopProcess(process);
+    await Promise.all(processes.map(stopProcess));
+    if (redisCreated) docker("rm", "-f", redisName);
     rmSync(dataDir, { recursive: true, force: true });
     process.removeListener("SIGINT", interrupt);
     process.removeListener("SIGTERM", interrupt);
