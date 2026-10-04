@@ -16,7 +16,9 @@ export const authProcedure = t.procedure.use(({ ctx, next }) => {
 });
 
 export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
-  if (!ctx.user) {
+  // A websocket can outlive logout or revocation on another replica.
+  const session = ctx.refreshSession();
+  if (!session.user) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "Please sign in first.",
@@ -26,7 +28,8 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
   return next({
     ctx: {
       ...ctx,
-      user: ctx.user,
+      ...session,
+      user: session.user,
     },
   });
 });

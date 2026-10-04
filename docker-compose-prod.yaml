@@ -44,8 +44,12 @@ services:
     environment:
       PORT: "80"
       BACKEND_URL: http://server:3514
+      ASSET_STORE_DIR: /app/assets
+    volumes:
+      - chess-assets:/app/assets
     depends_on:
       - server
 
 volumes:
   chess-data:
+  chess-assets:

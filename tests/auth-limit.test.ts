@@ -36,6 +36,7 @@ test("each batched auth operation consumes the socket-peer budget", async () => 
         user: null,
         session: null,
         clientIp: req.socket.remoteAddress ?? "unknown",
+        refreshSession: () => ({ user: null, session: null }),
       }),
     }),
   );

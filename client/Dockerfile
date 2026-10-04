@@ -25,10 +25,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl \
 
 COPY --from=build /app/dist/client ./dist
 COPY client/server.mjs ./server.mjs
+COPY client/assets.mjs ./assets.mjs
 
 ENV NODE_ENV=production
 ENV PORT=80
 ENV BACKEND_URL=http://server:3514
+ENV ASSET_STORE_DIR=/app/assets
+RUN mkdir -p /app/assets && chown node:node /app/assets
 
 USER node
 

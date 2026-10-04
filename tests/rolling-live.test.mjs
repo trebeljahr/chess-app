@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync, fork, spawn } from "node:child_process";
 import { once } from "node:events";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { request } from "node:http";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -42,6 +42,11 @@ test("two real servers share SQLite, recover Redis gaps, and preserve authentica
 }, async () => {
   const dir = await mkdtemp(join(tmpdir(), "chess-rolling-"));
   const dbFile = join(dir, "synthetic.db");
+  const assetStore = join(dir, "retained-assets");
+  const clientDist = join(dir, "client");
+  await mkdir(join(clientDist, "assets"), { recursive: true });
+  await writeFile(join(clientDist, "index.html"), "<title>Synthetic Chess client</title>");
+  await writeFile(join(clientDist, "assets", "synthetic-entry.js"), "/* fixture */");
   const redisPort = await freePort();
   const redisName = `chess-rolling-${process.pid}-${crypto.randomUUID().slice(0, 8)}`;
   const docker = (...args) =>
@@ -80,7 +85,29 @@ test("two real servers share SQLite, recover Redis gaps, and preserve authentica
     await until(() => /Chess app listening on http:\/\/127.0.0.1:\d+/.test(output), "server start");
     const origin = output.match(/Chess app listening on (http:\/\/127.0.0.1:\d+)/)[1];
     await until(async () => (await fetch(`${origin}/health`)).status === 200, "server readiness");
-    return { child, origin };
+    const proxy = spawn(process.execPath, ["client/server.mjs"], {
+      cwd: resolve("."),
+      env: {
+        ...env,
+        CLIENT_DIST_DIR: clientDist,
+        ASSET_STORE_DIR: assetStore,
+        BACKEND_URL: origin,
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    children.push(proxy);
+    let proxyOutput = "";
+    proxy.stdout.on("data", (chunk) => {
+      proxyOutput = (proxyOutput + chunk).slice(-5000);
+    });
+    proxy.stderr.resume();
+    await until(() => /Client serving on http:\/\/127.0.0.1:\d+/.test(proxyOutput), "proxy start");
+    const proxyOrigin = proxyOutput.match(/Client serving on (http:\/\/127.0.0.1:\d+)/)[1];
+    await until(
+      async () => (await fetch(`${proxyOrigin}/healthz`)).status === 200,
+      "proxy readiness",
+    );
+    return { child, proxy, origin: proxyOrigin };
   }
   function http(origin, initialCookie = "") {
     let cookie = initialCookie;
@@ -159,6 +186,23 @@ test("two real servers share SQLite, recover Redis gaps, and preserve authentica
       password: "synthetic-fixture-password",
     });
     const oneB = http(b.origin, one.cookie());
+    const revokedUser = http(a.origin);
+    await revokedUser.client.auth.register.mutate({
+      username: "rolling_revoked",
+      password: "synthetic-fixture-password",
+    });
+    const revokedEvents = [];
+    const revokedSocket = ws(() => a.origin, revokedUser.cookie(), revokedEvents);
+    await until(() => revokedEvents.length > 0, "pre-revocation authenticated socket");
+    await http(b.origin, revokedUser.cookie()).client.auth.logout.mutate();
+    await assert.rejects(
+      revokedSocket.lobby.create.mutate({
+        name: "Must not create",
+        color: "white",
+        timeControl: "untimed",
+      }),
+      /Please sign in first/,
+    );
     const game = await one.client.lobby.create.mutate({
       name: "Synthetic rolling game",
       color: "white",
@@ -225,14 +269,14 @@ test("two real servers share SQLite, recover Redis gaps, and preserve authentica
     countB = eventsB.length;
     docker("pause", redisName);
     paused = true;
-    assert.equal((await fetch(`${a.origin}/health`)).status, 503);
-    assert.equal((await fetch(`${b.origin}/health`)).status, 503);
+    assert.equal((await fetch(`${a.origin}/healthz`)).status, 503);
+    assert.equal((await fetch(`${b.origin}/healthz`)).status, 503);
     docker("unpause", redisName);
     paused = false;
     await until(
       async () =>
-        (await fetch(`${a.origin}/health`)).status === 200 &&
-        (await fetch(`${b.origin}/health`)).status === 200,
+        (await fetch(`${a.origin}/healthz`)).status === 200 &&
+        (await fetch(`${b.origin}/healthz`)).status === 200,
       "Redis recovery",
     );
     await until(
@@ -253,7 +297,7 @@ test("two real servers share SQLite, recover Redis gaps, and preserve authentica
       while (sample) {
         try {
           if (
-            (await fetch(`${b.origin}/health`, { signal: AbortSignal.timeout(2500) })).status !==
+            (await fetch(`${b.origin}/healthz`, { signal: AbortSignal.timeout(3000) })).status !==
             200
           )
             failures++;
@@ -273,7 +317,7 @@ test("two real servers share SQLite, recover Redis gaps, and preserve authentica
     countA = eventsA.length;
     const started = Date.now();
     a.child.kill("SIGTERM");
-    await until(async () => (await fetch(`${a.origin}/health`)).status === 503, "draining health");
+    await until(async () => (await fetch(`${a.origin}/healthz`)).status === 503, "draining health");
     await delay(18500);
     const body = JSON.stringify({ json: { slug: game.slug } });
     const response = new Promise((done, reject) => {
@@ -323,6 +367,8 @@ test("two real servers share SQLite, recover Redis gaps, and preserve authentica
         redisPauseReadiness: true,
         redisResnapshot: true,
         authenticatedReconnect: true,
+        revokedWebsocketMutationRefused: true,
+        actualClientProxies: true,
         acceptedRequestCrossedListenerClose: true,
         preservedMoves: 2,
       }),

@@ -2,11 +2,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createWSClient, httpBatchLink, splitLink, wsLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import type { PropsWithChildren } from "react";
-import { useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import superjson from "superjson";
 import type { AppRouter } from "../server/router";
 
 export const trpc = createTRPCReact<AppRouter>();
+const RealtimeSession = createContext<() => Promise<void>>(async () => {});
+export const useResetRealtimeSession = () => useContext(RealtimeSession);
 
 function getHttpUrl(): string {
   if (typeof window !== "undefined") {
@@ -38,12 +40,14 @@ export function AppProviders({ children }: PropsWithChildren) {
       }),
   );
 
-  const [trpcClient] = useState(() => {
+  const [transport] = useState(() => {
     const wsClient = createWSClient({
       url: getWsUrl(),
+      // Do not capture an anonymous cookie before the first authenticated subscription.
+      lazy: { enabled: true, closeMs: 0 },
     });
 
-    return trpc.createClient({
+    const client = trpc.createClient({
       links: [
         splitLink({
           condition(op) {
@@ -66,11 +70,20 @@ export function AppProviders({ children }: PropsWithChildren) {
         }),
       ],
     });
+    return { client, resetSession: () => wsClient.close() };
   });
+  useEffect(
+    () => () => {
+      void transport.resetSession();
+    },
+    [transport],
+  );
 
   return (
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </trpc.Provider>
+    <RealtimeSession.Provider value={transport.resetSession}>
+      <trpc.Provider client={transport.client} queryClient={queryClient}>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      </trpc.Provider>
+    </RealtimeSession.Provider>
   );
 }

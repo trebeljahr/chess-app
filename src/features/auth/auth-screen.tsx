@@ -11,12 +11,13 @@ import {
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Separator } from "../../components/ui/separator";
-import { trpc } from "../../lib/trpc";
+import { trpc, useResetRealtimeSession } from "../../lib/trpc";
 
 type AuthMode = "login" | "register";
 
 export function AuthScreen() {
   const utils = trpc.useUtils();
+  const resetRealtimeSession = useResetRealtimeSession();
   const [mode, setMode] = useState<AuthMode>("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -25,6 +26,7 @@ export function AuthScreen() {
   const login = trpc.auth.login.useMutation({
     onSuccess: async () => {
       setError(null);
+      await resetRealtimeSession();
       await utils.auth.session.invalidate();
     },
     onError: (mutationError) => {
@@ -35,6 +37,7 @@ export function AuthScreen() {
   const register = trpc.auth.register.useMutation({
     onSuccess: async () => {
       setError(null);
+      await resetRealtimeSession();
       await utils.auth.session.invalidate();
     },
     onError: (mutationError) => {

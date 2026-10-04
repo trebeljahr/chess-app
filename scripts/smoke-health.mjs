@@ -151,6 +151,7 @@ async function main() {
       PORT: String(clientPort),
       BACKEND_URL: `http://127.0.0.1:${serverPort}`,
       CLIENT_DIST_DIR: resolve(rootDir, "dist/client"),
+      ASSET_STORE_DIR: join(dataDir, "assets"),
     });
     processes.push(client);
     await waitForHealth(`http://127.0.0.1:${clientPort}/healthz`, client);

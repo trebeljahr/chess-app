@@ -1,5 +1,33 @@
 # Rolling server deployment contract
 
+The production client requires `ASSET_STORE_DIR` on a persistent shared directory,
+mounted into every overlapping client replica. Startup atomically publishes its
+Vite assets before readiness and refuses a filename collision with different
+bytes. Each replica can serve either release's assets from that directory;
+missing asset URLs return 404 instead of the SPA HTML. Do not garbage-collect
+retained releases while their browser documents can remain open. During the
+first adoption, seed the directory from the running legacy client's assets
+before retiring it, and verify the mount is writable by UID 1000.
+
+Client readiness checks backend readiness. Both client proxy and API mark health
+unready before the 20-second drain, finish accepted HTTP requests, reconnect
+WebSockets, and enforce a 28-second final deadline inside the 30-second container
+stop grace. The client closes both sides of a failed WebSocket tunnel.
+
+Browser sockets open only when an authenticated subscription starts and reset
+after login/logout. Protected server operations refresh the session from SQLite
+so revocation on another replica fences an already-open WebSocket too.
+
+For the first version-CAS deployment, stop the old writer before any new writer
+starts using the same volume. An older binary that does not advance the version
+counter is not safe to overlap. Later releases can overlap once every writer
+honors this protocol. Keep the old image digests and original volumes for rollback.
+
+`node scripts/browser-rolling-fixture.mjs` starts a synthetic loopback-only
+two-server/two-client environment from the built app. Its stdin controls retire
+the API and client independently; `stop` removes its Redis container and data.
+Use Node 24 and mute the browser before gameplay. No project dotenv is loaded.
+
 The server requires shared Redis in production. `/health` performs a bounded
 Redis PING and returns 503 if Redis is missing, disconnected, stalled, or the
 server is draining. HTTP mutations also reject unavailable realtime transport.

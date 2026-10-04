@@ -8,7 +8,7 @@ import { GamePage } from "./features/game/game-page";
 import { ImprintPage } from "./features/imprint/imprint-page";
 import { HomePage } from "./features/lobby/home-page";
 import { DONATE_URL } from "./lib/donation";
-import { trpc } from "./lib/trpc";
+import { trpc, useResetRealtimeSession } from "./lib/trpc";
 import { useToggleSound } from "./lib/use-move-sound";
 
 export function App() {
@@ -23,6 +23,7 @@ export function App() {
 
 function AppShell() {
   const utils = trpc.useUtils();
+  const resetRealtimeSession = useResetRealtimeSession();
   const sessionQuery = trpc.auth.session.useQuery(undefined, {
     retry: 3,
     retryDelay: 1000,
@@ -30,6 +31,7 @@ function AppShell() {
 
   const logout = trpc.auth.logout.useMutation({
     onSuccess: async () => {
+      await resetRealtimeSession();
       await utils.auth.session.invalidate();
       await utils.lobby.list.reset();
     },

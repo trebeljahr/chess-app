@@ -2,6 +2,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { createServer, request as httpRequest } from "node:http";
 import { extname, join } from "node:path";
 import { URL } from "node:url";
+import { retainAssets, retainedAssetPath } from "./assets.mjs";
 
 const PORT = Number(process.env.PORT ?? 80);
 const HOST = process.env.HOST ?? "0.0.0.0";
@@ -9,6 +10,10 @@ const BACKEND_URL = process.env.BACKEND_URL ?? "http://127.0.0.1:3514";
 const DIST_DIR = process.env.CLIENT_DIST_DIR
   ? process.env.CLIENT_DIST_DIR
   : join(import.meta.dirname, "dist");
+const ASSET_STORE_DIR = process.env.ASSET_STORE_DIR;
+if (process.env.NODE_ENV === "production" && !ASSET_STORE_DIR)
+  throw new Error("ASSET_STORE_DIR must mount the persistent shared asset directory");
+retainAssets(DIST_DIR, ASSET_STORE_DIR);
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -29,8 +34,16 @@ const indexHtml = readFileSync(join(DIST_DIR, "index.html"));
 const sockets = new Set();
 let draining = false;
 
+function backendTarget(url) {
+  const incoming = new URL(url, "http://client.invalid");
+  const target = new URL(BACKEND_URL);
+  target.pathname = incoming.pathname;
+  target.search = incoming.search;
+  return target;
+}
+
 function proxyRequest(req, res) {
-  const target = new URL(req.url, BACKEND_URL);
+  const target = backendTarget(req.url);
 
   const proxyReq = httpRequest(
     {
@@ -45,25 +58,45 @@ function proxyRequest(req, res) {
     },
     (proxyRes) => {
       res.writeHead(proxyRes.statusCode, proxyRes.headers);
+      proxyRes.on("error", () => res.destroy());
       proxyRes.pipe(res, { end: true });
     },
   );
 
   proxyReq.on("error", () => {
+    if (res.headersSent) {
+      res.destroy();
+      return;
+    }
     res.writeHead(502);
     res.end("Bad Gateway");
+  });
+  req.on("aborted", () => proxyReq.destroy());
+  proxyReq.setTimeout(30_000, () => proxyReq.destroy());
+  res.on("close", () => {
+    if (!res.writableFinished) proxyReq.destroy();
   });
 
   req.pipe(proxyReq, { end: true });
 }
 
-const server = createServer((req, res) => {
+const server = createServer(async (req, res) => {
   const pathname = new URL(req.url, `http://localhost:${PORT}`).pathname;
 
   // Health check
   if (pathname === "/healthz") {
-    res.writeHead(draining ? 503 : 200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ ok: !draining }));
+    let ready = !draining;
+    if (ready) {
+      try {
+        ready =
+          (await fetch(new URL("/health", BACKEND_URL), { signal: AbortSignal.timeout(2500) }))
+            .ok && !draining;
+      } catch {
+        ready = false;
+      }
+    }
+    res.writeHead(ready ? 200 : 503, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ ok: ready }));
     return;
   }
 
@@ -86,7 +119,15 @@ const server = createServer((req, res) => {
   }
 
   // Serve static files
-  const filePath = join(DIST_DIR, pathname);
+  let filePath = join(DIST_DIR, pathname);
+  try {
+    const retained = retainedAssetPath(ASSET_STORE_DIR, pathname);
+    if (retained && existsSync(retained)) filePath = retained;
+  } catch {
+    res.writeHead(400);
+    res.end();
+    return;
+  }
 
   if (existsSync(filePath) && statSync(filePath).isFile()) {
     const ext = extname(filePath);
@@ -104,6 +145,12 @@ const server = createServer((req, res) => {
     return;
   }
 
+  if (pathname.startsWith("/assets/")) {
+    res.writeHead(404, { "Cache-Control": "no-store" });
+    res.end("Asset unavailable");
+    return;
+  }
+
   // SPA fallback
   res.writeHead(200, {
     "Content-Type": "text/html; charset=utf-8",
@@ -113,7 +160,7 @@ const server = createServer((req, res) => {
 });
 
 // WebSocket upgrade — proxy to backend
-server.on("upgrade", (req, socket, _head) => {
+server.on("upgrade", (req, socket, head) => {
   if (draining) {
     socket.destroy();
     return;
@@ -123,7 +170,7 @@ server.on("upgrade", (req, socket, _head) => {
     return;
   }
 
-  const target = new URL(req.url, BACKEND_URL);
+  const target = backendTarget(req.url);
 
   const proxyReq = httpRequest({
     hostname: target.hostname,
@@ -139,8 +186,16 @@ server.on("upgrade", (req, socket, _head) => {
   proxyReq.on("upgrade", (proxyRes, proxySocket, proxyHead) => {
     sockets.add(socket);
     sockets.add(proxySocket);
-    socket.on("close", () => sockets.delete(socket));
-    proxySocket.on("close", () => sockets.delete(proxySocket));
+    const closePair = () => {
+      sockets.delete(socket);
+      sockets.delete(proxySocket);
+      socket.destroy();
+      proxySocket.destroy();
+    };
+    socket.on("close", closePair);
+    proxySocket.on("close", closePair);
+    socket.on("error", closePair);
+    proxySocket.on("error", closePair);
     const responseHeaders = [
       `HTTP/${proxyRes.httpVersion} ${proxyRes.statusCode} ${proxyRes.statusMessage}`,
     ];
@@ -154,6 +209,7 @@ server.on("upgrade", (req, socket, _head) => {
 
     socket.write(responseHeaders.join("\r\n") + "\r\n\r\n");
     if (proxyHead.length) socket.write(proxyHead);
+    if (head.length) proxySocket.write(head);
 
     proxySocket.pipe(socket);
     socket.pipe(proxySocket);
@@ -162,21 +218,32 @@ server.on("upgrade", (req, socket, _head) => {
   proxyReq.on("error", () => {
     socket.destroy();
   });
+  proxyReq.on("response", () => socket.destroy());
+  socket.on("close", () => proxyReq.destroy());
 
   proxyReq.end();
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Client serving on http://${HOST}:${PORT}`);
-  console.log(`Proxying /trpc to ${BACKEND_URL}`);
+  console.log(`Client serving on http://${HOST}:${server.address().port}`);
+  console.log("Proxying /trpc to the configured backend");
 });
 
 function shutdown() {
   if (draining) return;
   draining = true;
+  const deadline = setTimeout(() => {
+    for (const socket of sockets) socket.destroy();
+    server.closeAllConnections();
+    process.exit(1);
+  }, 28_000);
+  deadline.unref();
   setTimeout(() => {
     for (const socket of sockets) socket.end();
-    server.close();
+    server.close(() => {
+      clearTimeout(deadline);
+      process.exit(0);
+    });
     server.closeIdleConnections();
   }, 20_000);
 }

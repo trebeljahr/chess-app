@@ -8,6 +8,7 @@ export interface AppContext {
   session: ReturnType<typeof getSessionBundle>["session"];
   res?: Response;
   clientIp: string;
+  refreshSession: () => ReturnType<typeof getSessionBundle>;
 }
 
 function buildContext(clientIp: string, cookieHeader?: string, res?: Response): AppContext {
@@ -16,6 +17,7 @@ function buildContext(clientIp: string, cookieHeader?: string, res?: Response): 
     ...bundle,
     clientIp,
     res,
+    refreshSession: () => getSessionBundle(cookieHeader),
   };
 }
 
