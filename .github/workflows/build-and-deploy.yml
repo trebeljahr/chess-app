@@ -69,7 +69,6 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/chess-app-client
           tags: |
-            type=raw,value=latest
             type=sha,format=long
 
       - name: Build and push client image
@@ -105,7 +104,6 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/chess-app-server
           tags: |
-            type=raw,value=latest
             type=sha,format=long
 
       - name: Build and push server image

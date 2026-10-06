@@ -1,3 +1,6 @@
+# Retained legacy rollback only. The digests are the images observed running
+# before the move to Coolify Image apps; never replace them with a moving tag.
+# New releases deploy the Image apps by full-SHA digest instead.
 services:
   redis:
     image: redis:7-alpine
@@ -12,7 +15,7 @@ services:
       retries: 5
 
   server:
-    image: ghcr.io/trebeljahr/chess-app-server:latest
+    image: ghcr.io/trebeljahr/chess-app-server@sha256:003ac9729064c22aee046581961558238e899eeaa8ddfaa46597704f3cb72d79
     pull_policy: always
     restart: unless-stopped
     stop_grace_period: 30s
@@ -33,7 +36,7 @@ services:
       - chess-data:/app/data
 
   client:
-    image: ghcr.io/trebeljahr/chess-app-client:latest
+    image: ghcr.io/trebeljahr/chess-app-client@sha256:05855ec678988ccdb82b5cbff0c9d5b7056b40ec824e5e345d315e098c26609d
     pull_policy: always
     restart: unless-stopped
     stop_grace_period: 30s
@@ -44,12 +47,8 @@ services:
     environment:
       PORT: "80"
       BACKEND_URL: http://server:3514
-      ASSET_STORE_DIR: /app/assets
-    volumes:
-      - chess-assets:/app/assets
     depends_on:
       - server
 
 volumes:
   chess-data:
-  chess-assets:

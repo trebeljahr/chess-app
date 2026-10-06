@@ -76,8 +76,13 @@ not connect to production or test Redis, WebSockets, or container health checks.
 
 ### GHCR images
 
-- `ghcr.io/trebeljahr/chess-app-client:latest`
-- `ghcr.io/trebeljahr/chess-app-server:latest`
+Each push to `main` publishes full-SHA tags only:
+
+- `ghcr.io/trebeljahr/chess-app-client:sha-<full commit>`
+- `ghcr.io/trebeljahr/chess-app-server:sha-<full commit>`
+
+Deploy by the recorded digest. `docker-compose-prod.yaml` pins the legacy
+digests for the stopped Compose rollback resource and must not track a tag.
 
 ## Environment variables
 
