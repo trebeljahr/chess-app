@@ -122,7 +122,11 @@ Production runs as three Coolify resources in the chess project:
   `jzolhn29j9n0c3yhu4jmjezp_chess-data` at `/app/data`.
 - `chess-client` Docker Image app `hdnhx1xkzmfp5hx2xucdptw8`: route
   `https://chess.trebeljahr.com`, health `/healthz`, shared asset volume
-  `chess-client-assets` at `/app/assets`, `BACKEND_URL=http://chess-api:3514`.
+  `chess-client-assets` at `/app/assets`, `BACKEND_URL=http://chess-api:3514`,
+  `BACKEND_HEALTH_REQUIRED=false`. Traefik already health-checks the API route,
+  so client readiness covers only HTML and assets. With the check on, a draining
+  API replica behind the shared alias withdrew the only client replica (measured
+  12 s of `/` 503 per server release on 2026-10-06).
 - `chess-redis` database `hz02e2cn68c2tky575ow4rdi` (pub/sub only).
 
 Traefik sends `/trpc` HTTP and WebSocket traffic straight to healthy server

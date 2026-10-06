@@ -7,6 +7,10 @@ import { retainAssets, retainedAssetPath } from "./assets.mjs";
 const PORT = Number(process.env.PORT ?? 80);
 const HOST = process.env.HOST ?? "0.0.0.0";
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://127.0.0.1:3514";
+// Off when a router health-checks the API itself (Traefik routes /trpc on
+// Coolify). Readiness then covers only HTML and assets, so one draining API
+// replica behind a shared alias cannot withdraw every client replica.
+const BACKEND_HEALTH_REQUIRED = process.env.BACKEND_HEALTH_REQUIRED !== "false";
 const DIST_DIR = process.env.CLIENT_DIST_DIR
   ? process.env.CLIENT_DIST_DIR
   : join(import.meta.dirname, "dist");
@@ -86,7 +90,7 @@ const server = createServer(async (req, res) => {
   // Health check
   if (pathname === "/healthz") {
     let ready = !draining;
-    if (ready) {
+    if (ready && BACKEND_HEALTH_REQUIRED) {
       try {
         ready =
           (await fetch(new URL("/health", BACKEND_URL), { signal: AbortSignal.timeout(2500) }))

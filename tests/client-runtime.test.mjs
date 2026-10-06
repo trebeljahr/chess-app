@@ -32,7 +32,7 @@ test("mixed client routing preserves assets and paired proxy sockets", {
   const backendUrl = `http://127.0.0.1:${backend.address().port}`;
   let socket;
   try {
-    async function client(release) {
+    async function client(release, env = {}) {
       const dist = join(directory, release);
       await mkdir(join(dist, "assets"), { recursive: true });
       await writeFile(
@@ -49,6 +49,7 @@ test("mixed client routing preserves assets and paired proxy sockets", {
           CLIENT_DIST_DIR: dist,
           ASSET_STORE_DIR: join(directory, "retained"),
           BACKEND_URL: backendUrl,
+          ...env,
         },
         stdio: ["ignore", "pipe", "pipe"],
       });
@@ -66,7 +67,8 @@ test("mixed client routing preserves assets and paired proxy sockets", {
       throw new Error("Client start timed out");
     }
     const a = await client("a"),
-      b = await client("b");
+      b = await client("b"),
+      routerChecked = await client("c", { BACKEND_HEALTH_REQUIRED: "false" });
     for (const origin of [a, b]) {
       for (const release of ["a", "b"]) {
         const response = await fetch(`${origin}/assets/entry-${release}.js`);
@@ -111,10 +113,16 @@ test("mixed client routing preserves assets and paired proxy sockets", {
     ]);
     ready = false;
     assert.equal((await fetch(`${b}/healthz`)).status, 503);
+    assert.equal(
+      (await fetch(`${routerChecked}/healthz`)).status,
+      200,
+      "a router-checked API cannot withdraw the client",
+    );
     console.log(
       JSON.stringify({
         mixedAssetRoutingBothDirections: true,
         backendReadiness: true,
+        optionalBackendReadiness: true,
         pairedWebsocketClose: true,
       }),
     );
