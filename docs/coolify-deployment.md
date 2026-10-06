@@ -111,3 +111,25 @@ docker-compose up
 Starts Redis, server, and client. Access at `http://localhost:80`.
 
 For dev without Docker: `npm run dev` starts Redis via docker-compose, the server with tsx watch, and Vite dev server with proxy.
+
+## Current runtime (since 2026-10-06)
+
+Production runs as three Coolify resources in the chess project:
+
+- `chess-server` Docker Image app `ej88smq0caxwc4fecndnexuz`: route
+  `https://chess.trebeljahr.com/trpc` (strip prefix off), network alias
+  `chess-api`, health `/health`, mounts the original SQLite volume
+  `jzolhn29j9n0c3yhu4jmjezp_chess-data` at `/app/data`.
+- `chess-client` Docker Image app `hdnhx1xkzmfp5hx2xucdptw8`: route
+  `https://chess.trebeljahr.com`, health `/healthz`, shared asset volume
+  `chess-client-assets` at `/app/assets`, `BACKEND_URL=http://chess-api:3514`.
+- `chess-redis` database `hz02e2cn68c2tky575ow4rdi` (pub/sub only).
+
+Traefik sends `/trpc` HTTP and WebSocket traffic straight to healthy server
+containers. Release by pinning each app's tag to its full-SHA build digest and
+deploying it; the server and client roll independently.
+
+The stopped Compose app `jzolhn29j9n0c3yhu4jmjezp` is the rollback resource,
+pinned to Git commit `a09ce7ef8dc27ca35656521b61b8e1daddf2f8d4`, whose Compose file
+holds the pre-migration digests. Its writer has no version CAS: never run it
+while either Image app's server is running.
