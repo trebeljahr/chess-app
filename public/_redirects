@@ -1,0 +1,6 @@
+# Client routes (src/App.tsx) answered with the app shell and status 200.
+# Every other unknown path gets 404.html, which the router sends to "/".
+/games/:slug   /   200
+/games/:slug/  /   200
+/imprint       /   200
+/imprint/      /   200

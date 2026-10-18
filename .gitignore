@@ -58,3 +58,4 @@ venv/
 .env.test
 .envrc.local
 .vercel/
+.wrangler/

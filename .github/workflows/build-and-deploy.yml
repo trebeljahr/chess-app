@@ -46,40 +46,71 @@ jobs:
       - name: Smoke test built health endpoints
         run: pnpm run smoke:health
 
+  # The web client is Vite's static build served by the Cloudflare Worker
+  # chess-app-client (wrangler.jsonc); the zone routes /trpc* to the
+  # chess-server app. This job uploads a Worker version and activates
+  # nothing: deploy-client switches to it once the server reports this commit.
   build-client:
     runs-on: ubuntu-latest
     needs: verify
+    outputs:
+      version_id: ${{ steps.upload.outputs.version_id }}
+    env:
+      SITE_URL: https://chess.trebeljahr.com
+      WRANGLER: wrangler@4.147.0
     steps:
       - name: Check out source
         uses: actions/checkout@v4
 
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          version: 10.33.2
 
-      - name: Extract image metadata
-        id: meta
-        uses: docker/metadata-action@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          images: ghcr.io/${{ github.repository_owner }}/chess-app-client
-          tags: |
-            type=sha,format=long
+          node-version: 24
+          cache: pnpm
 
-      - name: Build and push client image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./client/Dockerfile
-          push: true
-          no-cache: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the static client
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: pnpm run build:client && node scripts/prepare-worker-assets.mjs dist/client
+
+      # A Worker version serves only its own files. Carry the last two
+      # releases' hashed files so tabs opened before this deploy keep
+      # loading their chunks.
+      - name: Carry earlier releases' hashed files
+        run: node scripts/carry-static.mjs --site "$SITE_URL" --out dist/client --dir assets
+
+      - name: Upload a new Worker version (not live yet)
+        id: upload
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-upload.ndjson
+          WRANGLER_SEND_METRICS: "false"
+        run: |
+          set -euo pipefail
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN/_ACCOUNT_ID are not set — run \`hatchkit cloudflare token --worker chess-app-client\`."
+            exit 1
+          fi
+          pnpm dlx "$WRANGLER" versions upload --tag "$GITHUB_SHA" --message "$GITHUB_SHA"
+          id=$(jq -r 'select(.type == "version-upload") | .version_id // empty' "$WRANGLER_OUTPUT_FILE_PATH" | head -n 1)
+          if [ -z "$id" ]; then
+            echo "::error::wrangler reported no version id"
+            exit 1
+          fi
+          echo "version_id=$id" >> "$GITHUB_OUTPUT"
+          {
+            echo "Uploaded Worker version \`$id\` for $GITHUB_SHA (not live yet)."
+            echo "Switch by hand: \`npx --yes $WRANGLER versions deploy $id@100% --name chess-app-client\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   build-server:
     runs-on: ubuntu-latest
@@ -112,6 +143,8 @@ jobs:
           context: .
           file: ./server/Dockerfile
           push: true
+          build-args: |
+            COMMIT_SHA=${{ github.sha }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -121,6 +154,8 @@ jobs:
     # Keep the existing Compose webhook dormant while the Image resources and
     # shared persistence are prepared. Set this only after cutover.
     if: vars.CHESS_IMAGE_ROLLOUT_READY == 'true'
+    outputs:
+      server_deployed: ${{ steps.webhook.outputs.server_deployed }}
     steps:
       # Tell Coolify to deploy. There is no Coolify API token here: each
       # app has its own webhook secret (hatchkit mints it), and a `push`
@@ -131,9 +166,10 @@ jobs:
       # build that does not exist yet; only this step does.
       #
       # Which apps: COOLIFY_RESOURCE_UUID for a single-app project, or
-      # COOLIFY_SERVER_/COOLIFY_CLIENT_RESOURCE_UUID for a split one.
-      # hatchkit sets one set and clears the other.
+      # COOLIFY_SERVER_RESOURCE_UUID for the API. The web client is not a
+      # Coolify app any more: deploy-client switches its Worker version.
       - name: Deploy via signed Coolify webhook
+        id: webhook
         env:
           COOLIFY_BASE_URL: ${{ secrets.COOLIFY_BASE_URL }}
           COOLIFY_RESOURCE_UUID: ${{ secrets.COOLIFY_RESOURCE_UUID }}
@@ -144,10 +180,6 @@ jobs:
           COOLIFY_SERVER_DEPLOY_SECRET: ${{ secrets.COOLIFY_SERVER_DEPLOY_SECRET }}
           COOLIFY_SERVER_DEPLOY_REPOSITORY: ${{ secrets.COOLIFY_SERVER_DEPLOY_REPOSITORY }}
           COOLIFY_SERVER_DEPLOY_BRANCH: ${{ secrets.COOLIFY_SERVER_DEPLOY_BRANCH }}
-          COOLIFY_CLIENT_RESOURCE_UUID: ${{ secrets.COOLIFY_CLIENT_RESOURCE_UUID }}
-          COOLIFY_CLIENT_DEPLOY_SECRET: ${{ secrets.COOLIFY_CLIENT_DEPLOY_SECRET }}
-          COOLIFY_CLIENT_DEPLOY_REPOSITORY: ${{ secrets.COOLIFY_CLIENT_DEPLOY_REPOSITORY }}
-          COOLIFY_CLIENT_DEPLOY_BRANCH: ${{ secrets.COOLIFY_CLIENT_DEPLOY_BRANCH }}
         if: env.COOLIFY_BASE_URL != ''
         run: |
           set -euo pipefail
@@ -175,6 +207,7 @@ jobs:
               >/dev/null 2>&1; then
               echo "deploy queued for the $1 app ($uuid)"
               deployed=$((deployed + 1))
+              if [ "$1" = server ]; then echo "server_deployed=true" >> "$GITHUB_OUTPUT"; fi
             else
               # Other apps on the same repo answer "Invalid signature.";
               # they are left out so a public log names only this one.
@@ -185,8 +218,53 @@ jobs:
           }
           deploy app COOLIFY_
           deploy server COOLIFY_SERVER_
-          deploy client COOLIFY_CLIENT_
           if [ "$deployed" -eq 0 ]; then
             echo "::error::COOLIFY_BASE_URL is set but no COOLIFY_*RESOURCE_UUID is — nothing was deployed."
             exit 1
           fi
+
+  # Server first, then the client: wait until the server reports this
+  # commit, switch the Worker in one step, check /version.json. A failure
+  # here leaves the new server with the previous client, which is the
+  # compatible direction; the run ends red and says so.
+  deploy-client:
+    runs-on: ubuntu-latest
+    needs: [build-client, deploy]
+    if: needs.deploy.outputs.server_deployed == 'true'
+    env:
+      SITE_URL: https://chess.trebeljahr.com
+      WRANGLER: wrangler@4.147.0
+    steps:
+      - name: Wait for the server at this commit
+        run: |
+          set -uo pipefail
+          for i in $(seq 1 40); do
+            got=$(curl -fsS --max-time 10 "$SITE_URL/trpc/system.version?cb=$i$RANDOM" 2>/dev/null \
+              | jq -r '.result.data.json.commit // empty' 2>/dev/null || true)
+            if [ "$got" = "$GITHUB_SHA" ]; then echo "server reports $GITHUB_SHA"; exit 0; fi
+            echo "  server: ${got:-<no version>}, waiting ($i/40)"
+            sleep 15
+          done
+          echo "::error::The server never reported $GITHUB_SHA. The client was NOT switched; the previous Worker version still serves."
+          exit 1
+
+      - name: Switch the client to this commit's Worker version
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          VERSION_ID: ${{ needs.build-client.outputs.version_id }}
+          WRANGLER_SEND_METRICS: "false"
+        run: npx --yes "$WRANGLER" versions deploy "$VERSION_ID@100%" --name chess-app-client --message "$GITHUB_SHA" --yes
+
+      - name: Verify the client is live
+        run: |
+          set -uo pipefail
+          for i in $(seq 1 24); do
+            commit=$(curl -fsS --max-time 10 "$SITE_URL/version.json?cb=$i$RANDOM" 2>/dev/null \
+              | jq -r '.commit // empty' 2>/dev/null || true)
+            if [ "$commit" = "$GITHUB_SHA" ]; then echo "$SITE_URL serves $GITHUB_SHA"; exit 0; fi
+            echo "  web: ${commit:-<no response>}, waiting ($i/24)"
+            sleep 5
+          done
+          echo "::error::Server $GITHUB_SHA is LIVE, but $SITE_URL/version.json never reported it."
+          exit 1

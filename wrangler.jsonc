@@ -1,0 +1,23 @@
+// The web client: Vite's static build served by Cloudflare Workers static
+// assets. No `main`, so no Worker code runs and asset requests stay free and
+// unmetered. Never add `main`, `run_worker_first` or `cache`: each one turns
+// page or asset requests into counted Worker requests.
+//
+// No `routes` either. The routes live on the zone, made once by hand, in this
+// order: chess.trebeljahr.com/trpc* and /.well-known/acme-challenge/* with no
+// Worker (they reach Traefik and the chess-server app), then
+// chess.trebeljahr.com/* → this Worker. A deploy only adds a version, so the
+// CI token needs Editor on this one Worker and nothing on the zone.
+{
+  "name": "chess-app-client",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./dist/client",
+    // Unknown paths get 404.html (a copy of index.html, so the router still
+    // sends them home) with status 404, and a missing /assets/ file is a
+    // real 404 instead of index.html. Known routes are in public/_redirects.
+    "not_found_handling": "404-page"
+  }
+}

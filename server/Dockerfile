@@ -41,6 +41,10 @@ USER node
 
 EXPOSE 3514
 
+# Reported by the system.version query; last, so it costs no cached layer.
+ARG COMMIT_SHA=""
+ENV COMMIT_SHA=$COMMIT_SHA
+
 HEALTHCHECK --interval=2s --timeout=5s --start-period=15s --retries=5 \
   CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT || '3514') + '/health').then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1))"
 

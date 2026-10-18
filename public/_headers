@@ -1,0 +1,10 @@
+# Cloudflare Workers static assets (wrangler.jsonc). Hashed /assets/ files keep
+# Cloudflare's default (max-age=0, must-revalidate, ETag): an immutable rule
+# would also apply to a 404 for a chunk asked for during a deploy, and the edge
+# and the browser would keep that 404 for a year.
+
+/version.json
+  Cache-Control: no-store, must-revalidate
+
+/release-assets.json
+  Cache-Control: no-store, must-revalidate

@@ -165,6 +165,10 @@ function saveGameState(
 }
 
 export const appRouter = router({
+  system: router({
+    // The deploy job switches the web client only once this names its commit.
+    version: publicProcedure.query(() => ({ commit: process.env.COMMIT_SHA || null })),
+  }),
   auth: router({
     session: publicProcedure.query(({ ctx }) => {
       if (!ctx.user) {
