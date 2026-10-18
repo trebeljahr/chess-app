@@ -13,11 +13,11 @@ Split client/server containers with Redis sidecar:
 
 ## Image rollout gate
 
-The live application is Docker Compose. `CHESS_IMAGE_ROLLOUT_READY` must stay
-unset in GitHub repository variables until an Image cutover is complete. CI may
-build images on a push, but it will not call the old Compose deploy webhook.
-The webhook response must name the exact app UUID with `success`; `skipped`
-does not mean an image deployed.
+The repository variable `CHESS_IMAGE_ROLLOUT_READY=true` turns on the `deploy`
+and `deploy-client` jobs (see "Server release"). Unset, CI builds the server
+image and uploads a Worker version, and nothing goes live. The webhook response
+must name the exact app UUID with `success`; `skipped` does not mean an image
+deployed.
 
 Do not run two independent server containers against separate copies of
 `chess.db`. The Compose named volume holds users, sessions, and game state.
@@ -59,33 +59,58 @@ docker-compose -f docker-compose-prod.yaml up -d
 
 ## GitHub Actions deploy flow
 
-1. Push to `main`
-2. CI runs typecheck + build + a built-artifact smoke test against `/health` and `/healthz`
-3. Parallel builds: client and server Docker images pushed to GHCR
-4. After both succeed: Coolify deployment triggered via webhook
+1. Push to `main` (or run the workflow by hand: `workflow_dispatch`).
+2. `verify`: typecheck, auth and rolling tests, build, built-artifact smoke test.
+3. `build-server` pushes `ghcr.io/trebeljahr/chess-app-server:sha-<full commit>`
+   (the image reports the commit on `/trpc/system.version`); `build-client`
+   uploads a Worker version without activating it.
+4. `deploy` (gated): server release, below.
+5. `deploy-client`: switches the Worker once the server reports the commit.
 
-### Required GitHub secrets
+### Server release
+
+The Coolify app `chess-server` pulls `ghcr.io/trebeljahr/chess-app-server:live`,
+has the watch path `.hatchkit/deploy-webhook`, `git_repository`
+`trebeljahr/chess-app`, branch `main`, and its own GitHub webhook secret. The
+`deploy` job:
+
+1. fails unless every `COOLIFY_SERVER_*` secret below is set;
+2. points `:live` at this run's image, by digest;
+3. signs a `push` payload with the app's webhook secret; Coolify rolls the
+   app (health `/health`, 20 s drain).
+
+Required GitHub secrets:
 
 - `COOLIFY_BASE_URL` — Coolify instance URL
-- `COOLIFY_RESOURCE_UUID` — the existing Compose application
-- `COOLIFY_DEPLOY_SECRET` — that application’s signed webhook key
-- `COOLIFY_DEPLOY_REPOSITORY` — repository name used by its webhook
-- `COOLIFY_DEPLOY_BRANCH` — branch used by its webhook
+- `COOLIFY_SERVER_RESOURCE_UUID` — `ej88smq0caxwc4fecndnexuz`
+- `COOLIFY_SERVER_DEPLOY_SECRET` — that app's GitHub webhook secret
+- `COOLIFY_SERVER_DEPLOY_REPOSITORY` — `trebeljahr/chess-app`
+- `COOLIFY_SERVER_DEPLOY_BRANCH` — `main`
 
-The workflow signs the deploy payload after both images finish building. The
-application stays on Compose so its SQLite and Redis volumes remain in place.
+The single-app set (`COOLIFY_RESOURCE_UUID`, `COOLIFY_DEPLOY_SECRET`, …) names
+the stopped legacy Compose app. The workflow does not read it: that app's writer
+has no version check and must never run next to `chess-server`.
+
 The smoke check uses temporary SQLite storage and free loopback ports; it does
 not connect to production or test Redis, WebSockets, or container health checks.
 
+Rollback of the server: point `:live` at the previous image and redeploy
+`chess-server` in Coolify.
+
+```bash
+docker buildx imagetools create --tag ghcr.io/trebeljahr/chess-app-server:live ghcr.io/trebeljahr/chess-app-server:sha-<previous commit>
+```
+
 ### GHCR images
 
-Each push to `main` publishes full-SHA tags only:
+- `ghcr.io/trebeljahr/chess-app-server:sha-<full commit>` — every build.
+- `ghcr.io/trebeljahr/chess-app-server:live` — what `chess-server` runs; moved
+  only by the `deploy` job (or a rollback).
+- `ghcr.io/trebeljahr/chess-app-client:sha-<…>` — no new builds since the client
+  moved to the Worker; the old tags remain for the stopped `chess-client` app.
 
-- `ghcr.io/trebeljahr/chess-app-client:sha-<full commit>`
-- `ghcr.io/trebeljahr/chess-app-server:sha-<full commit>`
-
-Deploy by the recorded digest. `docker-compose-prod.yaml` pins the legacy
-digests for the stopped Compose rollback resource and must not track a tag.
+`docker-compose-prod.yaml` pins the legacy digests for the stopped Compose
+rollback resource and must not track a tag.
 
 ## Environment variables
 
@@ -133,8 +158,9 @@ Production runs as three Coolify resources in the chess project:
 - `chess-redis` database `hz02e2cn68c2tky575ow4rdi` (pub/sub only).
 
 Traefik sends `/trpc` HTTP and WebSocket traffic straight to healthy server
-containers. Release by pinning each app's tag to its full-SHA build digest and
-deploying it; the server and client roll independently.
+containers. The server releases through CI (see "Server release"). The web
+client is the Cloudflare Worker below; `chess-client` keeps running without a
+route as its rollback target until it is retired.
 
 The stopped Compose app `jzolhn29j9n0c3yhu4jmjezp` is the rollback resource,
 pinned to Git commit `a09ce7ef8dc27ca35656521b61b8e1daddf2f8d4`, whose Compose file
@@ -187,8 +213,8 @@ Release order in `build-and-deploy.yml`:
 3. `deploy-client` waits until `GET /trpc/system.version` names the commit,
    runs `wrangler versions deploy <id>@100%`, and polls `/version.json`.
 
-While the server rollout gate is off, `deploy-client` is skipped: switch the
-client by hand once the server runs the same commit, with the command in the
+While `CHESS_IMAGE_ROLLOUT_READY` is unset, `deploy-client` is skipped: switch
+the client by hand once the server runs the same commit, with the command in the
 `build-client` summary. Required secrets: `CLOUDFLARE_API_TOKEN` (Editor on this
 one Worker) and `CLOUDFLARE_ACCOUNT_ID`, set by
 `hatchkit cloudflare token --worker chess-app-client`.
