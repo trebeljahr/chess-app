@@ -1,3 +1,8 @@
+// Local stand-in for the edge: serves dist/client and proxies /trpc to the
+// API. smoke:health, tests/rolling-live.test.mjs, tests/client-runtime.test.mjs
+// and scripts/browser-rolling-fixture.mjs run it. Production does not: the
+// client is the Cloudflare Worker in wrangler.jsonc, and the zone routes /trpc*
+// to the chess-server app.
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { createServer, request as httpRequest } from "node:http";
 import { extname, join } from "node:path";

@@ -36,22 +36,5 @@ services:
     volumes:
       - chess-data:/app/data
 
-  client:
-    build:
-      context: .
-      dockerfile: client/Dockerfile
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    ports:
-      - "127.0.0.1:${CLIENT_PORT:-51849}:80"
-    environment:
-      PORT: "80"
-      BACKEND_URL: http://server:3514
-    depends_on:
-      - server
-
 volumes:
   chess-data:

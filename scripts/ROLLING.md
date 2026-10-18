@@ -1,7 +1,10 @@
 # Rolling server deployment contract
 
-The production client requires `ASSET_STORE_DIR` on a persistent shared directory,
-mounted into every overlapping client replica. Startup atomically publishes its
+Production serves the client from the Cloudflare Worker (`wrangler.jsonc`); each
+upload carries the previous releases' hashed files (`scripts/carry-static.mjs`).
+The rest of this paragraph describes `client/server.mjs`, the local stand-in the
+tests and the fixture below run: it requires `ASSET_STORE_DIR` on a shared
+directory, mounted into every overlapping client replica. Startup atomically publishes its
 Vite assets before readiness and refuses a filename collision with different
 bytes. Each replica can serve either release's assets from that directory;
 missing asset URLs return 404 instead of the SPA HTML. Do not garbage-collect

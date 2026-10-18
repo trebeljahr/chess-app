@@ -2,12 +2,9 @@
 
 ## Architecture
 
-Split client/server containers with Redis sidecar:
-
-- **Client** — Vite-built SPA. In production it is served by the Cloudflare
-  Worker `chess-app-client` (see "Web client on Cloudflare Workers" below).
-  The `chess-app-client` image (a small Node.js server that proxies `/trpc`)
-  remains for local Docker runs and as the rollback target until it retires.
+- **Client** — Vite-built SPA served by the Cloudflare Worker `chess-app-client`
+  (see "Web client on Cloudflare Workers" below). `client/server.mjs` is only a
+  local stand-in for the edge in tests; nothing deploys it.
 - **Server** (`chess-app-server`) — Express + tRPC + WebSocket backend with SQLite persistence. Port 3514.
 - **Redis** — Pub/sub for realtime events. It does not store game state.
 
@@ -31,10 +28,9 @@ overlapping instances on the same host. The latter cannot cover host failure.
 Keep the old volume and Compose app for rollback. Extract Redis to a durable
 separate service; the Compose sidecar would stop with the old app.
 
-The client and server mark health `503` on SIGTERM, wait 20 seconds for proxy
-routing to change, then close sockets. Coolify's Image health checks should
-probe client `/healthz` on port 80 and server `/health` on port 3514 at 2-second
-interval, 5-second timeout, 5 retries, and 15-second start period. Use at
+The server marks health `503` on SIGTERM, waits 20 seconds for proxy routing
+to change, then closes sockets. Coolify's Image health check probes `/health`
+on port 3514 at 2-second interval, 5-second timeout, 5 retries, and 15-second start period. Use at
 least 30 seconds of stop grace. A WebSocket still disconnects when its server
 is replaced; the subscription refreshes the durable snapshot on reconnect.
 Verify active games and HTTP status during an actual rollout before claiming
@@ -48,14 +44,15 @@ Use `docker-compose-prod.yaml` which pulls pre-built images from GHCR:
 docker-compose -f docker-compose-prod.yaml up -d
 ```
 
+These commands describe the stopped legacy Compose app (see "Current
+runtime"); `docker-compose-prod.yaml` still names its client container.
+
 ## Coolify setup
 
-1. Create a Docker Compose application in Coolify
-2. Point it at `docker-compose-prod.yaml`
-3. Add persistent storage: `/app/data` on the server container (SQLite)
-4. Expose port 80 (client container)
-5. Health check: `/healthz` on the client
-6. Domain: `https://chess.your-domain.com`
+The live setup is one Docker Image app, `chess-server`: image
+`ghcr.io/trebeljahr/chess-app-server:live`, port 3514, domain
+`https://chess.trebeljahr.com/trpc` with strip prefix off, persistent storage at
+`/app/data`, health check `/health`. "Server release" lists its webhook settings.
 
 ## GitHub Actions deploy flow
 
@@ -106,8 +103,8 @@ docker buildx imagetools create --tag ghcr.io/trebeljahr/chess-app-server:live g
 - `ghcr.io/trebeljahr/chess-app-server:sha-<full commit>` — every build.
 - `ghcr.io/trebeljahr/chess-app-server:live` — what `chess-server` runs; moved
   only by the `deploy` job (or a rollback).
-- `ghcr.io/trebeljahr/chess-app-client:sha-<…>` — no new builds since the client
-  moved to the Worker; the old tags remain for the stopped `chess-client` app.
+- `ghcr.io/trebeljahr/chess-app-client:sha-<…>` — old builds only. The client
+  moved to the Worker and its Coolify app was deleted on 2026-10-19.
 
 `docker-compose-prod.yaml` pins the legacy digests for the stopped Compose
 rollback resource and must not track a tag.
@@ -123,12 +120,12 @@ rollback resource and must not track a tag.
 | `REDIS_URL` | — | Redis connection URL |
 | `CHESS_DB_FILE` | `/app/data/chess.db` | SQLite database path |
 
-### Client
+### Local client proxy (`client/server.mjs`, tests only)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `80` | Client listen port |
-| `BACKEND_URL` | `http://server:3514` | Backend URL for proxying |
+| `PORT` | `80` | Listen port |
+| `BACKEND_URL` | `http://127.0.0.1:3514` | API the proxy forwards `/trpc` to |
 
 ## Local development with Docker
 
@@ -136,31 +133,27 @@ rollback resource and must not track a tag.
 docker-compose up
 ```
 
-Starts Redis, server, and client. Access at `http://localhost:80`.
+Starts Redis and the server on `127.0.0.1:3514`. Run `pnpm dev:client` for the
+UI; Vite proxies `/trpc` to that port.
 
 For dev without Docker: `npm run dev` starts Redis via docker-compose, the server with tsx watch, and Vite dev server with proxy.
 
 ## Current runtime (since 2026-10-06)
 
-Production runs as three Coolify resources in the chess project:
+Production runs as two Coolify resources in the chess project, plus the
+Cloudflare Worker for the web client:
 
 - `chess-server` Docker Image app `ej88smq0caxwc4fecndnexuz`: route
   `https://chess.trebeljahr.com/trpc` (strip prefix off), network alias
   `chess-api`, health `/health`, mounts the original SQLite volume
   `jzolhn29j9n0c3yhu4jmjezp_chess-data` at `/app/data`.
-- `chess-client` Docker Image app `hdnhx1xkzmfp5hx2xucdptw8`: route
-  `https://chess.trebeljahr.com`, health `/healthz`, shared asset volume
-  `chess-client-assets` at `/app/assets`, `BACKEND_URL=http://chess-api:3514`,
-  `BACKEND_HEALTH_REQUIRED=false`. Traefik already health-checks the API route,
-  so client readiness covers only HTML and assets. With the check on, a draining
-  API replica behind the shared alias withdrew the only client replica (measured
-  12 s of `/` 503 per server release on 2026-10-06).
 - `chess-redis` database `hz02e2cn68c2tky575ow4rdi` (pub/sub only).
 
 Traefik sends `/trpc` HTTP and WebSocket traffic straight to healthy server
 containers. The server releases through CI (see "Server release"). The web
-client is the Cloudflare Worker below; `chess-client` keeps running without a
-route as its rollback target until it is retired.
+client is the Cloudflare Worker below. The Coolify app `chess-client` served it
+until 2026-10-18 and was deleted on 2026-10-19; its volume `chess-client-assets`
+(old hashed bundles, no user data) was kept.
 
 The stopped Compose app `jzolhn29j9n0c3yhu4jmjezp` is the rollback resource,
 pinned to Git commit `a09ce7ef8dc27ca35656521b61b8e1daddf2f8d4`, whose Compose file
@@ -223,7 +216,6 @@ Rollback:
 
 - One client release: `npx wrangler versions deploy <previous id>@100% --name chess-app-client`
   (version ids by commit tag: `npx wrangler versions list --name chess-app-client`).
-- The whole move: delete the `chess.trebeljahr.com/*` route first; Traefik and the
-  `chess-client` Coolify app answer again within seconds. Then the two
-  no-Worker routes, then `hatchkit cloudflare https remove chess.trebeljahr.com`.
-  This works only while the Coolify client still runs.
+- The whole move cannot be undone by deleting the `chess.trebeljahr.com/*` route
+  any more: with `chess-client` deleted, Traefik has no router for `/` and answers
+  503. Going back would mean a new client image app first.
