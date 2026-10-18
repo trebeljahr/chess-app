@@ -22,7 +22,7 @@
     "lint": "biome lint .",
     "check": "biome check --write .",
     "prepare": "husky",
-    "test:security": "tsx --test tests/auth-limit.test.ts tests/password.test.ts",
+    "test:security": "tsx --test tests/auth-limit.test.ts tests/password.test.ts tests/login-timing.test.ts",
     "test:game": "tsx --test tests/game-history.test.ts tests/game-storage.test.ts",
     "test:rolling": "node --import tsx --test tests/rolling-live.test.mjs tests/game-version.test.ts tests/client-assets.test.mjs tests/client-runtime.test.mjs",
     "backup:status": "hatchkit backup status --project chess-app",

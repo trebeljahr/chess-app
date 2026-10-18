@@ -81,6 +81,9 @@ const messageSchema = slugSchema.extend({
   text: z.string().trim().min(1).max(300),
 });
 
+// Unknown usernames are checked against this, so a miss costs as much as a wrong password.
+const MISSING_USER_HASH = "$2b$12$UQhLmguzSaBoMMQKcmxQuOC3W3xG3UoCEOuTXKrTKnGIFsMI7AUPq";
+
 function requireResponse(res: unknown): asserts res is NonNullable<typeof res> {
   if (!res) {
     throw new TRPCError({
@@ -212,8 +215,9 @@ export const appRouter = router({
       requireResponse(ctx.res);
 
       const user = findUserByUsername(input.username);
+      const valid = await compare(input.password, user?.passwordHash ?? MISSING_USER_HASH);
 
-      if (!user || !(await compare(input.password, user.passwordHash))) {
+      if (!user || !valid) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Invalid username or password.",
