@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { compareSync, hashSync } from "bcryptjs";
+import { compare, hash } from "bcrypt";
 import { z } from "zod";
 import {
   acceptDraw,
@@ -191,8 +191,12 @@ export const appRouter = router({
         }
         return profile;
       }),
-    register: authProcedure.input(authSchema).mutation(({ input, ctx }) => {
+    register: authProcedure.input(authSchema).mutation(async ({ input, ctx }) => {
       requireResponse(ctx.res);
+
+      // Native bcrypt hashes on the libuv pool, so other sockets keep running.
+      // Check the name after the await: nothing can interleave from here to the insert.
+      const passwordHash = await hash(input.password, 12);
 
       if (findUserByUsername(input.username)) {
         throw new TRPCError({
@@ -204,7 +208,7 @@ export const appRouter = router({
       const user = {
         id: crypto.randomUUID(),
         username: input.username,
-        passwordHash: hashSync(input.password, 12),
+        passwordHash,
         createdAt: Date.now(),
       };
 
@@ -219,12 +223,12 @@ export const appRouter = router({
         username: user.username,
       };
     }),
-    login: authProcedure.input(authSchema).mutation(({ input, ctx }) => {
+    login: authProcedure.input(authSchema).mutation(async ({ input, ctx }) => {
       requireResponse(ctx.res);
 
       const user = findUserByUsername(input.username);
 
-      if (!user || !compareSync(input.password, user.passwordHash)) {
+      if (!user || !(await compare(input.password, user.passwordHash))) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Invalid username or password.",

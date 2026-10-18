@@ -22,7 +22,7 @@
     "lint": "biome lint .",
     "check": "biome check --write .",
     "prepare": "husky",
-    "test:security": "tsx --test tests/auth-limit.test.ts",
+    "test:security": "tsx --test tests/auth-limit.test.ts tests/password.test.ts",
     "test:rolling": "node --import tsx --test tests/rolling-live.test.mjs tests/game-version.test.ts tests/client-assets.test.mjs tests/client-runtime.test.mjs",
     "backup:status": "hatchkit backup status --project chess-app",
     "backup:list": "hatchkit backup snapshots --project chess-app",
@@ -33,7 +33,7 @@
     "@trpc/client": "^11.19.0",
     "@trpc/react-query": "^11.19.0",
     "@trpc/server": "^11.19.0",
-    "bcryptjs": "^3.0.3",
+    "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.11.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -53,6 +53,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",
     "@tailwindcss/vite": "^4.3.3",
+    "@types/bcrypt": "^6.0.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/cookie": "^0.6.0",
     "@types/express": "^5.0.6",
@@ -77,6 +78,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@biomejs/biome",
+      "bcrypt",
       "better-sqlite3",
       "esbuild"
     ],
