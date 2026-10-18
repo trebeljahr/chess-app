@@ -33,7 +33,7 @@ import {
   insertGame,
   insertSession,
   insertUser,
-  listGames,
+  listGameSummaries,
   recordGameResult,
   removeGame,
   updateGame,
@@ -110,21 +110,6 @@ function createUniqueSlug(name: string): string {
   const base = slugify(name) || "game";
   const suffix = crypto.randomUUID().slice(0, 6);
   return `${base}-${suffix}`;
-}
-
-function toLobbySummary(game: NonNullable<ReturnType<typeof findGameBySlug>>) {
-  const state = game.state;
-
-  return {
-    id: game.id,
-    slug: game.slug,
-    name: game.name,
-    createdAt: game.createdAt,
-    updatedAt: game.updatedAt,
-    archived: state.archived,
-    users: state.users,
-    moveCount: state.moveHistory.length - 1,
-  };
 }
 
 function saveGameState(
@@ -256,11 +241,7 @@ export const appRouter = router({
     }),
   }),
   lobby: router({
-    list: protectedProcedure.query(() => {
-      return listGames()
-        .map(toLobbySummary)
-        .sort((left, right) => right.updatedAt - left.updatedAt);
-    }),
+    list: protectedProcedure.query(() => listGameSummaries()),
     create: protectedProcedure.input(createGameSchema).mutation(({ input, ctx }) => {
       const slug = createUniqueSlug(input.name);
       const timePresets: Record<string, [number, number]> = {

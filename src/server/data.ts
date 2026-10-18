@@ -1,5 +1,5 @@
-import { and, eq, sql } from "drizzle-orm";
-import { normalizeGameState } from "../shared/chess.js";
+import { and, desc, eq, sql } from "drizzle-orm";
+import { type GameUser, normalizeGameState } from "../shared/chess.js";
 import { db } from "./db.js";
 import { type GameRecord, games, sessions, type UserRecord, users } from "./schema.js";
 
@@ -23,8 +23,28 @@ export function deleteSession(sessionId: string): void {
   db.delete(sessions).where(eq(sessions.id, sessionId)).run();
 }
 
-export function listGames(): GameRecord[] {
-  return db.select().from(games).all();
+/** Lobby rows, newest first. Only the three state fields the lobby shows leave SQLite. */
+export function listGameSummaries() {
+  return db
+    .select({
+      id: games.id,
+      slug: games.slug,
+      name: games.name,
+      createdAt: games.createdAt,
+      updatedAt: games.updatedAt,
+      archived: sql<number>`json_extract(${games.state}, '$.archived')`,
+      users: sql<string>`json_extract(${games.state}, '$.users')`,
+      historyLength: sql<number>`json_array_length(${games.state}, '$.moveHistory')`,
+    })
+    .from(games)
+    .orderBy(desc(games.updatedAt))
+    .all()
+    .map(({ archived, users, historyLength, ...game }) => ({
+      ...game,
+      archived: archived === 1,
+      users: JSON.parse(users) as GameUser[],
+      moveCount: historyLength - 1,
+    }));
 }
 
 export function findGameBySlug(slug: string): GameRecord | null {
