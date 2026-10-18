@@ -13,7 +13,34 @@ const port = Number(process.env.PORT ?? 0);
 const host = process.env.HOST ?? "127.0.0.1";
 const app = express();
 let draining = false;
+let drainingSince = 0;
 const DRAIN_MS = 20_000;
+// Traefik's own health check fails only after this grace: it drops a
+// container on ONE failed check, and Coolify stops this one as soon as Docker
+// calls the new one healthy, which Traefik can take 2 s more to add.
+const PROXY_GRACE_MS = Math.min(4000, DRAIN_MS / 4);
+
+// Traefik's drain probe — ahead of every route, so a request that arrives
+// every few seconds skips the realtime probe. It reports only whether this
+// container is draining; readiness is /health, which Docker runs. Traefik
+// sends it straight to this container with an X-Hatchkit-Drain header; a
+// visitor's request is forwarded by Traefik, which always adds
+// X-Forwarded-For, so a visitor can't pose as it.
+app.use((req, res, next) => {
+  if (
+    req.headers["x-hatchkit-drain"] === undefined ||
+    req.headers["x-forwarded-for"] !== undefined
+  ) {
+    next();
+    return;
+  }
+  const failing = draining && Date.now() - drainingSince >= PROXY_GRACE_MS;
+  res
+    .status(failing ? 503 : 200)
+    .set("cache-control", "no-store")
+    .type("text/plain")
+    .send(failing ? "draining\n" : "serving\n");
+});
 
 app.get("/health", async (_req, res) => {
   const redis = getRedisClient();
@@ -65,6 +92,7 @@ server.listen(port, host, () => {
 function shutdown() {
   if (draining) return;
   draining = true;
+  drainingSince = Date.now();
   const deadline = setTimeout(() => {
     for (const socket of wss.clients) socket.terminate();
     server.closeAllConnections();
