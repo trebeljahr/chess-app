@@ -832,12 +832,22 @@ function halfMoveClockAt(moveHistory: MoveHistoryEntry[]): number {
   return clock;
 }
 
-function isThreefoldRepetition(positionHistory: string[], currentHash: string): boolean {
-  let count = 0;
+/**
+ * True once the current position has occurred three times. positionHistory
+ * already ends with currentHash but never holds the start position, so that
+ * occurrence comes from isStartPosition. Counting here instead of storing the
+ * start hash keeps positionHistory as the previous release writes it.
+ */
+function isThreefoldRepetition(
+  positionHistory: string[],
+  currentHash: string,
+  isStartPosition: boolean,
+): boolean {
+  let count = isStartPosition ? 1 : 0;
   for (const h of positionHistory) {
     if (h === currentHash) {
       count += 1;
-      if (count >= 2) return true; // current position is the 3rd occurrence
+      if (count >= 3) return true;
     }
   }
   return false;
@@ -899,9 +909,12 @@ function finalizeCommittedMove(
   // Position tracking for threefold repetition
   const posHash = boardPositionHash(threatenedBoard, nextTurn);
   const positionHistory = [...state.positionHistory, posHash];
+  const key = boardKey(threatenedBoard, nextTurn);
+  // boardHistory[0] is the start position; its key holds the same pieces and side as posHash.
+  const isStartPosition = key === state.boardHistory[0];
 
   state.board = threatenedBoard;
-  state.boardHistory = [...state.boardHistory, boardKey(threatenedBoard, nextTurn)];
+  state.boardHistory = [...state.boardHistory, key];
   state.turn = nextTurn;
   state.check = checkForCheck(threatenedBoard, nextTurn);
   state.checkmate = checkForCheckMate(threatenedBoard, nextTurn, moveHistory);
@@ -914,7 +927,7 @@ function finalizeCommittedMove(
   let drawReason: DrawReason = null;
   if (noMoves && !state.check) {
     drawReason = "stalemate";
-  } else if (isThreefoldRepetition(state.positionHistory, posHash)) {
+  } else if (isThreefoldRepetition(state.positionHistory, posHash, isStartPosition)) {
     drawReason = "threefold-repetition";
   } else if (halfMoveClock >= 100) {
     drawReason = "fifty-move-rule";

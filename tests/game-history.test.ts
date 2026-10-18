@@ -40,6 +40,14 @@ const PROMOTION = [
 
 type Line = ReadonlyArray<readonly [string, string]>;
 
+// Both knights out and back: four plies that return to the position they started from.
+const KNIGHT_SHUFFLE: Line = [
+  ["G1", "F3"],
+  ["G8", "F6"],
+  ["F3", "G1"],
+  ["F6", "G8"],
+];
+
 function newGame() {
   const state = addPlayerToGame(createDefaultGameState(), {
     userId: "w",
@@ -55,6 +63,16 @@ function playLine(start: GameState, line: Line) {
     state = executeMove(state, state.turn === "white" ? "w" : "b", from, to).state;
   }
   return state;
+}
+
+/** The 1-based ply of the line that ended the game, with its draw reason; null if none did. */
+function gameEnd(start: GameState, line: Line) {
+  let state = start;
+  for (const [index, move] of line.entries()) {
+    state = playLine(state, [move]);
+    if (state.archived) return { ply: index + 1, drawReason: state.drawReason };
+  }
+  return null;
 }
 
 function play(count: number) {
@@ -127,6 +145,36 @@ test("undo leaves repetition and fifty-move state as if the move was never playe
     assert.equal(replayed.remis, false, `${name}: replay is no draw`);
     assert.deepEqual(comparable(replayed), comparable(played), `${name}: replayed state`);
   }
+});
+
+test("a repeated position draws on its third occurrence, not its second", () => {
+  // Ply 5 repeats the position after ply 1 for the first time.
+  assert.equal(gameEnd(newGame(), [...KNIGHT_SHUFFLE, KNIGHT_SHUFFLE[0]]), null);
+
+  // After 1.e4 the knights shuffle, so the position after e4 recurs at plies 5 and 9.
+  const afterE4: Line = [
+    ["E2", "E4"],
+    ["G8", "F6"],
+    ["G1", "F3"],
+    ["F6", "G8"],
+    ["F3", "G1"],
+    ["G8", "F6"],
+    ["G1", "F3"],
+    ["F6", "G8"],
+    ["F3", "G1"],
+  ];
+  assert.deepEqual(gameEnd(newGame(), afterE4), { ply: 9, drawReason: "threefold-repetition" });
+});
+
+test("the start position counts as its first occurrence", () => {
+  // The start position recurs at plies 4 and 8; the position after ply 1 would need ply 9.
+  const line = [...KNIGHT_SHUFFLE, ...KNIGHT_SHUFFLE, KNIGHT_SHUFFLE[0]];
+  assert.deepEqual(gameEnd(newGame(), line), { ply: 8, drawReason: "threefold-repetition" });
+
+  // Taking back ply 4, the first return to the start, removes that occurrence again.
+  const undone = handleUndo(proposeUndo(playLine(newGame(), line.slice(0, 4)), "w"), "b");
+  assert.equal(undone.positionHistory.length, 3);
+  assert.deepEqual(gameEnd(undone, line.slice(3)), { ply: 5, drawReason: "threefold-repetition" });
 });
 
 test("legacy full boards fold into keys", () => {
