@@ -603,28 +603,38 @@ export function revertUndoProposal(state: GameState, userId: string): GameState 
 export function handleUndo(state: GameState, userId: string): GameState {
   const user = state.users.find((item) => item.userId === userId);
   const lastMove = getLastMove(state.moveHistory);
+  // Entries kept after the undo. A pending promotion is already in moveHistory
+  // but has no key or position hash yet, so boardHistory is one shorter then.
+  const kept = state.moveHistory.length - 1;
+  const previousKey = state.boardHistory[kept - 1];
 
   if (
     !user ||
     user.color === "none" ||
     !lastMove ||
     state.offerTakeback !== invertColor(user.color) ||
-    state.boardHistory.length < 2
+    !previousKey
   ) {
     return state;
   }
 
-  const previousBoard = boardFromKey(state.boardHistory[state.boardHistory.length - 2]);
-  const previousTurn = invertColor(state.turn);
+  const undone = state.moveHistory[kept];
+  const previousTurn = keyTurn(previousKey);
   const nextState = cloneState(state);
 
-  nextState.board = refreshThreats(previousBoard, previousTurn);
+  nextState.board = refreshThreats(boardFromKey(previousKey), previousTurn);
   nextState.turn = previousTurn;
-  nextState.moveHistory = nextState.moveHistory.slice(0, -1);
-  nextState.boardHistory = nextState.boardHistory.slice(0, -1);
+  nextState.moveHistory = nextState.moveHistory.slice(0, kept);
+  nextState.boardHistory = nextState.boardHistory.slice(0, kept);
+  // Only completed moves add a position hash; start, forfeit and draw entries do not.
+  if (!("kind" in undone) && state.boardHistory.length > kept) {
+    nextState.positionHistory = nextState.positionHistory.slice(0, -1);
+  }
+  nextState.halfMoveClock = halfMoveClockAt(nextState.moveHistory);
   nextState.check = checkForCheck(nextState.board, previousTurn);
   nextState.checkmate = false;
   nextState.remis = false;
+  nextState.drawReason = null;
   nextState.offerTakeback = false;
   nextState.baseLinePawn = false;
   nextState.movePart = 0;
@@ -802,6 +812,26 @@ export function normalizeGameState(state: GameState): GameState {
   };
 }
 
+/** Pawn moves and captures reset the fifty-move counter. */
+function resetsHalfMoveClock(move: ChessMove): boolean {
+  return move.figure.type === "pawn" || move.secondFigure !== "noFigure";
+}
+
+/**
+ * The halfMoveClock after the last entry, counted from the history alone, so
+ * undo needs nothing stored per entry and works on rows of any age.
+ */
+function halfMoveClockAt(moveHistory: MoveHistoryEntry[]): number {
+  let clock = 0;
+  for (let index = moveHistory.length - 1; index >= 0; index -= 1) {
+    const entry = moveHistory[index];
+    if ("kind" in entry) continue;
+    if (resetsHalfMoveClock(entry)) break;
+    clock += 1;
+  }
+  return clock;
+}
+
 function isThreefoldRepetition(positionHistory: string[], currentHash: string): boolean {
   let count = 0;
   for (const h of positionHistory) {
@@ -863,9 +893,8 @@ function finalizeCommittedMove(
 
   // Get the last move for half-move clock
   const lastEntry = moveHistory[moveHistory.length - 1];
-  const wasPawnMove = !("kind" in lastEntry) && lastEntry.figure.type === "pawn";
-  const wasCapture = !("kind" in lastEntry) && lastEntry.secondFigure !== "noFigure";
-  const halfMoveClock = wasPawnMove || wasCapture ? 0 : state.halfMoveClock + 1;
+  const resets = !("kind" in lastEntry) && resetsHalfMoveClock(lastEntry);
+  const halfMoveClock = resets ? 0 : state.halfMoveClock + 1;
 
   // Position tracking for threefold repetition
   const posHash = boardPositionHash(threatenedBoard, nextTurn);

@@ -25,9 +25,40 @@ const MOVES = [
   ["F6", "E4"],
 ] as const;
 
+// White's h-pawn takes on g5 and h7, then takes the g8 knight and waits for a piece.
+const PROMOTION = [
+  ["H2", "H4"],
+  ["G7", "G5"],
+  ["H4", "G5"],
+  ["A7", "A6"],
+  ["G5", "G6"],
+  ["A6", "A5"],
+  ["G6", "H7"],
+  ["A5", "A4"],
+  ["H7", "G8"],
+] as const;
+
+type Line = ReadonlyArray<readonly [string, string]>;
+
+function newGame() {
+  const state = addPlayerToGame(createDefaultGameState(), {
+    userId: "w",
+    name: "W",
+    color: "white",
+  });
+  return addPlayerToGame(state, { userId: "b", name: "B", color: "black" });
+}
+
+function playLine(start: GameState, line: Line) {
+  let state = start;
+  for (const [from, to] of line) {
+    state = executeMove(state, state.turn === "white" ? "w" : "b", from, to).state;
+  }
+  return state;
+}
+
 function play(count: number) {
-  let state = addPlayerToGame(createDefaultGameState(), { userId: "w", name: "W", color: "white" });
-  state = addPlayerToGame(state, { userId: "b", name: "B", color: "black" });
+  let state = newGame();
   // The board stored after each history entry, as releases before boardHistory kept it.
   const boards: Board[] = [structuredClone(state.board)];
   for (const [from, to] of MOVES.slice(0, count)) {
@@ -64,6 +95,38 @@ test("undo restores the previous board from its key", () => {
   assert.equal(undone.turn, "white");
   assert.equal(undone.boardHistory.length, 7);
   assert.equal(undone.moveHistory.length, 7);
+});
+
+test("undo leaves repetition and fifty-move state as if the move was never played", () => {
+  const lines: Record<string, Line> = {
+    // A stale hash of the undone position made replaying this move a repetition.
+    "quiet move": [
+      ["G1", "F3"],
+      ["G8", "F6"],
+      ["F3", "G1"],
+    ],
+    // The capture had reset the fifty-move counter from 5 to 0.
+    capture: MOVES,
+    // The promoting move has no key or position hash yet.
+    "pending promotion": PROMOTION,
+  };
+  const comparable = (state: GameState) => ({ ...state, timestamp: 0 });
+
+  for (const [name, line] of Object.entries(lines)) {
+    const start = newGame();
+    const played = playLine(start, line);
+    const neverPlayed = playLine(start, line.slice(0, -1));
+    const undone = handleUndo(proposeUndo(played, "w"), "b");
+
+    assert.equal(undone.halfMoveClock, neverPlayed.halfMoveClock, `${name}: halfMoveClock`);
+    assert.deepEqual(undone.positionHistory, neverPlayed.positionHistory, `${name}: positions`);
+    assert.deepEqual(comparable(undone), comparable(neverPlayed), `${name}: undone state`);
+
+    // Playing the move again is not a repetition of itself.
+    const replayed = playLine(undone, line.slice(-1));
+    assert.equal(replayed.remis, false, `${name}: replay is no draw`);
+    assert.deepEqual(comparable(replayed), comparable(played), `${name}: replayed state`);
+  }
 });
 
 test("legacy full boards fold into keys", () => {
