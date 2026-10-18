@@ -1,4 +1,5 @@
 import { and, eq, sql } from "drizzle-orm";
+import { normalizeGameState } from "../shared/chess.js";
 import { db } from "./db.js";
 import { type GameRecord, games, sessions, type UserRecord, users } from "./schema.js";
 
@@ -27,7 +28,8 @@ export function listGames(): GameRecord[] {
 }
 
 export function findGameBySlug(slug: string): GameRecord | null {
-  return db.select().from(games).where(eq(games.slug, slug)).all()[0] ?? null;
+  const game = db.select().from(games).where(eq(games.slug, slug)).all()[0];
+  return game ? { ...game, state: normalizeGameState(game.state) } : null;
 }
 
 export function insertGame(game: typeof games.$inferInsert): void {

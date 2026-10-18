@@ -49,6 +49,12 @@ rolling releases may overlap only while both sides preserve this contract and
 have compatible schema and client protocols. Do not retry ambiguous mutations
 blindly; fetch the current game state before a user retries.
 
+Game state stores one compact `boardHistory` key per move. Releases before it
+stored full boards in `oldBoards`; new writes keep that array empty so such a
+release can still overlap or be rolled back to, and reads fold any boards it
+appends back into keys. Drop the empty array only once no such image can run
+against the volume.
+
 Redis Pub/Sub carries snapshot invalidations, not durable game state. On initial
 subscription and after either Redis connection recovers, the server emits a
 snapshot-required event. The client refetches the authoritative SQLite state.

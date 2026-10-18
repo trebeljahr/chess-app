@@ -13,7 +13,7 @@ import {
   Send,
   UserPlus,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PieceArt } from "../../components/piece-art";
 import { Badge } from "../../components/ui/badge";
@@ -41,6 +41,7 @@ import {
   type DrawReason,
   formatMove,
   getCapturedPieces,
+  getHistoryBoard,
   invertColor,
   type MoveHistoryEntry,
   type Piece,
@@ -193,12 +194,12 @@ export function GamePage({ user }: GamePageProps) {
 
   // Build a view-only game state when scrubbing through history
   const gameData = gameQuery.data?.game;
-  const oldBoards = gameData?.oldBoards ?? [];
-  let displayBoard = gameData?.board;
-
-  if (viewIndex !== null && gameData) {
-    displayBoard = oldBoards[viewIndex] ?? gameData.board;
-  }
+  // Decode a history key once per position so the board keeps its identity across renders.
+  const historyBoard = useMemo(
+    () => (viewIndex !== null && gameData ? getHistoryBoard(gameData, viewIndex) : undefined),
+    [gameData, viewIndex],
+  );
+  const displayBoard = historyBoard ?? gameData?.board;
 
   const displayState = gameData
     ? { ...gameData, board: displayBoard ?? gameData.board }

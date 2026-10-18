@@ -94,6 +94,13 @@ export interface GameState {
   baseLinePawn: false | Position;
   users: GameUser[];
   archived: boolean;
+  /** One key per moveHistory entry: the board after it, see boardKey(). */
+  boardHistory: string[];
+  /**
+   * Full boards written by releases before boardHistory. New states keep it
+   * empty, so an overlapping older replica still finds an array to append to;
+   * normalizeGameState() folds anything found here into boardHistory.
+   */
   oldBoards: Board[];
   timestamp: number;
   messages: GameMessage[];
@@ -127,7 +134,8 @@ export function createDefaultGameState(): GameState {
     baseLinePawn: false,
     users: [],
     archived: false,
-    oldBoards: [cloneBoard(board)],
+    boardHistory: [boardKey(board, "white")],
+    oldBoards: [],
     timeControl: { type: "untimed" },
     clock: null,
     timestamp: Date.now(),
@@ -514,7 +522,7 @@ export function forfeitGame(state: GameState, userId: string): GameState {
 
   const nextState = cloneState(state);
   nextState.moveHistory = [...nextState.moveHistory, { kind: "forfeit", color: user.color }];
-  nextState.oldBoards = [...nextState.oldBoards, cloneBoard(nextState.board)];
+  nextState.boardHistory = [...nextState.boardHistory, boardKey(nextState.board, nextState.turn)];
   nextState.archived = true;
   nextState.timestamp = Date.now();
   return nextState;
@@ -538,7 +546,7 @@ export function acceptDraw(state: GameState, userId: string): GameState {
 
   const nextState = cloneState(state);
   nextState.moveHistory = [...nextState.moveHistory, { kind: "draw" }];
-  nextState.oldBoards = [...nextState.oldBoards, cloneBoard(nextState.board)];
+  nextState.boardHistory = [...nextState.boardHistory, boardKey(nextState.board, nextState.turn)];
   nextState.remis = true;
   nextState.drawReason = "agreement";
   nextState.archived = true;
@@ -601,19 +609,19 @@ export function handleUndo(state: GameState, userId: string): GameState {
     user.color === "none" ||
     !lastMove ||
     state.offerTakeback !== invertColor(user.color) ||
-    state.oldBoards.length < 2
+    state.boardHistory.length < 2
   ) {
     return state;
   }
 
-  const previousBoard = cloneBoard(state.oldBoards[state.oldBoards.length - 2]);
+  const previousBoard = boardFromKey(state.boardHistory[state.boardHistory.length - 2]);
   const previousTurn = invertColor(state.turn);
   const nextState = cloneState(state);
 
   nextState.board = refreshThreats(previousBoard, previousTurn);
   nextState.turn = previousTurn;
   nextState.moveHistory = nextState.moveHistory.slice(0, -1);
-  nextState.oldBoards = nextState.oldBoards.slice(0, -1);
+  nextState.boardHistory = nextState.boardHistory.slice(0, -1);
   nextState.check = checkForCheck(nextState.board, previousTurn);
   nextState.checkmate = false;
   nextState.remis = false;
@@ -681,6 +689,117 @@ function boardPositionHash(board: Board, turn: PieceColor): string {
     }
   }
   return hash;
+}
+
+const KEY_LETTERS: Record<PieceType, string> = {
+  pawn: "p",
+  knight: "n",
+  bishop: "b",
+  rook: "r",
+  queen: "q",
+  king: "k",
+};
+
+const KEY_TYPES = Object.fromEntries(
+  Object.entries(KEY_LETTERS).map(([type, letter]) => [letter, type as PieceType]),
+);
+
+/**
+ * FEN piece placement plus side to move, e.g. "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w".
+ * At most 73 bytes, against roughly 9 KB for the serialized board.
+ */
+function boardKey(board: Board, turn: PieceColor): string {
+  const ranks: string[] = [];
+
+  for (let row = 0; row < BOARD_SIZE; row += 1) {
+    let rank = "";
+    let empty = 0;
+
+    for (let col = 0; col < BOARD_SIZE; col += 1) {
+      const fig = board[row][col].figure;
+
+      if (!isPiece(fig)) {
+        empty += 1;
+        continue;
+      }
+
+      if (empty) {
+        rank += empty;
+        empty = 0;
+      }
+
+      const letter = KEY_LETTERS[fig.type];
+      rank += fig.color === "white" ? letter.toUpperCase() : letter;
+    }
+
+    ranks.push(empty ? rank + empty : rank);
+  }
+
+  return `${ranks.join("/")} ${turn[0]}`;
+}
+
+/** Rebuilds the pieces of a boardKey(); threat markers are left to the caller. */
+function boardFromKey(key: string): Board {
+  const figures: Figure[][] = key
+    .split(" ")[0]
+    .split("/")
+    .map((rank) =>
+      [...rank].flatMap((char): Figure[] => {
+        const type = KEY_TYPES[char.toLowerCase()];
+        if (!type) return Array<Figure>(Number(char)).fill("noFigure");
+        return [{ color: char === char.toLowerCase() ? "black" : "white", type }];
+      }),
+    );
+
+  return generateBoard((col, row) => figures[row][col]);
+}
+
+function keyTurn(key: string): PieceColor {
+  return key.endsWith(" b") ? "black" : "white";
+}
+
+/** The board after moveHistory[index], as the client shows it when scrubbing. */
+export function getHistoryBoard(state: GameState, index: number): Board | undefined {
+  // An older replica may still serve a state without boardHistory.
+  const keys = state.boardHistory ?? [];
+
+  if (index >= keys.length) {
+    return state.oldBoards?.[index - keys.length];
+  }
+
+  const key = keys[index];
+  return createTilesUnderThreat(boardFromKey(key), invertColor(keyTurn(key)));
+}
+
+/**
+ * Moves full boards from oldBoards into boardHistory. Covers rows written
+ * before boardHistory existed and boards an older replica appended during a
+ * rolling deploy; either way boardHistory then oldBoards is the whole history.
+ */
+export function normalizeGameState(state: GameState): GameState {
+  const legacy = state.oldBoards ?? [];
+  const keys = state.boardHistory ?? [];
+
+  if (!legacy.length && state.boardHistory) {
+    return state;
+  }
+
+  // Only completed moves flip the turn; start, forfeit and draw entries keep it.
+  const turns: PieceColor[] = [];
+  let turn: PieceColor = "white";
+  for (const [index, entry] of state.moveHistory.entries()) {
+    if (index > 0 && !("kind" in entry)) turn = invertColor(turn);
+    turns.push(turn);
+  }
+
+  return {
+    ...state,
+    boardHistory: [
+      ...keys,
+      ...legacy.map((board, i) => boardKey(board, turns[keys.length + i] ?? state.turn)),
+    ],
+    oldBoards: [],
+  };
 }
 
 function isThreefoldRepetition(positionHistory: string[], currentHash: string): boolean {
@@ -753,7 +872,7 @@ function finalizeCommittedMove(
   const positionHistory = [...state.positionHistory, posHash];
 
   state.board = threatenedBoard;
-  state.oldBoards = [...state.oldBoards, cloneBoard(threatenedBoard)];
+  state.boardHistory = [...state.boardHistory, boardKey(threatenedBoard, nextTurn)];
   state.turn = nextTurn;
   state.check = checkForCheck(threatenedBoard, nextTurn);
   state.checkmate = checkForCheckMate(threatenedBoard, nextTurn, moveHistory);
@@ -851,7 +970,7 @@ function validateMove(board: Board, row: number, col: number): boolean {
   return board[row][col].valid === "valid";
 }
 
-function generateBoard(): Board {
+function generateBoard(figureAt: (col: number, row: number) => Figure = generateFigure): Board {
   const board: Board = [];
 
   for (let row = 0; row < BOARD_SIZE; row += 1) {
@@ -866,7 +985,7 @@ function generateBoard(): Board {
         selected: "",
         rochade: "",
         enpassen: "",
-        figure: generateFigure(col, row),
+        figure: figureAt(col, row),
       });
     }
   }
