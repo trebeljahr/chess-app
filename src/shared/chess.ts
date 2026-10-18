@@ -833,24 +833,81 @@ function halfMoveClockAt(moveHistory: MoveHistoryEntry[]): number {
 }
 
 /**
- * True once the current position has occurred three times. positionHistory
- * already ends with currentHash but never holds the start position, so that
- * occurrence comes from isStartPosition. Counting here instead of storing the
- * start hash keeps positionHistory as the previous release writes it.
+ * What FIDE compares besides the pieces and the side to move, in FEN notation:
+ * castling rights as the engine tracks them (king and rook unmoved, rook still
+ * on its corner) and the en-passant square, only if a capture there is legal.
+ * history ends with the entry that produced board.
+ */
+function repetitionRights(board: Board, turn: PieceColor, history: MoveHistoryEntry[]): string {
+  let castling = "";
+  for (const color of ["white", "black"] as const) {
+    if (checkForMovedKing(history, color)) continue;
+    const row = color === "white" ? BOARD_SIZE - 1 : 0;
+    const rights =
+      (hasRookOn(board, row, 7, color) && !checkForMovedRightRook(history, color) ? "K" : "") +
+      (hasRookOn(board, row, 0, color) && !checkForMovedLeftRook(history, color) ? "Q" : "");
+    castling += color === "white" ? rights : rights.toLowerCase();
+  }
+
+  let enPassant = "-";
+  const last = history.at(-1);
+  const doublePush =
+    last &&
+    !("kind" in last) &&
+    last.figure.type === "pawn" &&
+    Math.abs(last.oldPos.row - last.newPos.row) === 2;
+  if (doublePush) {
+    const target = { row: (last.oldPos.row + last.newPos.row) / 2, col: last.oldPos.col };
+    const marked = removeMarkers(cloneBoard(board), ["valid", "enpassen"]);
+    for (const col of [last.newPos.col - 1, last.newPos.col + 1]) {
+      const figure = isInsideBoard(last.newPos.row, col) && marked[last.newPos.row][col].figure;
+      if (figure && isPiece(figure) && figure.type === "pawn" && figure.color === turn) {
+        enPassenMove(marked, last.newPos.row, col, history, turn);
+      }
+    }
+    if (marked[target.row][target.col].enpassen) enPassant = fieldName(target);
+  }
+
+  return `${castling || "-"} ${enPassant}`;
+}
+
+function hasRookOn(board: Board, row: number, col: number, color: PieceColor): boolean {
+  const figure = board[row][col].figure;
+  return isPiece(figure) && figure.type === "rook" && figure.color === color;
+}
+
+/**
+ * True once the current position, the last boardHistory key, has occurred
+ * three times. A position repeats when its key and repetitionRights() match;
+ * only entries with the same key can match, so they share the current board.
+ *
+ * The count reads boardHistory, which holds one key per moveHistory entry with
+ * the start position at index 0. positionHistory is still written for the
+ * previous release, but older undo code left stale hashes in it.
  */
 function isThreefoldRepetition(
-  positionHistory: string[],
-  currentHash: string,
-  isStartPosition: boolean,
+  board: Board,
+  turn: PieceColor,
+  boardHistory: string[],
+  moveHistory: MoveHistoryEntry[],
 ): boolean {
-  let count = isStartPosition ? 1 : 0;
-  for (const h of positionHistory) {
-    if (h === currentHash) {
-      count += 1;
-      if (count >= 3) return true;
-    }
+  const current = boardHistory.length - 1;
+  // Normally 0; aligning from the end keeps recent entries paired if an older undo lost a key.
+  const offset = moveHistory.length - boardHistory.length;
+  const earlier: number[] = [];
+  for (let index = 0; index < current; index += 1) {
+    const entry = moveHistory[index + offset];
+    // Forfeit and draw entries repeat the key of the entry before them.
+    if (!entry || ("kind" in entry && entry.kind !== "start")) continue;
+    if (boardHistory[index] === boardHistory[current]) earlier.push(index + offset);
   }
-  return false;
+  if (earlier.length < 2) return false;
+
+  const rights = repetitionRights(board, turn, moveHistory);
+  const repeats = earlier.filter(
+    (index) => repetitionRights(board, turn, moveHistory.slice(0, index + 1)) === rights,
+  );
+  return repeats.length >= 2;
 }
 
 function hasInsufficientMaterial(board: Board): boolean {
@@ -906,15 +963,12 @@ function finalizeCommittedMove(
   const resets = !("kind" in lastEntry) && resetsHalfMoveClock(lastEntry);
   const halfMoveClock = resets ? 0 : state.halfMoveClock + 1;
 
-  // Position tracking for threefold repetition
+  // The previous release counts repetitions from positionHistory, so keep writing it.
   const posHash = boardPositionHash(threatenedBoard, nextTurn);
   const positionHistory = [...state.positionHistory, posHash];
-  const key = boardKey(threatenedBoard, nextTurn);
-  // boardHistory[0] is the start position; its key holds the same pieces and side as posHash.
-  const isStartPosition = key === state.boardHistory[0];
 
   state.board = threatenedBoard;
-  state.boardHistory = [...state.boardHistory, key];
+  state.boardHistory = [...state.boardHistory, boardKey(threatenedBoard, nextTurn)];
   state.turn = nextTurn;
   state.check = checkForCheck(threatenedBoard, nextTurn);
   state.checkmate = checkForCheckMate(threatenedBoard, nextTurn, moveHistory);
@@ -927,7 +981,7 @@ function finalizeCommittedMove(
   let drawReason: DrawReason = null;
   if (noMoves && !state.check) {
     drawReason = "stalemate";
-  } else if (isThreefoldRepetition(state.positionHistory, posHash, isStartPosition)) {
+  } else if (isThreefoldRepetition(threatenedBoard, nextTurn, state.boardHistory, moveHistory)) {
     drawReason = "threefold-repetition";
   } else if (halfMoveClock >= 100) {
     drawReason = "fifty-move-rule";

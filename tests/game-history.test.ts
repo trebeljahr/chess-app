@@ -48,6 +48,14 @@ const KNIGHT_SHUFFLE: Line = [
   ["F6", "G8"],
 ];
 
+// The same with the queen's knights.
+const QUEEN_KNIGHT_SHUFFLE: Line = [
+  ["B1", "C3"],
+  ["B8", "C6"],
+  ["C3", "B1"],
+  ["C6", "B8"],
+];
+
 function newGame() {
   const state = addPlayerToGame(createDefaultGameState(), {
     userId: "w",
@@ -175,6 +183,68 @@ test("the start position counts as its first occurrence", () => {
   const undone = handleUndo(proposeUndo(playLine(newGame(), line.slice(0, 4)), "w"), "b");
   assert.equal(undone.positionHistory.length, 3);
   assert.deepEqual(gameEnd(undone, line.slice(3)), { ply: 5, drawReason: "threefold-repetition" });
+});
+
+test("a position with castling rights differs from the same pieces without them", () => {
+  // 1.e4 e5 2.Ke2 Nc6 3.Ke1 Nb8: the pieces after ply 2 return at ply 6, but white can no longer castle.
+  const kingWalk: Line = [
+    ["E2", "E4"],
+    ["E7", "E5"],
+    ["E1", "E2"],
+    ["B8", "C6"],
+    ["E2", "E1"],
+    ["C6", "B8"],
+  ];
+  // The pieces recur at plies 10 and 14; only plies 6, 10 and 14 are the same position.
+  const king = [...kingWalk, ...KNIGHT_SHUFFLE, ...KNIGHT_SHUFFLE];
+  assert.equal(gameEnd(newGame(), king.slice(0, 10)), null);
+  assert.deepEqual(gameEnd(newGame(), king), { ply: 14, drawReason: "threefold-repetition" });
+
+  // Both h-rooks out and back restore the start pieces at ply 8, without kingside castling.
+  const rookWalk: Line = [
+    ["G1", "F3"],
+    ["G8", "F6"],
+    ["H1", "G1"],
+    ["H8", "G8"],
+    ["G1", "H1"],
+    ["G8", "H8"],
+    ["F3", "G1"],
+    ["F6", "G8"],
+  ];
+  const rook = [...rookWalk, ...QUEEN_KNIGHT_SHUFFLE, ...QUEEN_KNIGHT_SHUFFLE];
+  assert.equal(gameEnd(newGame(), rook.slice(0, 12)), null);
+  assert.deepEqual(gameEnd(newGame(), rook), { ply: 16, drawReason: "threefold-repetition" });
+});
+
+test("a position with an en-passant capture differs from the same pieces without it", () => {
+  // 1.e4 a6 2.e5 d5: white may take on d6 only now, so the pieces after ply 4 repeat at 8, 12 and 16.
+  const line: Line = [
+    ["E2", "E4"],
+    ["A7", "A6"],
+    ["E4", "E5"],
+    ["D7", "D5"],
+  ];
+  // Three different shuffles, so no position in between occurs three times.
+  const rimShuffle: Line = [
+    ["G1", "H3"],
+    ["G8", "H6"],
+    ["H3", "G1"],
+    ["H6", "G8"],
+  ];
+  const full = [...line, ...QUEEN_KNIGHT_SHUFFLE, ...KNIGHT_SHUFFLE, ...rimShuffle];
+  assert.equal(gameEnd(newGame(), full.slice(0, 12)), null);
+  assert.deepEqual(gameEnd(newGame(), full), { ply: 16, drawReason: "threefold-repetition" });
+});
+
+test("position hashes an older release kept after undo do not count", () => {
+  // The previous release undid a move without dropping its hash from positionHistory.
+  const played = playLine(newGame(), KNIGHT_SHUFFLE.slice(0, 3));
+  const undone = handleUndo(proposeUndo(played, "w"), "b");
+  const olderUndo = { ...undone, positionHistory: played.positionHistory };
+
+  // Ply 7 repeats the position after ply 3 for the first time; the stale hash would make it the third.
+  const line = [...KNIGHT_SHUFFLE.slice(2), ...KNIGHT_SHUFFLE.slice(0, 3)];
+  assert.equal(gameEnd(olderUndo, line), null);
 });
 
 test("legacy full boards fold into keys", () => {
