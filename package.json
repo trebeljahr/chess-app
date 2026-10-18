@@ -23,8 +23,9 @@
     "check": "biome check --write .",
     "prepare": "husky",
     "test:security": "tsx --test tests/auth-limit.test.ts tests/password.test.ts tests/login-timing.test.ts",
-    "test:game": "tsx --test tests/game-history.test.ts tests/game-storage.test.ts",
+    "test:game": "tsx --test tests/game-history.test.ts tests/game-storage.test.ts tests/compact-games.test.ts",
     "test:rolling": "node --import tsx --test tests/rolling-live.test.mjs tests/game-version.test.ts tests/client-assets.test.mjs tests/client-runtime.test.mjs",
+    "migrate:compact-games": "tsx src/server/compact-games.ts",
     "backup:status": "hatchkit backup status --project chess-app",
     "backup:list": "hatchkit backup snapshots --project chess-app",
     "backup:restore": "hatchkit backup restore --project chess-app"

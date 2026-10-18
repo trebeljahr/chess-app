@@ -55,6 +55,13 @@ release can still overlap or be rolled back to, and reads fold any boards it
 appends back into keys. Drop the empty array only once no such image can run
 against the volume.
 
+Rows nobody writes again keep their full boards until compacted. Inside the
+server container, `node dist/server/server/compact-games.js --dry-run` reports
+what would change; without the flag it rewrites those rows and vacuums the
+database (`pnpm migrate:compact-games` locally). It is safe beside running
+replicas and keeps each row's version. A game an older replica saves during the
+run can come back with full boards; a second run finds it.
+
 Redis Pub/Sub carries snapshot invalidations, not durable game state. On initial
 subscription and after either Redis connection recovers, the server emits a
 snapshot-required event. The client refetches the authoritative SQLite state.
