@@ -8,6 +8,7 @@ import { AuthScreen } from "./features/auth/auth-screen";
 import { GamePage } from "./features/game/game-page";
 import { ImprintPage } from "./features/imprint/imprint-page";
 import { HomePage } from "./features/lobby/home-page";
+import { PrivacyPage } from "./features/privacy/privacy-page";
 import { DONATE_URL } from "./lib/donation";
 import { reportClientError } from "./lib/error-reporting/reporter";
 import { trpc, useResetRealtimeSession } from "./lib/trpc";
@@ -17,7 +18,12 @@ export function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <AppShell />
+        <Routes>
+          {/* Outside the session gate: readable before signing up, and while the server is down. */}
+          <Route path="/imprint" element={<ImprintPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="*" element={<AppShell />} />
+        </Routes>
       </BrowserRouter>
     </ErrorBoundary>
   );
@@ -86,13 +92,15 @@ function AppShell() {
       <Routes>
         <Route path="/" element={<HomePage user={sessionQuery.data} />} />
         <Route path="/games/:slug" element={<GamePage user={sessionQuery.data} />} />
-        <Route path="/imprint" element={<ImprintPage />} />
         <Route path="*" element={<Navigate replace to="/" />} />
       </Routes>
 
       <footer className="flex justify-center gap-4 border-t border-white/30 py-3">
         <a href="/imprint" className="text-xs text-slate-400 hover:text-slate-600">
           Imprint
+        </a>
+        <a href="/privacy" className="text-xs text-slate-400 hover:text-slate-600">
+          Privacy
         </a>
         <ProjectDonateLink
           href={DONATE_URL}

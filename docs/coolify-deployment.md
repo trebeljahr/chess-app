@@ -162,6 +162,8 @@ address, and no CSP or CORS change is needed. The tunnel forwards only
 envelopes for the server's own `SENTRY_DSN`, so **the client reports only while
 the server has `SENTRY_DSN` set** (otherwise `/trpc/_e` is a 404).
 
+The privacy page (`/privacy`, `src/features/privacy/privacy-page.tsx`,
+"Error reports") states the following in plain words. Change both together.
 What a report carries, on both sides: the error message and stack frames, the
 page or request URL with its query string and fragment removed, the release
 (`chess-app@<commit>`), the environment and a `platform` tag (`web` or
@@ -236,7 +238,7 @@ Files:
   no `main`, no `routes`, `workers_dev: false`. Never add `main`,
   `run_worker_first` or `cache`: each turns free asset requests into counted
   Worker requests.
-- `public/_redirects` — client routes (`/games/:slug`, `/imprint`) answer with the
+- `public/_redirects` — client routes (`/games/:slug`, `/imprint`, `/privacy`) answer with the
   app shell and status 200. Any other path gets `404.html`, a copy of the shell,
   with status 404; the router then sends it to `/`. A missing `/assets/` file is
   a real 404.

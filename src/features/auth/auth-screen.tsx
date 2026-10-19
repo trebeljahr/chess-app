@@ -153,6 +153,14 @@ export function AuthScreen() {
           </CardContent>
         </Card>
       </div>
+      <footer className="mt-8 flex justify-center gap-4">
+        <a href="/imprint" className="text-xs text-slate-400 hover:text-slate-600">
+          Imprint
+        </a>
+        <a href="/privacy" className="text-xs text-slate-400 hover:text-slate-600">
+          Privacy
+        </a>
+      </footer>
     </main>
   );
 }
