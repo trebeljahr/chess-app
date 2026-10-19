@@ -39,8 +39,8 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck
 
-      - name: Verify authentication and rolling state preservation
-        run: pnpm run test:security && pnpm run test:rolling
+      - name: Verify authentication, error report scrubbing and rolling state preservation
+        run: pnpm run test:security && pnpm run test:errors && pnpm run test:rolling
 
       - name: Build repo
         run: pnpm run build
@@ -78,10 +78,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # VITE_SENTRY_DSN is a repository variable, not a secret: the DSN is in
+      # the shipped bundle either way. Empty builds a client that reports
+      # nothing and ships no SDK. See docs/coolify-deployment.md, "Error reporting".
       - name: Build the static client
         env:
           COMMIT_SHA: ${{ github.sha }}
-        run: pnpm run build:client && node scripts/prepare-worker-assets.mjs dist/client
+          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
+        run: |
+          set -euo pipefail
+          if [ -z "$VITE_SENTRY_DSN" ]; then
+            echo "::notice::VITE_SENTRY_DSN is not set; this client reports no errors."
+          fi
+          pnpm run build:client && node scripts/prepare-worker-assets.mjs dist/client
 
       # A Worker version serves only its own files. Carry the last two
       # releases' hashed files so tabs opened before this deploy keep

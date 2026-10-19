@@ -24,6 +24,7 @@
     "prepare": "husky",
     "test:security": "tsx --test tests/auth-limit.test.ts tests/password.test.ts tests/login-timing.test.ts",
     "test:game": "tsx --test tests/game-history.test.ts tests/game-storage.test.ts tests/compact-games.test.ts",
+    "test:errors": "tsx --test tests/error-reporting.test.ts",
     "test:rolling": "node --import tsx --test tests/rolling-live.test.mjs tests/game-version.test.ts tests/client-assets.test.mjs tests/client-runtime.test.mjs",
     "migrate:compact-games": "tsx src/server/compact-games.ts",
     "backup:status": "hatchkit backup status --project chess-app",
@@ -31,6 +32,8 @@
     "backup:restore": "hatchkit backup restore --project chess-app"
   },
   "dependencies": {
+    "@sentry/browser": "10.75.3",
+    "@sentry/node": "10.75.3",
     "@tanstack/react-query": "^5.104.0",
     "@trpc/client": "^11.19.0",
     "@trpc/react-query": "^11.19.0",

@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { App } from "./App";
 import { recordDonationReturn } from "./lib/donation";
+import { startErrorReporting } from "./lib/error-reporting/reporter";
 import { AppProviders } from "./lib/trpc";
 import "./styles.css";
 
@@ -14,3 +15,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </AppProviders>
   </React.StrictMode>,
 );
+
+void startErrorReporting();

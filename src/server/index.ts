@@ -1,3 +1,5 @@
+// First: the error handlers are in place before any other module runs.
+import "./instrument.js";
 import { createServer } from "node:http";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
@@ -5,6 +7,8 @@ import express from "express";
 import { WebSocketServer } from "ws";
 import { createExpressContext, createWsContext } from "./context.js";
 import { sqlite } from "./db.js";
+import { createErrorTunnel } from "./error-tunnel.js";
+import { errorReportingEnabled, trpcErrorReporter } from "./instrument.js";
 import { closeRealtime } from "./realtime.js";
 import { closeRedis, getRedisClient, probeRealtime, realtimeReady } from "./redis.js";
 import { appRouter } from "./router.js";
@@ -52,6 +56,14 @@ app.get("/health", async (_req, res) => {
   });
 });
 
+// Ahead of /trpc and its realtime gate: a report is worth forwarding exactly
+// when this server is unwell. See error-tunnel.ts.
+app.post(
+  "/trpc/_e",
+  express.raw({ type: () => true, limit: "512kb" }),
+  createErrorTunnel(process.env.SENTRY_DSN?.trim() ?? ""),
+);
+
 app.use(
   "/trpc",
   (_req, res, next) => {
@@ -64,6 +76,7 @@ app.use(
   createExpressMiddleware({
     router: appRouter,
     createContext: createExpressContext,
+    onError: trpcErrorReporter("http"),
   }),
 );
 
@@ -77,6 +90,7 @@ const handler = applyWSSHandler({
   wss,
   router: appRouter,
   createContext: createWsContext,
+  onError: trpcErrorReporter("ws"),
 });
 
 server.listen(port, host, () => {
@@ -86,6 +100,11 @@ server.listen(port, host, () => {
   );
   console.log(
     getRedisClient() ? "[redis] Pub/sub enabled" : "[redis] No REDIS_URL, using in-process events",
+  );
+  console.log(
+    errorReportingEnabled
+      ? "[errors] Reporting to SENTRY_DSN"
+      : "[errors] No SENTRY_DSN, reporting off",
   );
 });
 

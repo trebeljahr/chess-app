@@ -119,6 +119,9 @@ rollback resource and must not track a tag.
 | `HOST` | `0.0.0.0` | Bind address |
 | `REDIS_URL` | — | Redis connection URL |
 | `CHESS_DB_FILE` | `/app/data/chess.db` | SQLite database path |
+| `SENTRY_DSN` | — | GlitchTip DSN; unset turns error reports and `/trpc/_e` off (see "Error reporting") |
+| `SENTRY_ENVIRONMENT` | `NODE_ENV` | Environment tag on error reports |
+| `COMMIT_SHA` | baked into the image | Reported by `system.version`; the release on error reports |
 
 ### Local client proxy (`client/server.mjs`, tests only)
 
@@ -126,6 +129,55 @@ rollback resource and must not track a tag.
 |----------|---------|-------------|
 | `PORT` | `80` | Listen port |
 | `BACKEND_URL` | `http://127.0.0.1:3514` | API the proxy forwards `/trpc` to |
+
+## Error reporting
+
+Both halves report to the GlitchTip project `chess-app` on
+`https://glitchtip.trebeljahr.com` (org `ricos-web-empire`). One DSN serves both:
+
+- **Server:** `SENTRY_DSN` in the env of the Coolify app `chess-server`
+  (`src/server/instrument.ts`). It reports uncaught exceptions, unhandled
+  rejections and tRPC errors with code `INTERNAL_SERVER_ERROR`; refusals
+  (`UNAUTHORIZED`, `BAD_REQUEST`, `TOO_MANY_REQUESTS`, …) are not bugs and are
+  not sent. An uncaught exception still ends the process after the report is
+  flushed, as before.
+- **Browser:** the repository variable `VITE_SENTRY_DSN`, inlined by
+  `vite build` in the `build-client` job. It is a variable, not a secret: the DSN
+  is in the bundle either way.
+
+  ```bash
+  gh variable set VITE_SENTRY_DSN --body 'https://<key>@glitchtip.trebeljahr.com/<id>'
+  ```
+
+  Without it, the client ships no SDK at all (the dynamic import folds away)
+  and the job prints a `::notice::`. With it, `src/lib/error-reporting/` loads
+  the SDK after the first render and reports what the global handlers and the
+  `ErrorBoundary` in `App.tsx` catch. tRPC client errors are dropped: a real
+  server fault is reported by the server.
+
+The browser posts its reports to `POST /trpc/_e` on its own origin
+(`src/server/error-tunnel.ts`), and the server forwards them to GlitchTip. Ad
+blockers let a same-origin request through, GlitchTip never sees a visitor's IP
+address, and no CSP or CORS change is needed. The tunnel forwards only
+envelopes for the server's own `SENTRY_DSN`, so **the client reports only while
+the server has `SENTRY_DSN` set** (otherwise `/trpc/_e` is a 404).
+
+What a report carries, on both sides: the error message and stack frames, the
+page or request URL with its query string and fragment removed, the release
+(`chess-app@<commit>`), the environment and a `platform` tag (`web` or
+`server`). Browser reports add the method, status and stripped URL of the last
+requests and navigations, and the browser and OS from the user agent. Server
+reports add the tRPC procedure name, never its input. No report carries a user
+id, username, email address, cookie, other header, request body, console
+output, or click and keystroke trail. Email addresses and bearer tokens inside
+a message are replaced. No session replay, no tracing, no session pings. The
+rules live in `src/shared/error-scrub.ts`, `src/lib/error-reporting/scrub.ts`
+and `scrubServerEvent` in `src/server/instrument.ts`, tested in
+`tests/error-reporting.test.ts`.
+
+To check delivery without user traffic, send an event with
+`SENTRY_ENVIRONMENT=wiring-check` (server) or `VITE_SENTRY_ENVIRONMENT=wiring-check`
+(a local `vite` build) and look for it in GlitchTip.
 
 ## Local development with Docker
 

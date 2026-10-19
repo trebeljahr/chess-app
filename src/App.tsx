@@ -9,6 +9,7 @@ import { GamePage } from "./features/game/game-page";
 import { ImprintPage } from "./features/imprint/imprint-page";
 import { HomePage } from "./features/lobby/home-page";
 import { DONATE_URL } from "./lib/donation";
+import { reportClientError } from "./lib/error-reporting/reporter";
 import { trpc, useResetRealtimeSession } from "./lib/trpc";
 import { useToggleSound } from "./lib/use-move-sound";
 
@@ -132,6 +133,7 @@ class ErrorBoundary extends Component<PropsWithChildren, { hasError: boolean }> 
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
     console.error("Uncaught error:", error, info.componentStack);
+    reportClientError(error, { source: "boundary" });
   }
 
   render() {
