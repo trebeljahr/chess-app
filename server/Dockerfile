@@ -1,4 +1,4 @@
-FROM node:24-bookworm-slim AS deps
+FROM node:24.22.1-bookworm-slim AS deps
 WORKDIR /app
 
 RUN apt-get update \
@@ -20,7 +20,7 @@ COPY tsconfig.json tsconfig.server.json ./
 RUN pnpm run build:server
 RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
-FROM node:24-bookworm-slim AS runtime
+FROM node:24.22.1-bookworm-slim AS runtime
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
