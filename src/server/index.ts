@@ -81,6 +81,14 @@ app.use(
 );
 
 const server = createServer(app);
+let closingHttp = false;
+server.on("request", (_req, res) => {
+  res.once("finish", () => {
+    // Requests admitted during the drain may finish after close() starts.
+    // Retire their idle keep-alive sockets without cutting an active response.
+    if (closingHttp) setImmediate(() => server.closeIdleConnections());
+  });
+});
 const wss = new WebSocketServer({
   server,
   path: "/trpc",
@@ -122,6 +130,7 @@ function shutdown() {
   deadline.unref();
   // Traefik must observe failed health before active sockets leave this node.
   setTimeout(() => {
+    closingHttp = true;
     handler.broadcastReconnectNotification();
     for (const socket of wss.clients) socket.close(1001, "Server restarting");
     let httpClosed = false;
@@ -142,6 +151,7 @@ function shutdown() {
       httpClosed = true;
       finish();
     });
+    server.closeIdleConnections();
   }, DRAIN_MS);
 }
 
