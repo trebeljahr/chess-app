@@ -22,7 +22,7 @@
     "lint": "biome lint .",
     "check": "biome check --write .",
     "prepare": "husky",
-    "test:security": "tsx --test tests/auth-limit.test.ts tests/password.test.ts tests/login-timing.test.ts",
+    "test:security": "tsx --test tests/auth-limit.test.ts tests/password.test.ts tests/login-timing.test.ts tests/compressed-body.test.ts",
     "test:game": "tsx --test tests/game-history.test.ts tests/game-storage.test.ts tests/compact-games.test.ts",
     "test:errors": "tsx --test tests/error-reporting.test.ts",
     "test:rolling": "node --import tsx --test tests/rolling-live.test.mjs tests/game-version.test.ts tests/client-assets.test.mjs tests/client-runtime.test.mjs",
@@ -88,10 +88,11 @@
       "esbuild"
     ],
     "overrides": {
-      "body-parser": "^1.20.6",
+      "body-parser": "^1.20.9",
       "path-to-regexp": "^0.1.13",
       "qs": "^6.16.0",
-      "minimist": "^1.2.8"
+      "minimist": "^1.2.8",
+      "shell-quote": "^1.11.0"
     }
   }
 }
