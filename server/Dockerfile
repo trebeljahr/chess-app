@@ -18,7 +18,11 @@ COPY src ./src
 COPY tsconfig.json tsconfig.server.json ./
 
 RUN pnpm run build:server
-RUN pnpm install --prod --frozen-lockfile --ignore-scripts
+# A fresh installation excludes orphaned dev packages left in pnpm's virtual
+# store by an in-place production install. Skip the dev-only Husky prepare hook,
+# then build only the two explicitly allowed native production dependencies.
+RUN rm -rf node_modules && pnpm install --prod --frozen-lockfile --ignore-scripts
+RUN pnpm rebuild bcrypt better-sqlite3
 
 FROM node:24.22.1-bookworm-slim AS runtime
 WORKDIR /app
