@@ -39,7 +39,7 @@ export function PrivacyPage() {
       </p>
 
       <h2 className="mb-2 text-3xl font-semibold">Privacy Policy</h2>
-      <p className="mb-8 text-sm text-slate-500">Last updated: 19 October 2026</p>
+      <p className="mb-8 text-sm text-slate-500">Last updated: 6 November 2026</p>
 
       <Section title="1. Who is responsible for your data">
         <p>
@@ -149,7 +149,10 @@ export function PrivacyPage() {
           </li>
           <li>
             Hetzner Online GmbH (Nuremberg, Germany) hosts the servers I run: the chess server and
-            its database, GlitchTip and Plausible.
+            its database, GlitchTip and Plausible. The web server in front of them writes an access
+            log for each request: the time, the address requested (including any query string), the
+            response code, your IP address, your country, the user agent of your browser and the
+            referring page. I use it only to find attacks and faults.
           </li>
         </List>
         <p>
@@ -166,8 +169,8 @@ export function PrivacyPage() {
           </li>
           <li>
             Legitimate interest (Art. 6(1)(f) GDPR): the count of sign-in attempts, error reports,
-            usage statistics and delivery through Cloudflare. They keep the app secure and working.
-            You can object at any time.
+            server access logs, usage statistics and delivery through Cloudflare. They keep the app
+            secure and working. You can object at any time.
           </li>
         </List>
       </Section>
@@ -180,6 +183,7 @@ export function PrivacyPage() {
           </li>
           <li>The count of sign-in attempts ends after one minute.</li>
           <li>GlitchTip deletes error reports after 90 days.</li>
+          <li>Server access logs are deleted after 14 days.</li>
           <li>
             Plausible keeps only totals. It discards the daily visitor identifier after 24 hours.
           </li>
