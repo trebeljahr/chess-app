@@ -42,6 +42,7 @@ import { sqlite } from "./db.js";
 import { emitGameUpdate, emitLobbyUpdate, subscribeToChannel } from "./realtime.js";
 import { attachSessionCookie, clearSessionCookie, createSessionRecord } from "./session.js";
 import { authProcedure, protectedProcedure, publicProcedure, router } from "./trpc.js";
+import { zodInput } from "./zod-input.js";
 
 const authSchema = z.object({
   username: z
@@ -170,7 +171,7 @@ export const appRouter = router({
       };
     }),
     profile: protectedProcedure
-      .input(z.object({ userId: z.string().optional() }))
+      .input(zodInput(z.object({ userId: z.string().optional() })))
       .query(({ input, ctx }) => {
         const targetId = input.userId ?? ctx.user.id;
         const profile = getUserProfile(targetId);
@@ -179,7 +180,7 @@ export const appRouter = router({
         }
         return profile;
       }),
-    register: authProcedure.input(authSchema).mutation(async ({ input, ctx }) => {
+    register: authProcedure.input(zodInput(authSchema)).mutation(async ({ input, ctx }) => {
       requireResponse(ctx.res);
 
       // Native bcrypt hashes on the libuv pool, so other sockets keep running.
@@ -211,7 +212,7 @@ export const appRouter = router({
         username: user.username,
       };
     }),
-    login: authProcedure.input(authSchema).mutation(async ({ input, ctx }) => {
+    login: authProcedure.input(zodInput(authSchema)).mutation(async ({ input, ctx }) => {
       requireResponse(ctx.res);
 
       const user = findUserByUsername(input.username);
@@ -246,7 +247,7 @@ export const appRouter = router({
   }),
   lobby: router({
     list: protectedProcedure.query(() => listGameSummaries()),
-    create: protectedProcedure.input(createGameSchema).mutation(({ input, ctx }) => {
+    create: protectedProcedure.input(zodInput(createGameSchema)).mutation(({ input, ctx }) => {
       const slug = createUniqueSlug(input.name);
       const timePresets: Record<string, [number, number]> = {
         "1+0": [60_000, 0],
@@ -282,7 +283,7 @@ export const appRouter = router({
 
       return { slug };
     }),
-    join: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
+    join: protectedProcedure.input(zodInput(slugSchema)).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
 
       if (!game) {
@@ -306,7 +307,7 @@ export const appRouter = router({
         slug: game.slug,
       };
     }),
-    delete: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
+    delete: protectedProcedure.input(zodInput(slugSchema)).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
 
       if (!game) {
@@ -334,7 +335,7 @@ export const appRouter = router({
     }),
   }),
   game: router({
-    bySlug: protectedProcedure.input(slugSchema).query(({ input, ctx }) => {
+    bySlug: protectedProcedure.input(zodInput(slugSchema)).query(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
 
       if (!game) {
@@ -361,7 +362,7 @@ export const appRouter = router({
         glyphPreview: pieceToGlyph(game.state.board[0][0].figure),
       };
     }),
-    move: protectedProcedure.input(moveSchema).mutation(({ input, ctx }) => {
+    move: protectedProcedure.input(zodInput(moveSchema)).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
 
       if (!game) {
@@ -387,7 +388,7 @@ export const appRouter = router({
         });
       }
     }),
-    promote: protectedProcedure.input(promoteSchema).mutation(({ input, ctx }) => {
+    promote: protectedProcedure.input(zodInput(promoteSchema)).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
 
       if (!game) {
@@ -402,7 +403,7 @@ export const appRouter = router({
 
       return { success: true };
     }),
-    sendMessage: protectedProcedure.input(messageSchema).mutation(({ input, ctx }) => {
+    sendMessage: protectedProcedure.input(zodInput(messageSchema)).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
 
       if (!game) {
@@ -420,7 +421,7 @@ export const appRouter = router({
       saveGameState(game, nextState, "message-added");
       return { success: true };
     }),
-    proposeUndo: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
+    proposeUndo: protectedProcedure.input(zodInput(slugSchema)).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
 
       if (!game) {
@@ -434,7 +435,7 @@ export const appRouter = router({
       saveGameState(game, nextState, "undo-proposed");
       return { success: true };
     }),
-    revertUndo: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
+    revertUndo: protectedProcedure.input(zodInput(slugSchema)).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
 
       if (!game) {
@@ -448,7 +449,7 @@ export const appRouter = router({
       saveGameState(game, nextState, "undo-reverted");
       return { success: true };
     }),
-    acceptUndo: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
+    acceptUndo: protectedProcedure.input(zodInput(slugSchema)).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
 
       if (!game) {
@@ -462,28 +463,28 @@ export const appRouter = router({
       saveGameState(game, nextState, "undo-accepted");
       return { success: true };
     }),
-    proposeDraw: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
+    proposeDraw: protectedProcedure.input(zodInput(slugSchema)).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
       if (!game) throw new TRPCError({ code: "NOT_FOUND", message: "Game not found." });
       const nextState = proposeDraw(game.state, ctx.user.id);
       saveGameState(game, nextState, "draw-proposed");
       return { success: true };
     }),
-    acceptDraw: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
+    acceptDraw: protectedProcedure.input(zodInput(slugSchema)).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
       if (!game) throw new TRPCError({ code: "NOT_FOUND", message: "Game not found." });
       const nextState = acceptDraw(game.state, ctx.user.id);
       saveGameState(game, nextState, "draw-accepted", game.state.archived);
       return { success: true };
     }),
-    rejectDraw: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
+    rejectDraw: protectedProcedure.input(zodInput(slugSchema)).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
       if (!game) throw new TRPCError({ code: "NOT_FOUND", message: "Game not found." });
       const nextState = rejectDraw(game.state, ctx.user.id);
       saveGameState(game, nextState, "draw-rejected");
       return { success: true };
     }),
-    forfeit: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
+    forfeit: protectedProcedure.input(zodInput(slugSchema)).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
 
       if (!game) {
@@ -497,7 +498,7 @@ export const appRouter = router({
       saveGameState(game, nextState, "game-forfeited", game.state.archived);
       return { success: true };
     }),
-    rematch: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
+    rematch: protectedProcedure.input(zodInput(slugSchema)).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
 
       if (!game) {
@@ -548,7 +549,7 @@ export const appRouter = router({
 
       return { slug };
     }),
-    heartbeat: protectedProcedure.input(slugSchema).mutation(({ input, ctx }) => {
+    heartbeat: protectedProcedure.input(zodInput(slugSchema)).mutation(({ input, ctx }) => {
       const game = findGameBySlug(input.slug);
 
       if (!game) {
@@ -562,7 +563,7 @@ export const appRouter = router({
       saveGameState(game, nextState, "presence-updated");
       return { success: true };
     }),
-    onChanged: protectedProcedure.input(slugSchema).subscription(async function* (opts) {
+    onChanged: protectedProcedure.input(zodInput(slugSchema)).subscription(async function* (opts) {
       yield* subscribeToChannel(`game:${opts.input.slug}`, opts.signal);
     }),
   }),
