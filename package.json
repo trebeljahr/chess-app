@@ -1,6 +1,17 @@
 {
   "name": "chess-app",
   "private": true,
+  "description": "Play chess with a friend in the browser. Share a link, pick a clock, and both boards update live.",
+  "homepage": "https://chess.trebeljahr.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trebeljahr/chess-app.git"
+  },
+  "bugs": {
+    "url": "https://github.com/trebeljahr/chess-app/issues"
+  },
+  "license": "AGPL-3.0-or-later",
+  "author": "Rico Trebeljahr",
   "packageManager": "pnpm@10.33.2",
   "type": "module",
   "engines": {
@@ -27,6 +38,8 @@
     "test:errors": "tsx --test tests/error-reporting.test.ts",
     "test:rolling": "node --import tsx --test tests/rolling-live.test.mjs tests/game-version.test.ts tests/client-assets.test.mjs tests/client-runtime.test.mjs",
     "migrate:compact-games": "tsx src/server/compact-games.ts",
+    "marketing:screenshots": "node scripts/marketing/capture-screenshots.mjs",
+    "marketing:social-preview": "node scripts/marketing/render-social-preview.mjs",
     "backup:status": "hatchkit backup status --project chess-app",
     "backup:list": "hatchkit backup snapshots --project chess-app",
     "backup:restore": "hatchkit backup restore --project chess-app"
