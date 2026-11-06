@@ -22,7 +22,7 @@
     "lint": "biome lint .",
     "check": "biome check --write .",
     "prepare": "husky",
-    "test:security": "tsx --test tests/auth-limit.test.ts tests/password.test.ts tests/login-timing.test.ts tests/compressed-body.test.ts",
+    "test:security": "tsx --test tests/auth-limit.test.ts tests/password.test.ts tests/login-timing.test.ts tests/compressed-body.test.ts tests/input-validation.test.ts",
     "test:game": "tsx --test tests/game-history.test.ts tests/game-storage.test.ts tests/compact-games.test.ts",
     "test:errors": "tsx --test tests/error-reporting.test.ts",
     "test:rolling": "node --import tsx --test tests/rolling-live.test.mjs tests/game-version.test.ts tests/client-assets.test.mjs tests/client-runtime.test.mjs",
