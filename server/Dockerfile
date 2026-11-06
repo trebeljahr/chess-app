@@ -27,8 +27,15 @@ RUN pnpm rebuild bcrypt better-sqlite3
 FROM node:24.22.1-bookworm-slim AS runtime
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
-  && rm -rf /var/lib/apt/lists/*
+# Upgrade Debian packages so a rebuild picks up security fixes before the
+# node base image is republished. The runtime never calls npm or npx, and the
+# npm bundled in the base image carries its own vulnerable dependencies, so it
+# is removed.
+RUN apt-get update \
+  && apt-get upgrade -y \
+  && apt-get install -y --no-install-recommends curl \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 ENV NODE_ENV=production
 ENV PORT=3514
