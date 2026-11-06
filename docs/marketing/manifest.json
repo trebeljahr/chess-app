@@ -1,0 +1,67 @@
+{
+  "files": [
+    {
+      "path": "screenshots/game-desktop-black.jpg",
+      "width": 3200,
+      "height": 2078,
+      "bytes": 294655,
+      "sha256": "47c143c56b39ddf4e1e1df26ef77f637f3c472ef4d254143c26fdcaaa958d267",
+      "made": "2026-11-06",
+      "source": "scripts/marketing/capture-screenshots.mjs (local dev server, throwaway database)"
+    },
+    {
+      "path": "screenshots/game-desktop.jpg",
+      "width": 3200,
+      "height": 2078,
+      "bytes": 294162,
+      "sha256": "365c582f408d69a745aed9a2d47c215b597c61f919a58d1406c8a3ddc3aa0304",
+      "made": "2026-11-06",
+      "source": "scripts/marketing/capture-screenshots.mjs (local dev server, throwaway database)"
+    },
+    {
+      "path": "screenshots/game-mobile.jpg",
+      "width": 1170,
+      "height": 2532,
+      "bytes": 189167,
+      "sha256": "3fa4958e9f81d08f0f2eced92dcf5e5262a15ae2984bfffdd53ace83d067bafa",
+      "made": "2026-11-06",
+      "source": "scripts/marketing/capture-screenshots.mjs (local dev server, throwaway database)"
+    },
+    {
+      "path": "screenshots/lobby-open-games.jpg",
+      "width": 3200,
+      "height": 1000,
+      "bytes": 144678,
+      "sha256": "bc1c77c0ab8b2ab1cfd0b90e7fb3b6ca5a8acdcbcef77bc1ead303a88ddaf495",
+      "made": "2026-11-06",
+      "source": "scripts/marketing/capture-screenshots.mjs (local dev server, throwaway database)"
+    },
+    {
+      "path": "social-preview/social-preview-a.png",
+      "width": 1280,
+      "height": 640,
+      "bytes": 315998,
+      "sha256": "0b99c999ad8647352a9c15c6338553d2302d991e7533b1f032151c6a98570b1d",
+      "made": "2026-11-06",
+      "source": "scripts/marketing/render-social-preview.mjs from social-preview/template.html"
+    },
+    {
+      "path": "social-preview/social-preview-b.png",
+      "width": 1280,
+      "height": 640,
+      "bytes": 380341,
+      "sha256": "6d179f4353dc2c9f3e4aac116a4c9e999e3eb54fff5cbfff8e95e5a8f06f1bb5",
+      "made": "2026-11-06",
+      "source": "scripts/marketing/render-social-preview.mjs from social-preview/template.html"
+    },
+    {
+      "path": "social-preview/social-preview-c.png",
+      "width": 1280,
+      "height": 640,
+      "bytes": 299654,
+      "sha256": "1c81986313a908722be0c2210f975300ad515c25d1a77c56011d32e5d8482bff",
+      "made": "2026-11-06",
+      "source": "scripts/marketing/render-social-preview.mjs from social-preview/template.html"
+    }
+  ]
+}

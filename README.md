@@ -1,131 +1,91 @@
 # Online Chess
 
-This project has been modernized away from Meteor and now runs on:
+[![build-and-deploy](https://github.com/trebeljahr/chess-app/actions/workflows/build-and-deploy.yml/badge.svg)](https://github.com/trebeljahr/chess-app/actions/workflows/build-and-deploy.yml)
+[![License: AGPL-3.0-or-later](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)](LICENSE)
 
-- React 19 + TypeScript
-- Vite for the client build
-- Express + Node for the app server
-- tRPC + TanStack Query for typed data fetching and realtime updates
-- Drizzle ORM + SQLite for persistence
-- Tailwind CSS v4 with shadcn-style UI components
+Play chess with a friend in the browser. Create a game, send your friend the link, and each move shows up on both boards as soon as it is made.
 
-## Deployment shape
+Pick a side and a clock, from one-minute bullet to 30-minute classical, or play with no clock at all. During the game you can chat, offer a draw or ask for a takeback. When it ends, start a rematch or download the game as PGN.
 
-Production is designed to run as a single web app:
+Play at **[chess.trebeljahr.com](https://chess.trebeljahr.com)**. You sign up with a username and a password, no email address.
 
-- the frontend is built into `dist/client`
-- the Node server serves that build
-- tRPC HTTP and WebSocket traffic share the same origin at `/trpc`
+![A game in progress on chess.trebeljahr.com, seen by the player with White: the board after eleven moves of an Italian Game, both clocks, the match status, the action buttons and the latest moves](docs/marketing/screenshots/game-desktop.jpg)
 
-That shape works well with Coolify because the browser can stay on one origin for both HTTP and realtime traffic.
+## What you can do
 
-## What Changed
+- **Play live.** Moves, clocks, chat and the online dots of both players update over a WebSocket. Nobody reloads. After a dropped connection the board catches up to the current position.
+- **Choose a time control:** no limit, 1+0, 3+0, 3+2, 5+0, 5+3, 10+0, 15+10 or 30+0.
+- **Play by the full rules,** with castling, en passant and promotion to the piece you pick. The game ends in a draw on stalemate, threefold repetition, the fifty-move rule or insufficient material.
+- **Pre-move.** Queue your next move while your opponent thinks, and it plays the moment your turn starts.
+- Click a piece or drag it. A short sound plays on every move, and the speaker icon mutes it.
+- **Agree on takebacks and draws.** Each needs the other player's yes. Forfeit ends the game at once.
+- **Look back.** Step through the moves with the arrow keys, and download a finished game as a PGN file.
+- **Watch.** The lobby lists games waiting for a second player and games already running. Join one, spectate one, or open any game by its ID.
+- **Track your rating.** Every account has an Elo rating that starts at 1200.
+- Pick one of five board colours, turn coordinates on or off, and flip the board. The browser tab icon shows whose turn it is.
 
-The old Meteor publications, methods, and accounts flow have been replaced with:
+![The lobby's open games: a running game to spectate and two games waiting for a second player, each with a Join button](docs/marketing/screenshots/lobby-open-games.jpg)
 
-- a typed tRPC API
-- cookie-based username/password auth
-- a Drizzle-backed game store
-- WebSocket subscriptions that invalidate TanStack Query caches so the lobby and board update automatically
+The layout fits a phone screen, so you can play from your phone against a friend on a laptop.
 
-The chess rules were ported into shared TypeScript so the gameplay logic survives the framework migration.
+<img src="docs/marketing/screenshots/game-mobile.jpg" width="280" alt="The same game on a phone: the board fills the screen width, with the opponent's clock above it and your own clock below">
 
-## Local Development
+## Run it locally
 
-Install dependencies:
-
-```bash
-npm install
-```
-
-Start the client and server in development mode:
+You need Node.js 24 or newer and pnpm 10.
 
 ```bash
-npm run dev
+pnpm install
+pnpm dev
 ```
 
-- Vite serves the frontend
-- the Node server runs on port `3000`
-- Vite proxies `/trpc` to the backend, including WebSocket upgrades
+`pnpm dev` starts the API server and the Vite client on two free ports and prints the client URL. Vite sends `/trpc` requests and WebSocket upgrades to the API server. Set `API_PORT` and `PORT` to choose the ports yourself.
 
-## Production Build
+Accounts and games go to the SQLite file `data/chess.db`. Set `CHESS_DB_FILE` to use another file. Without `REDIS_URL`, the server passes live updates around in its own process, which is all a single server needs.
 
-Build the app:
+Checks and a production build:
 
 ```bash
-npm run build
+pnpm typecheck
+pnpm test:game       # move history, undo, repetition, game storage
+pnpm test:security   # login limits, password hashing, input validation
+pnpm build           # client to dist/client, server to dist/server
+pnpm smoke:health    # starts the built server and a local client stand-in, probes /health and /healthz
 ```
 
-Start the production server:
+## How it runs in production
 
-```bash
-npm start
+The web client is a static Vite build on the Cloudflare Worker `chess-app-client` ([`wrangler.jsonc`](wrangler.jsonc)). The API server is a Docker image that Coolify runs, and `/trpc` on the same host reaches it over HTTP and WebSocket. Every push to `main` runs [`build-and-deploy.yml`](.github/workflows/build-and-deploy.yml). The release steps, secrets and rollout gate are in [docs/coolify-deployment.md](docs/coolify-deployment.md).
+
+## Project layout
+
+```
+src/features/   lobby, game page and board, sign-in, privacy and imprint pages
+src/shared/     chess rules, used by both client and server
+src/server/     Express + tRPC API, WebSocket subscriptions, SQLite through Drizzle
+public/         piece images, move sound, favicons, Worker headers and redirects
+scripts/        dev runner, smoke test, Worker asset prep, marketing captures
+tests/          node:test suites
+docs/           deployment, security notes, project history, marketing assets
 ```
 
-The production server serves the built frontend from `dist/client` and the backend from `dist/server/server`.
+## Tech stack
 
-## Docker / Coolify deployment
+React 19, TypeScript, Vite and Tailwind CSS 4 in the browser. tRPC 11 with WebSocket subscriptions and TanStack Query between client and server. Express on Node.js 24, Drizzle ORM on SQLite (better-sqlite3), and optional Redis pub/sub when more than one server runs.
 
-This repo now includes:
+The app started in 2019 on Create React App and Meteor. [docs/history.md](docs/history.md) covers the move to this stack.
 
-- [Dockerfile](/Users/rico/projects/chess-app/Dockerfile)
-- [.dockerignore](/Users/rico/projects/chess-app/.dockerignore)
-- [.env.example](/Users/rico/projects/chess-app/.env.example)
-- [docs/coolify-deployment.md](/Users/rico/projects/chess-app/docs/coolify-deployment.md)
-- [build-and-deploy.yml](/Users/rico/projects/chess-app/.github/workflows/build-and-deploy.yml)
+## License
 
-The Docker image:
+The code is licensed under the [GNU Affero General Public License v3.0 or later](LICENSE). If you run a changed version for other people over a network, you must offer them its source.
 
-- installs dependencies
-- builds the frontend and server
-- serves the built frontend from the Node container
-- exposes a health endpoint at `/health`
-- keeps the app on one origin for both HTTP and realtime traffic
+These files are not covered by that licence:
 
-There is also a built-artifact smoke test:
+- **Chess pieces** (`public/pieces-basic-svg/`): by Uray M. János ([Green Chess](https://greenchess.net/info.php?item=downloads)), after Colin M. L. Burnett's pieces on Wikimedia Commons, under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). Each file keeps its original header.
+- **Fonts:** Space Grotesk and Fraunces load from Google Fonts under the [SIL Open Font License 1.1](https://openfontlicense.org). They are not part of this repository.
+- **Images made for this project** (the screenshots and cards in `docs/marketing/`): © Rico Trebeljahr, all rights reserved. The chess pieces in them keep their CC BY-SA 3.0 licence.
+- **Move sound** (`public/move.mp3`) and **`public/favicon.ico`**: their source is not recorded, so no licence is offered for them here.
 
-```bash
-pnpm run build
-pnpm run smoke:health
-```
+## Support
 
-That script boots the compiled server and client locally, probes `/health` and `/healthz`, and exits non-zero if the deployment shape is broken.
-
-For Coolify, you should add a persistent storage mount at `/app/data` so the SQLite database survives redeploys.
-
-## Runtime Configuration
-
-Supported environment variables:
-
-- `PORT`
-  default: `3000`
-- `HOST`
-  default: `0.0.0.0`
-- `CHESS_DB_FILE`
-  default: `data/chess.db`
-
-## Deployment Notes
-
-This repo is currently optimized for a regular Node host such as Uberspace with `pm2`.
-
-Suggested deployment flow:
-
-1. `git push` to your server
-2. `npm install`
-3. `npm run build`
-4. `pm2 start npm --name chess-app -- start`
-
-Because this version uses an in-process WebSocket realtime layer plus a local SQLite database, it is a strong fit for a single self-hosted Node process.
-
-If you move to Coolify instead of PM2 directly, the recommended path is:
-
-1. create one Coolify app from the repo Dockerfile
-2. set the health check path to `/health`
-3. expose port `3000`
-4. mount persistent storage at `/app/data`
-
-If you later want true multi-instance horizontal scaling or Vercel-style serverless deployment, the next step would be:
-
-- move the database to hosted Postgres
-- replace the in-memory realtime bus with Redis/Postgres pub-sub
-- optionally swap the SQLite Drizzle adapter to Postgres
+Online Chess is free and shows no ads. To support it and Rico's other free projects: [ricos.site/donate](https://ricos.site/donate).
