@@ -1,0 +1,111 @@
+name: dependency-updates
+
+# Lands Dependabot's grouped minor/patch and security PRs (see
+# .github/dependabot.yml): runs the same checks as the push pipeline on the PR,
+# squash-merges it, and starts build-and-deploy on main. A merge made with
+# GITHUB_TOKEN does not trigger push workflows, so the deploy is started
+# explicitly. One PR per run; the next run takes the next one after Dependabot
+# rebases it.
+#
+# Never lands: a major update, an ungrouped PR, a PR with a commit that is not
+# Dependabot's, or a PR whose checks fail. Those stay open for a person.
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: dependency-updates
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  pick:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      number: ${{ steps.pick.outputs.number }}
+      sha: ${{ steps.pick.outputs.sha }}
+    steps:
+      - name: Pick the oldest grouped Dependabot PR
+        id: pick
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          pr=$(gh pr list --repo "$REPO" --state open --author app/dependabot --base main \
+                 --json number,headRefName,headRefOid,createdAt \
+                 --jq '[.[] | select(.headRefName | test("^dependabot/npm_and_yarn/npm-(minor-patch|security)-"))] | sort_by(.createdAt) | first // empty')
+          if [ -z "$pr" ]; then echo "no grouped Dependabot PR is open"; exit 0; fi
+          number=$(jq -r .number <<<"$pr"); sha=$(jq -r .headRefOid <<<"$pr")
+          others=$(gh pr view "$number" --repo "$REPO" --json commits \
+                     --jq '[.commits[].authors[].login | select(. != "dependabot[bot]")] | length')
+          if [ "$others" != "0" ]; then
+            echo "::warning::PR #$number has commits that are not Dependabot's: left for a person"; exit 0
+          fi
+          echo "PR #$number at $sha"
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+  # The same gate as build-and-deploy.yml's verify job. It runs the PR's code
+  # with a read-only token and no secrets.
+  test:
+    needs: [pick]
+    if: needs.pick.outputs.number != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the PR
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.pick.outputs.sha }}
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Verify authentication, error report scrubbing and rolling state preservation
+        run: pnpm run test:security && pnpm run test:errors && pnpm run test:rolling
+
+      - name: Build repo
+        run: pnpm run build
+
+      - name: Smoke test built health endpoints
+        run: pnpm run smoke:health
+
+  land:
+    needs: [pick, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      - name: Squash-merge the tested commit and deploy main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ needs.pick.outputs.number }}
+          SHA: ${{ needs.pick.outputs.sha }}
+        run: |
+          # --match-head-commit refuses if Dependabot pushed again after the tests.
+          gh pr merge "$NUMBER" --repo "$REPO" --squash --delete-branch --match-head-commit "$SHA"
+          gh workflow run build-and-deploy.yml --repo "$REPO" --ref main
+          echo "merged #$NUMBER and started build-and-deploy on main"
