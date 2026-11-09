@@ -1,0 +1,2 @@
+# Cloudflare's managed robots.txt adds its crawler rules above this line.
+Sitemap: https://chess.trebeljahr.com/sitemap.xml

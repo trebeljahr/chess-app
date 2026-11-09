@@ -67,7 +67,9 @@ export function AuthScreen() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.22),transparent_32%),linear-gradient(135deg,#0f172a_0%,#1e293b_45%,#312e81_100%)]" />
             <div className="relative space-y-5">
               <div className="space-y-4">
-                <CardTitle className="text-4xl text-stone-50 md:text-6xl">Online Chess</CardTitle>
+                <h1 className="text-4xl font-semibold tracking-tight text-stone-50 md:text-6xl">
+                  Online Chess
+                </h1>
                 <CardDescription className="max-w-xl text-base text-stone-200/80 md:text-lg">
                   Play chess against other people online. Create a game, invite a friend, and enjoy
                   a match in real time.

@@ -5,12 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Online Chess</title>
     <meta name="description" content="Play chess against friends online in real time. Create a game, share the link, and enjoy." />
+    <link rel="canonical" href="https://chess.trebeljahr.com/" />
+    <meta property="og:site_name" content="Online Chess" />
     <meta property="og:title" content="Online Chess" />
     <meta property="og:description" content="Play chess against friends online in real time." />
     <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:url" content="https://chess.trebeljahr.com/" />
+    <meta property="og:image" content="https://chess.trebeljahr.com/og-image.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="A live game on Online Chess: the board, both players, the match status and the move list" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Online Chess" />
     <meta name="twitter:description" content="Play chess against friends online in real time." />
+    <meta name="twitter:image" content="https://chess.trebeljahr.com/og-image.jpg" />
+    <meta name="twitter:image:alt" content="A live game on Online Chess: the board, both players, the match status and the move list" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "Online Chess",
+        "description": "Play chess with a friend in the browser. Share a link, pick a clock, and both boards update live.",
+        "url": "https://chess.trebeljahr.com/",
+        "image": "https://chess.trebeljahr.com/og-image.jpg",
+        "genre": ["Chess", "Board game"],
+        "gamePlatform": "Web browser",
+        "playMode": "MultiPlayer",
+        "numberOfPlayers": { "@type": "QuantitativeValue", "value": 2 },
+        "applicationCategory": "Game",
+        "inLanguage": "en",
+        "isAccessibleForFree": true,
+        "author": { "@type": "Person", "name": "Rico Trebeljahr", "url": "https://ricos.site" },
+        "license": "https://www.gnu.org/licenses/agpl-3.0.html",
+        "sameAs": ["https://github.com/trebeljahr/chess-app"]
+      }
+    </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <script>
       (function () {
@@ -31,7 +61,9 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Static heading for crawlers that read the raw HTML; React's first
+         render replaces it. -->
+    <div id="root"><h1 class="sr-only">Online Chess</h1></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
