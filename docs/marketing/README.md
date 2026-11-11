@@ -45,6 +45,8 @@ down to exactly 1200×630 with ImageMagick.
 | File | Shows |
 | --- | --- |
 | `social-preview/og-wordmark.png` | Card A: wordmark and one line beside the desktop game capture, without the URL. |
+
+`og-wordmark.png` is also the site's og:image, as `public/og-card.jpg` (JPEG, quality 88, 4:4:4): `magick docs/marketing/social-preview/og-wordmark.png -strip -sampling-factor 4:4:4 -interlace JPEG -quality 88 public/og-card.jpg`.
 | `social-preview/og-clean.png` | No text: the same game crop, larger, centred on the cream background. |
 
 ## Rebuilding
