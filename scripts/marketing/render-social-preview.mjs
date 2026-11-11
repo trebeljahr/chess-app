@@ -2,7 +2,7 @@
 // docs/marketing/social-preview/template.html, one per variant, and the two
 // og:image cards (1200x630 PNG) from variant A:
 //
-//   og-wordmark.png  card A with its wordmark and line, laid out at 1.91:1
+//   og-wordmark.png  card A with its wordmark and line (no URL), laid out at 1.91:1
 //   og-clean.png     card A without the text column, the game crop centred
 //
 //   node scripts/marketing/render-social-preview.mjs        # all five
@@ -39,9 +39,12 @@ const ogOnly = process.argv.includes("--og");
 // Every card is 1280x640 in the template; the page and card become 672 tall.
 const ogTall = "html, body, .card { height: 672px !important; }";
 const ogCards = {
-  // Live A: text column left, framed screenshot right; both move down 16 px.
+  // Live A: text column left, framed screenshot right; the crop moves down
+  // 16 px. The URL and the short rule above it are left out; the name and line
+  // (276 px) keep the centre the full column had (y 347), so they start at 209.
   "og-wordmark": `
-    #a .text { top: 166px !important; }
+    #a .rule, #a .url { display: none !important; }
+    #a .text { top: 209px !important; }
     #a .crop { top: 80px !important; }
   `,
   // Text column gone; the same screenshot crop, larger, centred on the cream

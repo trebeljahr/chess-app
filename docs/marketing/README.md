@@ -44,7 +44,7 @@ down to exactly 1200×630 with ImageMagick.
 
 | File | Shows |
 | --- | --- |
-| `social-preview/og-wordmark.png` | Card A: wordmark, one line and the URL beside the desktop game capture. |
+| `social-preview/og-wordmark.png` | Card A: wordmark and one line beside the desktop game capture, without the URL. |
 | `social-preview/og-clean.png` | No text: the same game crop, larger, centred on the cream background. |
 
 ## Rebuilding

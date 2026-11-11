@@ -49,8 +49,8 @@
       "path": "social-preview/og-wordmark.png",
       "width": 1200,
       "height": 630,
-      "bytes": 293295,
-      "sha256": "e460b57b1363fbca3363584045ef8334a20d9712948fd6111ec0ed7ae5280580",
+      "bytes": 284310,
+      "sha256": "dd2cae5f7d45b48558d6215072396c651e49b597393f26d525b3220e38f9e6cd",
       "made": "2026-11-11",
       "source": "scripts/marketing/render-social-preview.mjs from social-preview/template.html"
     },
