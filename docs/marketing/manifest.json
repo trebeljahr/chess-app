@@ -37,6 +37,24 @@
       "source": "scripts/marketing/capture-screenshots.mjs (local dev server, throwaway database)"
     },
     {
+      "path": "social-preview/og-clean.png",
+      "width": 1200,
+      "height": 630,
+      "bytes": 254650,
+      "sha256": "ef7482903b304799817d4a2355ba523c9c2585c4c964e5b5828991a403ff98b3",
+      "made": "2026-11-11",
+      "source": "scripts/marketing/render-social-preview.mjs from social-preview/template.html"
+    },
+    {
+      "path": "social-preview/og-wordmark.png",
+      "width": 1200,
+      "height": 630,
+      "bytes": 293295,
+      "sha256": "e460b57b1363fbca3363584045ef8334a20d9712948fd6111ec0ed7ae5280580",
+      "made": "2026-11-11",
+      "source": "scripts/marketing/render-social-preview.mjs from social-preview/template.html"
+    },
+    {
       "path": "social-preview/social-preview-a.png",
       "width": 1280,
       "height": 640,

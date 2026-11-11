@@ -1,7 +1,16 @@
 // Renders the GitHub social preview cards (1280x640 PNG) from
-// docs/marketing/social-preview/template.html, one per variant.
+// docs/marketing/social-preview/template.html, one per variant, and the two
+// og:image cards (1200x630 PNG) from variant A:
 //
-//   node scripts/marketing/render-social-preview.mjs
+//   og-wordmark.png  card A with its wordmark and line, laid out at 1.91:1
+//   og-clean.png     card A without the text column, the game crop centred
+//
+//   node scripts/marketing/render-social-preview.mjs        # all five
+//   node scripts/marketing/render-social-preview.mjs --og   # only the og:image cards
+//
+// The og:image cards are laid out at 1280x672, the 1.905:1 shape of 1200x630,
+// so the 1280-px-wide template still holds; they are shot at 2x and scaled to
+// exactly 1200x630 with ImageMagick (`magick` on the PATH).
 //
 // It then rewrites docs/marketing/manifest.json (every screenshot and card
 // with its pixel size, byte size and SHA-256). With REVIEW_DIR set, it also
@@ -13,7 +22,7 @@
 // Chromium binary. The template loads its fonts from Google Fonts, so this
 // needs a network connection.
 
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { copyFile, mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
@@ -24,6 +33,40 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const cardDir = join(root, "docs/marketing/social-preview");
 const template = pathToFileURL(join(cardDir, "template.html")).href;
 const variants = ["a", "b", "c"];
+const ogOnly = process.argv.includes("--og");
+
+// Override CSS for the og:image cards, added after the template has loaded.
+// Every card is 1280x640 in the template; the page and card become 672 tall.
+const ogTall = "html, body, .card { height: 672px !important; }";
+const ogCards = {
+  // Live A: text column left, framed screenshot right; both move down 16 px.
+  "og-wordmark": `
+    #a .text { top: 166px !important; }
+    #a .crop { top: 80px !important; }
+  `,
+  // Text column gone; the same screenshot crop, larger, centred on the cream
+  // page (4 px above centre, to balance the drop shadow).
+  "og-clean": `
+    #a .text { display: none !important; }
+    #a .crop {
+      width: 789px !important;
+      height: 576px !important;
+      left: 245.5px !important;
+      top: 44px !important;
+    }
+  `,
+};
+
+// The template sizes each crop on load; redo it for the og:image boxes.
+async function refitCrops() {
+  for (const crop of document.querySelectorAll(".card.on .crop[data-crop]")) {
+    const [x, y, w, h] = crop.dataset.crop.split(" ").map(Number);
+    const img = crop.querySelector("img");
+    await img.decode();
+    const scale = Math.max(crop.clientWidth / w, crop.clientHeight / h);
+    img.style.transform = `scale(${scale}) translate(${-x}px, ${-y}px)`;
+  }
+}
 
 function loadPlaywright() {
   const require = createRequire(import.meta.url);
@@ -62,6 +105,13 @@ const SOURCES = {
 
 async function writeManifest() {
   const marketingDir = join(root, "docs/marketing");
+  // A file whose bytes have not changed keeps its date (a fresh checkout
+  // resets every mtime).
+  let previous = new Map();
+  try {
+    const { files } = JSON.parse(await readFile(join(marketingDir, "manifest.json"), "utf8"));
+    previous = new Map(files.map((file) => [file.path, file]));
+  } catch {}
   const files = [];
   for (const folder of Object.keys(SOURCES)) {
     for (const name of (await readdir(join(marketingDir, folder))).sort()) {
@@ -70,13 +120,15 @@ async function writeManifest() {
       const bytes = await readFile(path);
       const { mtime } = await stat(path);
       const { width, height } = imageSize(bytes);
+      const sha256 = createHash("sha256").update(bytes).digest("hex");
+      const before = previous.get(relative(marketingDir, path));
       files.push({
         path: relative(marketingDir, path),
         width,
         height,
         bytes: bytes.length,
-        sha256: createHash("sha256").update(bytes).digest("hex"),
-        made: mtime.toISOString().slice(0, 10),
+        sha256,
+        made: before?.sha256 === sha256 ? before.made : mtime.toISOString().slice(0, 10),
         source: SOURCES[folder],
       });
     }
@@ -85,8 +137,54 @@ async function writeManifest() {
   console.log(`Wrote manifest.json (${files.length} files)`);
 }
 
+// Downscales a 2560x1344 screenshot to exactly 1200x630.
+function writeOg(png, out) {
+  try {
+    execFileSync(
+      "magick",
+      ["png:-", "-resize", "1200x630!", "-define", "png:exclude-chunks=date,time", out],
+      {
+        input: png,
+      },
+    );
+  } catch (error) {
+    if (error.code === "ENOENT")
+      throw new Error("The og:image cards need ImageMagick: `magick` is not on the PATH");
+    throw error;
+  }
+}
+
+async function renderOg(browser) {
+  for (const [name, css] of Object.entries(ogCards)) {
+    const page = await browser.newPage({
+      viewport: { width: 1280, height: 672 },
+      deviceScaleFactor: 2,
+    });
+    await page.goto(`${template}?v=a`, { waitUntil: "networkidle" });
+    await page.waitForSelector("body[data-ready='1']");
+    await page.evaluate(() => document.fonts.ready);
+    await page.addStyleTag({ content: ogTall + css });
+    await page.evaluate(refitCrops);
+    await page.evaluate(() =>
+      Promise.all([...document.images].map((img) => img.decode().catch(() => {}))),
+    );
+    await page.waitForTimeout(250);
+    const out = join(cardDir, `${name}.png`);
+    writeOg(await page.screenshot({ clip: { x: 0, y: 0, width: 1280, height: 672 } }), out);
+    const { size } = await stat(out);
+    console.log(`${out} ${(size / 1024).toFixed(0)} KiB`);
+    await page.close();
+  }
+}
+
 async function main() {
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
+  await renderOg(browser);
+  if (ogOnly) {
+    await writeManifest();
+    await browser.close();
+    return;
+  }
   const page = await browser.newPage({
     viewport: { width: 1280, height: 640 },
     deviceScaleFactor: 1,
