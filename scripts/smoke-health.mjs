@@ -157,7 +157,8 @@ async function main() {
     await waitForHealth(`http://127.0.0.1:${clientPort}/healthz`, client);
     const response = await request(`http://127.0.0.1:${clientPort}/`);
     const html = await response.text();
-    if (!response.ok || !html.includes('<div id="root"></div>')) {
+    // The shell's root holds a static sr-only h1 for crawlers until React mounts.
+    if (!response.ok || !html.includes('<div id="root">')) {
       throw new Error("Client homepage did not return the built app shell");
     }
     server.assertRunning();
