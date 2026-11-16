@@ -47,10 +47,10 @@
   "dependencies": {
     "@sentry/browser": "10.78.0",
     "@sentry/node": "10.78.0",
-    "@tanstack/react-query": "^5.105.1",
-    "@trpc/client": "^11.22.1",
-    "@trpc/react-query": "^11.22.1",
-    "@trpc/server": "^11.22.1",
+    "@tanstack/react-query": "^5.107.1",
+    "@trpc/client": "^11.25.2",
+    "@trpc/react-query": "^11.25.2",
+    "@trpc/server": "^11.25.2",
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.11.1",
     "class-variance-authority": "^0.7.1",
@@ -65,12 +65,12 @@
     "react-router-dom": "^7.18.5",
     "superjson": "^2.2.6",
     "tailwind-merge": "^3.7.0",
-    "ws": "^8.22.1",
+    "ws": "^8.22.2",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
-    "@tailwindcss/vite": "^4.3.3",
+    "@tailwindcss/vite": "^4.3.5",
     "@types/bcrypt": "^6.0.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/cookie": "^0.6.0",
@@ -83,7 +83,7 @@
     "concurrently": "^9.2.5",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
-    "tailwindcss": "^4.3.3",
+    "tailwindcss": "^4.3.5",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vite": "^7.3.7"
