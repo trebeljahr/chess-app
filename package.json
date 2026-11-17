@@ -57,7 +57,7 @@
     "clsx": "^2.1.1",
     "cookie": "^2.0.2",
     "drizzle-orm": "^0.45.4",
-    "express": "^4.22.3",
+    "express": "^5.3.0",
     "ioredis": "^6.0.0",
     "lucide-react": "^0.500.0",
     "react": "^19.3.1",
@@ -100,8 +100,6 @@
       "esbuild"
     ],
     "overrides": {
-      "body-parser": "^1.20.9",
-      "path-to-regexp": "^0.1.13",
       "qs": "^6.16.0",
       "minimist": "^1.2.8",
       "shell-quote": "^1.11.0"
