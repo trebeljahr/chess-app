@@ -230,7 +230,12 @@ describe("browser reports", () => {
     assert.equal(loads, 1);
     const init = calls.init[0] as Record<string, unknown>;
     assert.equal(init.tunnel, "/trpc/_e");
-    assert.equal(init.sendDefaultPii, false);
+    const collection = init.dataCollection as Record<string, unknown>;
+    assert.equal(collection.userInfo, false);
+    assert.equal(collection.cookies, false);
+    assert.deepEqual(collection.httpBodies, []);
+    assert.equal(collection.urlQueryParams, false);
+    assert.equal(init.attachStacktrace, false);
     assert.equal(init.defaultIntegrations, false);
     assert.equal(init.tracesSampleRate, undefined);
     assert.deepEqual(calls.capture, [[early, { tags: { source: "boundary" } }]]);

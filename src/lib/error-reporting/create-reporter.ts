@@ -49,7 +49,28 @@ export function createErrorReporter(options: ErrorReporterOptions): ErrorReporte
           tunnel: options.tunnel,
           release: options.release,
           environment: options.environment,
-          sendDefaultPii: false,
+          // Sentry 11 collects user info, cookies, headers and query strings
+          // unless told not to (it replaced `sendDefaultPii`, whose unset
+          // default was restrictive). Every category is off here except the
+          // User-Agent header, which the browser and OS contexts come from.
+          // scrub.ts still strips each event; this keeps the SDK from
+          // gathering more in the first place.
+          dataCollection: {
+            userInfo: false,
+            cookies: false,
+            httpHeaders: { request: { allow: ["user-agent"] }, response: false },
+            httpBodies: [],
+            urlQueryParams: false,
+            graphQL: { document: false, variables: false },
+            genAI: { inputs: false, outputs: false },
+            mcp: { inputs: false, outputs: false },
+            databaseQueryData: false,
+            queues: false,
+            stackFrameVariables: false,
+          },
+          // Sentry 11 turns this on: a synthetic stack on captureMessage and
+          // non-Error throws. Off, as in Sentry 10.
+          attachStacktrace: false,
           sendClientReports: false,
           // No tracing: no tracesSampleRate and no browserTracingIntegration.
           // The list replaces the SDK defaults, leaving out the session
@@ -60,8 +81,8 @@ export function createErrorReporter(options: ErrorReporterOptions): ErrorReporte
             client.eventFiltersIntegration(),
             client.functionToStringIntegration(),
             client.browserApiErrorsIntegration(),
+            // No consoleIntegration in this list, so no console breadcrumbs.
             client.breadcrumbsIntegration({
-              console: false,
               dom: false,
               sentry: false,
               fetch: true,

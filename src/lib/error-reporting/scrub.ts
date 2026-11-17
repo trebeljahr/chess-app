@@ -6,7 +6,7 @@ import { scrubText, stripUrl } from "../../shared/error-scrub";
  * here removes something; nothing adds data. docs/coolify-deployment.md
  * ("Error reporting") says the same in plain words.
  *
- *  - No person: `user` is dropped whole and `sendDefaultPii` stays off.
+ *  - No person: `user` is dropped whole and `dataCollection.userInfo` stays off.
  *  - No query string and no fragment in any URL: the page address, every
  *    stack frame, every breadcrumb, any URL inside a message. A tRPC GET puts
  *    its whole input into `?input=`.

@@ -62,10 +62,28 @@ if (errorReportingEnabled) {
     dsn,
     release: releaseName(process.env.COMMIT_SHA),
     environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || "development",
-    sendDefaultPii: false,
+    // Sentry 11 collects user info, cookies, headers and query strings unless
+    // told not to (it replaced `sendDefaultPii`, whose unset default was
+    // restrictive). Every category is off: server reports carry no request.
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpHeaders: false,
+      httpBodies: [],
+      urlQueryParams: false,
+      graphQL: { document: false, variables: false },
+      genAI: { inputs: false, outputs: false },
+      mcp: { inputs: false, outputs: false },
+      databaseQueryData: false,
+      queues: false,
+      stackFrameVariables: false,
+    },
+    // Sentry 11 turns this on: a synthetic stack on captureMessage and
+    // non-Error throws. Off, as in Sentry 10.
+    attachStacktrace: false,
     sendClientReports: false,
-    // No OpenTelemetry hooks on every later import: nothing here traces.
-    registerEsmLoaderHooks: false,
+    // No module hooks on every later import: nothing here traces.
+    enableRuntimeChannelInjection: false,
     defaultIntegrations: false,
     integrations: [
       Sentry.eventFiltersIntegration(),
