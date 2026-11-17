@@ -58,7 +58,7 @@
     "cookie": "^2.0.2",
     "drizzle-orm": "^0.45.4",
     "express": "^4.22.3",
-    "ioredis": "^5.11.1",
+    "ioredis": "^6.0.0",
     "lucide-react": "^0.500.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
