@@ -1,4 +1,4 @@
-import { parse, serialize } from "cookie";
+import { parseCookie, stringifySetCookie } from "cookie";
 import { eq, lt } from "drizzle-orm";
 import type { Response } from "express";
 import { db } from "./db.js";
@@ -13,7 +13,9 @@ export interface SessionBundle {
 }
 
 export function createSessionCookie(sessionId: string, expiresAt: number): string {
-  return serialize(SESSION_COOKIE_NAME, sessionId, {
+  return stringifySetCookie({
+    name: SESSION_COOKIE_NAME,
+    value: sessionId,
     path: "/",
     httpOnly: true,
     sameSite: "lax",
@@ -23,7 +25,9 @@ export function createSessionCookie(sessionId: string, expiresAt: number): strin
 }
 
 export function createExpiredSessionCookie(): string {
-  return serialize(SESSION_COOKIE_NAME, "", {
+  return stringifySetCookie({
+    name: SESSION_COOKIE_NAME,
+    value: "",
     path: "/",
     httpOnly: true,
     sameSite: "lax",
@@ -58,7 +62,7 @@ export function getSessionIdFromCookie(cookieHeader?: string): string | null {
     return null;
   }
 
-  const cookies = parse(cookieHeader);
+  const cookies = parseCookie(cookieHeader);
   return cookies[SESSION_COOKIE_NAME] ?? null;
 }
 
