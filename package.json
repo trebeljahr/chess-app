@@ -75,7 +75,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/cookie": "^0.6.0",
     "@types/express": "^5.0.6",
-    "@types/node": "^22.20.5",
+    "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/ws": "^8.18.2",
