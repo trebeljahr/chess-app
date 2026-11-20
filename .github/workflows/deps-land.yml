@@ -1,0 +1,145 @@
+# Dependency autopilot: lands the branches that Claude on the hq box pushes.
+# The box scans GitHub's main every morning, a Claude session applies the
+# updates on deps/<date> and pushes the branch. This workflow runs the repo's
+# checks on it, then fast-forwards main (never a merge, never a force push) and
+# starts build-and-deploy, because a push made with GITHUB_TOKEN starts no push
+# workflows. When main moved meanwhile it rebases onto main, pushes the result
+# as a new deps/ branch and runs itself again on it, so nothing lands untested.
+# deps/<date>-major branches only run the checks; they land when Rico says so
+# (hq: `deps-state land <repo> <date>`, which dispatches this with land=true).
+# No pull requests. The box reads the outcome from this workflow's runs.
+name: deps-land
+run-name: deps-land ${{ inputs.branch || github.ref_name }}
+
+on:
+  push:
+    branches: ["deps/**"]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: deps/ branch to check (and land)
+        required: true
+      land:
+        description: land it after the checks
+        type: boolean
+        default: true
+
+concurrency:
+  group: deps-land-${{ inputs.branch || github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  target:
+    runs-on: ubuntu-latest
+    outputs:
+      branch: ${{ steps.t.outputs.branch }}
+      sha: ${{ steps.t.outputs.sha }}
+      land: ${{ steps.t.outputs.land }}
+    steps:
+      - id: t
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          IN_BRANCH: ${{ inputs.branch }}
+          IN_LAND: ${{ inputs.land }}
+          REF_NAME: ${{ github.ref_name }}
+          PUSH_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = push ]; then
+            branch=$REF_NAME; sha=$PUSH_SHA
+            case "$branch" in *-major) land=false ;; *) land=true ;; esac
+          else
+            branch=$IN_BRANCH; land=$IN_LAND
+            sha=$(gh api "repos/$REPO/git/ref/heads/$branch" --jq .object.sha)
+          fi
+          case "$branch" in deps/*) ;; *) echo "only deps/ branches"; exit 1 ;; esac
+          { echo "branch=$branch"; echo "sha=$sha"; echo "land=$land"; } >> "$GITHUB_OUTPUT"
+          echo "$branch at $sha, land=$land"
+
+  # Checks: the same steps build-and-deploy.yml's verify job runs on every push.
+  verify:
+    needs: [target]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.target.outputs.sha }}
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.33.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Verify authentication, error report scrubbing and rolling state preservation
+        run: pnpm run test:security && pnpm run test:errors && pnpm run test:rolling
+
+      - name: Build repo
+        run: pnpm run build
+
+      - name: Smoke test built health endpoints
+        run: pnpm run smoke:health
+
+  land:
+    needs: [target, verify]
+    if: needs.target.outputs.land == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Fast-forward main, or rebase and test again
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ needs.target.outputs.branch }}
+          SHA: ${{ needs.target.outputs.sha }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch -q origin main "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH"
+          if [ "$(git rev-parse "origin/$BRANCH")" != "$SHA" ]; then
+            echo "$BRANCH moved after the checks; the run for the new tip lands it"; exit 0
+          fi
+          if git merge-base --is-ancestor origin/main "$SHA"; then
+            # Plain push: GitHub refuses it unless it is a fast-forward.
+            git push origin "$SHA:refs/heads/main"
+            echo "main -> $SHA"
+            gh workflow run build-and-deploy.yml --ref main
+            git push -q origin --delete "$BRANCH" || true
+            exit 0
+          fi
+          base=${BRANCH%-rebased*}
+          n=$(( $(git ls-remote --heads origin "$base-rebased*" | wc -l) + 1 ))
+          next="$base-rebased$n"
+          git checkout -q -B land "$SHA"
+          if ! git rebase -q origin/main; then
+            git rebase --abort || true
+            echo "::error::$BRANCH does not rebase onto main cleanly"; exit 1
+          fi
+          git push -q origin "HEAD:refs/heads/$next"
+          gh workflow run deps-land.yml --ref main -f branch="$next" -f land=true
+          git push -q origin --delete "$BRANCH" || true
+          echo "main moved: rebased onto $(git rev-parse --short origin/main) as $next, checks run again"
